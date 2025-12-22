@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ESP32 BPM Detector</string>
+
+    <!-- BPM Display Screen -->
+    <string name="bpm_title">BPM</string>
+    <string name="settings_title">Settings</string>
+    <string name="start_monitoring">Start Monitoring</string>
+    <string name="stop_monitoring">Stop Monitoring</string>
+    <string name="confidence_label">Confidence</string>
+    <string name="signal_label">Signal</string>
+
+    <!-- Settings Screen -->
+    <string name="server_ip_label">ESP32 Server IP Address</string>
+    <string name="server_ip_placeholder">192.168.1.100</string>
+    <string name="server_ip_description">IP address of your ESP32 device</string>
+    <string name="polling_interval_label">Polling Interval (ms)</string>
+    <string name="polling_interval_placeholder">500</string>
+    <string name="polling_interval_description">How often to check for BPM updates (100-2000ms)</string>
+    <string name="test_connection">Test Connection</string>
+    <string name="testing_connection">Testing Connection...</string>
+    <string name="save_settings">Save Settings</string>
+    <string name="connection_successful">✓ Connection successful!</string>
+    <string name="connection_failed">✗ Cannot reach ESP32 server</string>
+    <string name="current_connection_status">Current Connection Status</string>
+
+    <!-- Status Messages -->
+    <string name="status_detecting">Detecting BPM</string>
+    <string name="status_low_signal">Low Audio Signal</string>
+    <string name="status_error">Connection Error</string>
+    <string name="status_initializing">Initializing...</string>
+    <string name="status_buffering">Buffering...</string>
+    <string name="status_low_confidence">Analyzing...</string>
+    <string name="status_connected">Connected</string>
+    <string name="status_connecting">Connecting...</string>
+    <string name="status_disconnected">Disconnected</string>
+
+    <!-- App Info -->
+    <string name="app_description">Real-time BPM detection from audio signals</string>
+
+    <!-- Error Messages -->
+    <string name="error_unknown">Unknown error</string>
+    <string name="error_cannot_reach">Cannot reach ESP32 server</string>
+    <string name="error_timeout">Connection timeout</string>
+    <string name="error_invalid_ip">Invalid IP address format</string>
+</resources>

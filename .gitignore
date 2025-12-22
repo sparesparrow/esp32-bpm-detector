@@ -1,0 +1,90 @@
+# C++ build artifacts
+build/
+!build/sparetools/
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+.pioenvs.windows/
+
+# Arduino IDE
+.build/
+.pioenvs/
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
+# Dependency directories
+node_modules/
+lib/
+
+# Environment and local files
+.env
+.env.local
+local.properties
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Logs
+*.log
+logs/
+
+# Android specific
+android-app/.gradle
+android-app/build/
+android-app/.DS_Store
+android-app/local.properties
+android-app/.idea/
+android-app/*.iml
+android-app/captures/
+android-app/.externalNativeBuild
+android-app/.cxx
+
+# Kotlin
+*.kt.bak
+
+# Documentation
+docs/_build/
+*.pdf
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Secrets and credentials
+secrets/
+*.pem
+*.key
+*.keystore
+
+# Test artifacts
+test-results/
+coverage/
+
+# Binary files
+*.bin
+*.hex
+firmware/.pio/build/**/*.bin
+firmware/.pio/build/**/*.elf

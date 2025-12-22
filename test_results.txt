@@ -1,0 +1,31 @@
+ESP32 BPM Detector Validation Tests
+===================================
+
+Test 1: BPM Calculation
+120 BPM Test: Expected 120.0, Got 120 BPM
+140 BPM Test: Expected 140.0, Got 139.86 BPM
+
+Test 2: Confidence Calculation
+Perfect Regularity: CV = 0, Confidence = 1
+Irregular: CV = 0.141421, Confidence = 0.717157
+
+Test 3: FFT Frequency Resolution
+Sample Rate: 25000 Hz
+FFT Size: 1024
+Frequency Resolution: 24.4141 Hz/bin
+Bass Frequency Range: 40-200 Hz
+Bass FFT Bins: 1-8
+
+Test 4: Signal Processing
+Sine Wave RMS: 0.712008 (expected ~0.707)
+
+===================================
+TEST SUMMARY
+===================================
+BPM 120 Test: PASS
+BPM 140 Test: PASS
+Confidence Test: PASS
+FFT Resolution Test: PASS
+Signal Processing Test: PASS
+
+OVERALL RESULT: ALL TESTS PASSED
