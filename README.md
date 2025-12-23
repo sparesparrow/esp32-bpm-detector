@@ -183,7 +183,32 @@ pio device monitor   # View serial output
 
 ## Testing
 
-### Firmware Testing
+### C++ Firmware Tests (Cross-platform)
+
+**Using Makefile (Recommended):**
+```bash
+make test          # Build and run all tests
+make clean         # Clean build artifacts
+```
+
+**Using Python script:**
+```bash
+python3 run_tests.py
+```
+
+**Using shell script (Linux/macOS/Git Bash):**
+```bash
+chmod +x run_tests.sh
+./run_tests.sh
+```
+
+**Manual compilation:**
+```bash
+g++ -std=c++17 -I. comprehensive_tests.cpp -o comprehensive_tests -lm
+./comprehensive_tests
+```
+
+### ESP32 Firmware Testing
 ```bash
 # Build test firmware with serial debugging
 pio run -e esp32dev --verbose
@@ -193,6 +218,15 @@ pio run -e esp32dev --verbose
 ```
 
 ### Android App Testing
+```bash
+cd android-app
+./gradlew test                    # Unit tests (Linux/macOS)
+.\gradlew.bat test               # Unit tests (Windows)
+./gradlew connectedAndroidTest    # Integration tests (Linux/macOS)
+.\gradlew.bat connectedAndroidTest  # Integration tests (Windows)
+```
+
+**Manual testing:**
 1. Connect Android device to same WiFi as ESP32
 2. Open app and enter ESP32 IP
 3. Verify BPM updates in real-time

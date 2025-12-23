@@ -77,6 +77,8 @@ pio run -t upload
 pio device monitor
 ```
 
+**Note**: PlatformIO works cross-platform on Linux, macOS, and Windows.
+
 **Expected Serial Output:**
 ```
 [System] ESP32 BPM Detector v1.0.0
@@ -96,14 +98,19 @@ pio device monitor
 # Navigate to Android project
 cd android-app
 
-# Build debug APK (cross-platform)
+# Build debug APK
+# Linux/macOS:
 ./gradlew assembleDebug
 
-# Or on Windows
+# Windows:
 .\gradlew.bat assembleDebug
 
 # Install on connected device
+# Linux/macOS:
 ./gradlew installDebug
+
+# Windows:
+.\gradlew.bat installDebug
 ```
 
 ### 2.2 Configure App Connection

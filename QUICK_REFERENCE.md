@@ -119,16 +119,40 @@ curl http://192.168.1.100/api/settings
 
 ## 🧪 Testing Commands
 
-### Run All C++ Tests
+### Run All C++ Tests (Cross-platform)
+
+**Using Makefile (Recommended):**
+```bash
+make test          # Build and run all tests
+make clean         # Clean build artifacts
+```
+
+**Using Python script:**
+```bash
+python3 run_tests.py
+# or
+python run_tests.py
+```
+
+**Using shell script (Linux/macOS/Git Bash):**
+```bash
+chmod +x run_tests.sh
+./run_tests.sh
+```
+
+**Manual compilation:**
 ```bash
 # Compile and run comprehensive tests
-g++ -std=c++17 -I. comprehensive_tests.cpp -o test.exe && ./test.exe
+g++ -std=c++17 -I. comprehensive_tests.cpp -o comprehensive_tests -lm
+./comprehensive_tests
 
 # Run final validation
-g++ -std=c++17 -I. final_test.cpp -o test.exe && ./test.exe
+g++ -std=c++17 -I. final_test.cpp -o final_test -lm
+./final_test
 
 # Run simple validation
-g++ -std=c++17 -I. simple_validation.cpp -o test.exe && ./test.exe
+g++ -std=c++17 -I. simple_validation.cpp -o simple_validation -lm
+./simple_validation
 ```
 
 ### Android Tests

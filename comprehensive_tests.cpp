@@ -512,14 +512,21 @@ void testRealTimeSimulation() {
     const size_t TOTAL_SAMPLES = SAMPLE_RATE * 5; // 5 seconds
     const size_t DETECTION_INTERVAL = SAMPLE_RATE / 10; // Detect every 100ms
 
-    // Generate a signal with beats at 120 BPM
+    // Generate a signal with beats at 120 BPM using bass frequencies
     std::vector<float> audio_signal(TOTAL_SAMPLES, 0.0f);
-    size_t beat_interval_samples = SAMPLE_RATE * 60 / 120; // Samples per beat
+    size_t beat_interval_samples = SAMPLE_RATE * 60 / 120; // Samples per beat (500ms intervals)
 
+    // Generate bass kick drum pattern (60-80 Hz fundamental with harmonics)
     for (size_t i = 0; i < TOTAL_SAMPLES; i += beat_interval_samples) {
-        if (i + 100 < TOTAL_SAMPLES) { // 100 sample beat pulse
-            for (size_t j = 0; j < 100; ++j) {
-                audio_signal[i + j] = 1.0f; // Beat pulse
+        if (i + 300 < TOTAL_SAMPLES) { // 300 sample beat duration (12ms at 25kHz)
+            for (size_t j = 0; j < 300; ++j) {
+                size_t sample_idx = i + j;
+                float t = (float)j / SAMPLE_RATE; // Time in seconds
+                // Generate bass drum sound: fundamental + harmonics
+                float fundamental = 0.8f * sinf(2.0f * M_PI * 60.0f * t) * expf(-t * 50.0f); // 60Hz fundamental
+                float harmonic1 = 0.4f * sinf(2.0f * M_PI * 120.0f * t) * expf(-t * 60.0f);  // 120Hz harmonic
+                float harmonic2 = 0.2f * sinf(2.0f * M_PI * 180.0f * t) * expf(-t * 70.0f);  // 180Hz harmonic
+                audio_signal[sample_idx] = fundamental + harmonic1 + harmonic2;
             }
         }
     }
