@@ -232,3 +232,4 @@ data class ConnectionStatus(
     fun hasError(): Boolean = status.hasError()
     fun isConnecting(): Boolean = status.isConnecting()
 }
+

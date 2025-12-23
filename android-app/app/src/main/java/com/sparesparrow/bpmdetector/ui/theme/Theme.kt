@@ -86,3 +86,4 @@ fun BPMDetectorTheme(
         content = content
     )
 }
+

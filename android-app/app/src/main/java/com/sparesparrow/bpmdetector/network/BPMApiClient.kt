@@ -188,3 +188,4 @@ class BPMApiClient(private val baseUrl: String) {
  * Custom HTTP exception
  */
 class HttpException(message: String) : IOException(message)
+

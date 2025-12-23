@@ -32,3 +32,4 @@ void DisplayHandler::showBPM(int bpm, float confidence) {
     // Can be replaced later with actual OLED/7-segment display code
 }
 
+

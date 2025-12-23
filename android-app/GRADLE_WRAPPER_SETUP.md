@@ -26,3 +26,4 @@ Download from: https://raw.githubusercontent.com/gradle/gradle/v8.0.0/gradle/wra
 Save to: `android-app/gradle/wrapper/gradle-wrapper.jar`
 
 The wrapper JAR is approximately 60KB and is required for the Gradle wrapper to function.
+

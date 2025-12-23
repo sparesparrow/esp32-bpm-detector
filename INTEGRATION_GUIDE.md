@@ -381,3 +381,4 @@ private val _pollingInterval = MutableStateFlow(250L)  // Faster updates
 ---
 
 **Ready to start?** Follow the setup instructions above and you'll have a working real-time BPM detection system in minutes! 🎵
+

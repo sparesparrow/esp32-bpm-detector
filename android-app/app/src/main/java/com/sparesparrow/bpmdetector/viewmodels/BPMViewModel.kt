@@ -214,3 +214,4 @@ class BPMViewModel(application: Application) : AndroidViewModel(application) {
         clearBPMService()
     }
 }
+

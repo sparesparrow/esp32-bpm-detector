@@ -12,3 +12,4 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object BPMDisplay : Screen("bpm_display", "BPM", Icons.Filled.MusicNote)
     object Settings : Screen("settings", "Settings", Icons.Filled.Settings)
 }
+

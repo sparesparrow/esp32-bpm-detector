@@ -240,8 +240,26 @@ android-app/
 
 MIT License - See LICENSE file for details.
 
+## sparetools Integration
+
+This project integrates with the [sparetools](https://github.com/sparesparrow/sparetools) repository for shared components and workflows.
+
+**Integration Status:** ✅ Complete - See `build/SPARETOOLS_INTEGRATION_COMPLETE.md` for details.
+
+**Integrated Components:**
+- Updated dependency versions (Compose BOM 2024.02.00, Lifecycle 2.7.0, Coroutines 1.7.3)
+- Added buildConfig feature support
+- CI/CD workflow adapted from sparetools (`.github/workflows/android-build.yml`)
+- Enhanced ProGuard rules with source file attributes
+
+For integration details and future updates, see:
+- `build/SPARETOOLS_INTEGRATION_COMPLETE.md` - What was integrated
+- `build/SPARETOOLS_INTEGRATION.md` - Integration guide
+
 ## Related Projects
 
 - **ESP32 Firmware**: Real-time audio processing and BPM detection
 - **Hardware Setup**: MAX9814 microphone integration guide
 - **API Documentation**: Complete REST API specification
+- **sparetools**: Shared Android build patterns and CI/CD workflows
+

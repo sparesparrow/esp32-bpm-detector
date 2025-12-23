@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "ESP32 BPM Detector"
 include ':app'
+

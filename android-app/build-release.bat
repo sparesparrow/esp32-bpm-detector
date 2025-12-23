@@ -17,3 +17,4 @@ if %ERRORLEVEL% EQU 0 (
     echo Build failed. Check the error messages above.
     exit /b 1
 )
+

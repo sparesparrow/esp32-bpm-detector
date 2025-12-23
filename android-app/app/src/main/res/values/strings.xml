@@ -44,3 +44,4 @@
     <string name="error_timeout">Connection timeout</string>
     <string name="error_invalid_ip">Invalid IP address format</string>
 </resources>
+

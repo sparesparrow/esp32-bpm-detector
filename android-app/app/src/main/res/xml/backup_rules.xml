@@ -6,3 +6,4 @@
     <exclude domain="sharedpref" path="gcm_preferences.xml"/>
     -->
 </full-backup-content>
+
