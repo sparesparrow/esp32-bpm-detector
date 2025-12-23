@@ -63,12 +63,29 @@ Edit `include/config.h`:
 
 ### 2. Android App Setup
 
-#### Prerequisites
+#### Option A: Download Pre-built APK (Recommended)
+
+**From GitHub Releases:**
+1. Go to [Releases](https://github.com/sparesparrow/esp32-bpm-detector/releases)
+2. Download the latest release APK
+3. Install on your Android device
+
+**From Workflow Artifacts:**
+1. Go to [Actions](https://github.com/sparesparrow/esp32-bpm-detector/actions)
+2. Click the latest successful workflow run
+3. Download the `bpm-detector-package-*` artifact
+4. Extract and install the APK
+
+See [GitHub Packages Guide](.github/PACKAGES.md) for detailed instructions.
+
+#### Option B: Build from Source
+
+**Prerequisites:**
 - Android Studio (2023.1+)
 - Kotlin 1.8+
 - Android SDK level 24+
 
-#### Installation
+**Installation:**
 ```bash
 cd android-app
 ./gradlew build

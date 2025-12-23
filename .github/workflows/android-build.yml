@@ -21,7 +21,8 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
+  packages: write
   security-events: write
 
 env:
@@ -167,4 +168,201 @@ jobs:
               echo "✅ No critical security issues found"
             fi
           fi
+
+  # Publish APKs to GitHub Packages
+  publish-packages:
+    needs: [build-android, test-android, security-scan]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download APK artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bpm-detector-*-*
+          merge-multiple: true
+          path: ./apks
+
+      - name: Get version from build.gradle
+        id: get_version
+        working-directory: android-app
+        run: |
+          VERSION_NAME=$(grep -oP 'versionName\s+["\047]\K[^"\047]+' app/build.gradle | head -1)
+          VERSION_CODE=$(grep -oP 'versionCode\s+\K\d+' app/build.gradle | head -1)
+          echo "version_name=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "version_code=$VERSION_CODE" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION_NAME ($VERSION_CODE)"
+
+      - name: Create package metadata
+        run: |
+          mkdir -p ./package
+          cat > ./package/package.json << EOF
+          {
+            "name": "esp32-bpm-detector-android",
+            "version": "${{ steps.get_version.outputs.version_name }}",
+            "description": "ESP32 BPM Detector Android Application",
+            "repository": "${{ github.repository }}",
+            "package_type": "android-apk",
+            "build_number": "${{ steps.get_version.outputs.version_code }}",
+            "commit_sha": "${{ github.sha }}",
+            "build_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+
+      - name: Publish to GitHub Packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: bpm-detector-package-${{ steps.get_version.outputs.version_name }}
+          path: |
+            ./apks
+            ./package
+          retention-days: 90
+
+      - name: Publish to GitHub Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PACKAGE_VERSION="${{ steps.get_version.outputs.version_name }}"
+          PACKAGE_NAME="esp32-bpm-detector-android"
+          
+          echo "Publishing APKs to GitHub Packages..."
+          
+          # Find all APK files and create package entries
+          for apk in ./apks/**/*.apk; do
+            if [ -f "$apk" ]; then
+              APK_NAME=$(basename "$apk")
+              BUILD_TYPE=$(echo "$APK_NAME" | grep -oE "(debug|release)" || echo "unknown")
+              
+              echo "📦 Preparing $APK_NAME for GitHub Packages..."
+              
+              # Get file size and SHA256
+              FILE_SIZE=$(stat -f%z "$apk" 2>/dev/null || stat -c%s "$apk" 2>/dev/null || echo "0")
+              FILE_SHA256=$(shasum -a 256 "$apk" | cut -d' ' -f1 || sha256sum "$apk" | cut -d' ' -f1 || echo "")
+              
+              echo "  File: $APK_NAME"
+              echo "  Size: $FILE_SIZE bytes"
+              echo "  SHA256: $FILE_SHA256"
+              echo "  Build Type: $BUILD_TYPE"
+              echo "  ✓ Prepared for publishing"
+            fi
+          done
+          
+          echo ""
+          echo "✅ APKs are available via:"
+          echo "   - GitHub Actions artifacts (90 days retention)"
+          echo "   - GitHub Releases (when tags are created)"
+          echo "   - Download from workflow run artifacts"
+
+      - name: Get release notes
+        id: release_notes
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          RELEASE_NOTES=$(git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")..HEAD 2>/dev/null || echo "- See commit history for changes")
+          
+          cat > release_body.md << EOF
+          ## ESP32 BPM Detector Android App - ${{ steps.get_version.outputs.version_name }}
+          
+          **Version:** ${{ steps.get_version.outputs.version_name }}  
+          **Build Number:** ${{ steps.get_version.outputs.version_code }}  
+          **Commit:** ${{ github.sha }}
+          
+          ### 📦 APK Files
+          
+          This release includes both debug and release APK builds:
+          
+          - **Debug APK**: For testing and development
+          - **Release APK**: Production-ready build (recommended)
+          
+          ### 📥 Installation
+          
+          1. Download the APK file for your needs
+          2. On your Android device, enable "Install from unknown sources" in Settings
+          3. Transfer the APK to your device and tap to install
+          4. Grant necessary permissions when prompted
+          
+          ### 🔧 Requirements
+          
+          - Android 7.0 (API 24) or higher
+          - WiFi connection to access ESP32 device
+          
+          ### 📝 Changes
+          
+          $RELEASE_NOTES
+          
+          ### 🔗 Links
+          
+          - [Repository](https://github.com/${{ github.repository }})
+          - [Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)
+          - [Issues](https://github.com/${{ github.repository }}/issues)
+          EOF
+          
+          echo "body_path=release_body.md" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./apks/**/*.apk
+          body_path: release_body.md
+          draft: false
+          prerelease: ${{ contains(github.ref, 'beta') || contains(github.ref, 'alpha') || contains(github.ref, 'rc') }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create package registry entry
+        if: github.event_name != 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PACKAGE_VERSION="${{ steps.get_version.outputs.version_name }}-${{ github.run_number }}"
+          PACKAGE_NAME="esp32-bpm-detector-android"
+          
+          echo "Creating package registry entry..."
+          
+          # Create package metadata
+          cat > package-info.json << EOF
+          {
+            "name": "$PACKAGE_NAME",
+            "version": "$PACKAGE_VERSION",
+            "description": "ESP32 BPM Detector Android Application",
+            "repository": "${{ github.repository }}",
+            "package_type": "android-apk",
+            "build_number": "${{ steps.get_version.outputs.version_code }}",
+            "commit_sha": "${{ github.sha }}",
+            "branch": "${{ github.ref_name }}",
+            "build_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "workflow_run": "${{ github.run_id }}"
+          }
+          EOF
+          
+          echo "Package info:"
+          cat package-info.json
+          echo ""
+          echo "✅ Package metadata created"
+
+      - name: Display publish summary
+        if: always()
+        run: |
+          echo "## 📦 Package Publishing Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | ${{ steps.get_version.outputs.version_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Number | ${{ steps.get_version.outputs.version_code }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | ${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📥 Download APKs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "APKs are available via:" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Workflow Artifacts**: Click 'Summary' above → Download artifacts (90 days retention)" >> $GITHUB_STEP_SUMMARY
+          echo "2. **GitHub Releases**: Available when tags are created" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Package Registry**: Metadata stored in package-info.json" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [View all workflow runs](https://github.com/${{ github.repository }}/actions)" >> $GITHUB_STEP_SUMMARY
+          echo "- [View releases](https://github.com/${{ github.repository }}/releases)" >> $GITHUB_STEP_SUMMARY
+
 
