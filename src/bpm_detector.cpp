@@ -90,10 +90,6 @@ void BPMDetector::begin(uint8_t adc_pin) {
         audio_input_->begin(adc_pin);
 }
 
-void BPMDetector::begin(uint8_t adc_pin) {
-    beginStereo(adc_pin, 0); // Initialize as mono
-}
-
 void BPMDetector::beginStereo(uint8_t left_pin, uint8_t right_pin) {
     adc_pin_ = left_pin;
 

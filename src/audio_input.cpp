@@ -60,7 +60,9 @@ void AudioInput::begin(uint8_t adc_pin) {
             // Configure ADC width and attenuation
             adc1_config_width(ADC_WIDTH_BIT_12);
             adc1_config_channel_atten(channel, ADC_ATTENUATION);
-            
+        }
+    #endif
+
     beginStereo(adc_pin, 0); // Initialize as mono
 }
 
@@ -202,16 +204,6 @@ float AudioInput::readSample() {
     // Update signal level tracking
     updateSignalLevel(ac_signal);
 
-    return ac_signal;
-}
-
-    
-    // Update DC offset estimation (slow adaptation)
-    dc_offset = dc_offset * 0.999f + voltage * 0.001f;
-    
-    // Update signal level tracking
-    updateSignalLevel(ac_signal);
-    
     return ac_signal;
 }
 
