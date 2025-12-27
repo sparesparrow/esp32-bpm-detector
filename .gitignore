@@ -88,3 +88,27 @@ coverage/
 *.hex
 firmware/.pio/build/**/*.bin
 firmware/.pio/build/**/*.elf
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Conan package manager
+.conan/
+conanbuildinfo.*
+conaninfo.txt
+graph_info.json
+
+# ESP-IDF specific
+sdkconfig
+sdkconfig.old
+components/
+managed_components/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+*.log
