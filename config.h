@@ -4,16 +4,17 @@
 // ============================================================================
 // WiFi Configuration
 // ============================================================================
-#define WIFI_SSID "Your_WiFi_SSID"
-#define WIFI_PASSWORD "Your_WiFi_Password"
+#define WIFI_SSID "BPM"
+#define WIFI_PASSWORD "pppppppp"
 
 // ============================================================================
 // Hardware Configuration
 // ============================================================================
-// Microphone input pin (ADC pin on ESP32)
-// ADC1_CH0 = GPIO36, ADC1_CH1 = GPIO37, ADC1_CH2 = GPIO38, ADC1_CH3 = GPIO39
-// ADC1_CH4 = GPIO32, ADC1_CH5 = GPIO33, ADC1_CH6 = GPIO34, ADC1_CH7 = GPIO35
-#define MICROPHONE_PIN 32           // GPIO32 (ADC1_CH4)
+// Stereo microphone input pins (ADC pins on ESP32-S3)
+// ADC1_CH0 = GPIO1, ADC1_CH1 = GPIO2, ADC1_CH2 = GPIO3, ADC1_CH3 = GPIO4
+// ADC1_CH4 = GPIO5, ADC1_CH5 = GPIO6, ADC1_CH6 = GPIO7, ADC1_CH7 = GPIO8
+#define MICROPHONE_LEFT_PIN 5       // GPIO5 (ADC1_CH4) - Left channel
+#define MICROPHONE_RIGHT_PIN 6      // GPIO6 (ADC1_CH5) - Right channel
 
 // Display configuration
 #define USE_OLED_DISPLAY 1          // Set to 1 to enable SSD1306 OLED
@@ -27,8 +28,8 @@
 // ============================================================================
 // Audio Configuration
 // ============================================================================
-#define SAMPLE_RATE 25000           // Sampling rate in Hz (25 kHz is good balance)
-#define FFT_SIZE 1024               // FFT size (power of 2: 256, 512, 1024)
+#define SAMPLE_RATE 8000            // Sampling rate in Hz (8 kHz for ESP32-S3 performance)
+#define FFT_SIZE 512                // FFT size (power of 2: 256, 512, 1024)
 #define ADC_RESOLUTION 12           // ESP32 ADC resolution (12 bits max)
 
 // ============================================================================

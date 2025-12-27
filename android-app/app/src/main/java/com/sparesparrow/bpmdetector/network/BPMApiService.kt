@@ -3,6 +3,7 @@ package com.sparesparrow.bpmdetector.network
 import com.sparesparrow.bpmdetector.models.BPMData
 import com.sparesparrow.bpmdetector.models.BPMHealth
 import com.sparesparrow.bpmdetector.models.BPMSettings
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.GET
 
@@ -12,22 +13,22 @@ import retrofit2.http.GET
 interface BPMApiService {
 
     /**
-     * Get current BPM data
+     * Get current BPM data (FlatBuffers binary)
      */
     @GET("/api/bpm")
-    suspend fun getBPMData(): Response<BPMData>
+    suspend fun getBPMData(): Response<ResponseBody>
 
     /**
-     * Get firmware settings
+     * Get firmware settings (FlatBuffers binary)
      */
     @GET("/api/settings")
-    suspend fun getSettings(): Response<BPMSettings>
+    suspend fun getSettings(): Response<ResponseBody>
 
     /**
-     * Health check
+     * Health check (FlatBuffers binary)
      */
     @GET("/api/health")
-    suspend fun getHealth(): Response<BPMHealth>
+    suspend fun getHealth(): Response<ResponseBody>
 
     companion object {
         const val DEFAULT_TIMEOUT_MS = 5000L

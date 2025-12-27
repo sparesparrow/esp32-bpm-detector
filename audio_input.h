@@ -10,11 +10,17 @@ public:
     AudioInput();
     ~AudioInput();
 
-    // Initialize ADC with specified pin
+    // Initialize ADC with specified pin (mono)
     void begin(uint8_t adc_pin);
 
-    // Read a single sample from ADC
+    // Initialize ADC with stereo pins
+    void beginStereo(uint8_t left_pin, uint8_t right_pin);
+
+    // Read a single sample from ADC (mono or combined stereo)
     float readSample();
+
+    // Read separate stereo samples
+    void readStereoSamples(float& left, float& right);
 
     // Get current signal level (RMS or peak)
     float getSignalLevel() const;
@@ -30,7 +36,9 @@ public:
 
 private:
     uint8_t adc_pin_;
+    uint8_t adc_pin_right_;
     bool initialized_;
+    bool stereo_mode_;
     
     // Signal level tracking
     float signal_level_;

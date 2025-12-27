@@ -7,10 +7,14 @@ using namespace std;
 #include <algorithm>
 #include <cstdlib>
 
+// Global audio input instance (will be initialized by begin())
+static AudioInput* audio_input = nullptr;
+
 BPMDetector::BPMDetector(uint16_t sample_rate, uint16_t fft_size)
     : sample_rate_(sample_rate)
     , fft_size_(fft_size)
     , adc_pin_(0)
+    , adc_pin_right_(0)
     , min_bpm_(MIN_BPM)
     , max_bpm_(MAX_BPM)
     , detection_threshold_(DETECTION_THRESHOLD)
@@ -84,6 +88,24 @@ void BPMDetector::begin(uint8_t adc_pin) {
     } else {
         // If audio input was injected, initialize it with the pin
         audio_input_->begin(adc_pin);
+}
+
+void BPMDetector::begin(uint8_t adc_pin) {
+    beginStereo(adc_pin, 0); // Initialize as mono
+}
+
+void BPMDetector::beginStereo(uint8_t left_pin, uint8_t right_pin) {
+    adc_pin_ = left_pin;
+
+    // Create audio input instance if not exists
+    if (!audio_input) {
+        static AudioInput audio_input_instance;
+        audio_input = &audio_input_instance;
+        if (right_pin != 0) {
+            audio_input->beginStereo(left_pin, right_pin);
+        } else {
+            audio_input->begin(left_pin);
+        }
     }
     
     // Clear buffers
@@ -136,6 +158,18 @@ void BPMDetector::sample() {
     } else if (audio_input_ && audio_input_->isInitialized()) {
         // Read from actual ADC
         float sample = audio_input_->readSample();
+    } else if (audio_input && audio_input->isInitialized()) {
+        // Read from actual ADC (stereo or mono)
+        float sample;
+        if (adc_pin_right_ != 0) {
+            // Stereo mode - combine channels
+            float left, right;
+            audio_input->readStereoSamples(left, right);
+            sample = (left + right) * 0.5f; // Simple average for mono BPM detection
+        } else {
+            // Mono mode
+            sample = audio_input->readSample();
+        }
         addSample(sample);
     }
 }
@@ -188,12 +222,17 @@ BPMDetector::BPMData BPMDetector::detect() {
         // #region agent log
         writeLog("bpm_detector.cpp:detect:bufferNotReady", "Buffer not ready for detection", "C", "{\"status\":\"buffering\"}");
         // #endregion
+    // Check if buffer is ready
+    if (!isBufferReady()) {
+        result.status = "buffering";
         return result;
     }
     
     // Get signal level
     if (audio_input_) {
         result.signal_level = audio_input_->getNormalizedLevel();
+    if (audio_input) {
+        result.signal_level = audio_input->getNormalizedLevel();
     } else {
         // Calculate from sample buffer
         float sum_sq = 0.0f;
@@ -228,6 +267,7 @@ BPMDetector::BPMData BPMDetector::detect() {
     writeLog("bpm_detector.cpp:detect:calculation", "BPM calculation completed", "C", dataBuf2);
     // #endregion
 
+    
     // Determine status
     if (result.bpm > 0.0f && result.confidence >= CONFIDENCE_THRESHOLD) {
         result.status = "detecting";
@@ -244,6 +284,7 @@ BPMDetector::BPMData BPMDetector::detect() {
     writeLog("bpm_detector.cpp:detect:complete", "BPM detection completed", "C", dataBuf3);
     // #endregion
 
+    
     return result;
 }
 
@@ -273,6 +314,12 @@ void BPMDetector::performFFT() {
     FFT.windowing(FFT_WIN_TYP_HAMMING, FFT_FORWARD);
     FFT.compute(FFT_FORWARD);
     FFT.complexToMagnitude();
+    arduinoFFT FFT = arduinoFFT(vReal, vImag, fft_size_, sample_rate_);
+
+    // Apply window function and perform FFT
+    FFT.Windowing(FFT_WIN_TYP_HAMMING, FFT_FORWARD);
+    FFT.Compute(FFT_FORWARD);
+    FFT.ComplexToMagnitude();
     
     // Copy magnitude results back to fft_buffer_ for use in beat detection
     for (size_t i = 0; i < fft_size_ / 2; ++i) {
@@ -327,6 +374,8 @@ void BPMDetector::detectBeatEnvelope() {
     float signal_level = 0.0f;
     if (audio_input_) {
         signal_level = audio_input_->getNormalizedLevel();
+    if (audio_input) {
+        signal_level = audio_input->getNormalizedLevel();
     }
     
     // Adjust threshold based on signal level
@@ -489,6 +538,16 @@ void BPMDetector::setThreshold(float threshold) {
             DEBUG_PRINTF("[BPMDetector] Warning: Invalid threshold %.2f (must be 0.0-1.0)\n", threshold);
         #endif
     }
+    min_bpm_ = min_bpm;
+}
+
+void BPMDetector::setMaxBPM(float max_bpm) {
+    max_bpm_ = max_bpm;
+}
+
+void BPMDetector::setThreshold(float threshold) {
+    detection_threshold_ = threshold;
+    envelope_threshold_ = threshold;
 }
 
 float BPMDetector::getMinBPM() const {
