@@ -1,0 +1,12 @@
+[requires]
+sparetools-bpm-detector/0.1.0
+
+[options]
+sparetools-bpm-detector/*:with_display=True
+sparetools-bpm-detector/*:with_networking=True
+sparetools-bpm-detector/*:with_websocket=True
+sparetools-bpm-detector/*:with_audio_calibration=True
+sparetools-bpm-detector/*:target_board=esp32s3
+
+[generators]
+CMakeDeps

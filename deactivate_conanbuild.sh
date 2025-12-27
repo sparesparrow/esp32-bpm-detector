@@ -1,0 +1,1 @@
+. "/home/sparrow/projects/embedded-systems/esp32-bpm-detector/deactivate_conanbuildenv-release-x86_64.sh"
