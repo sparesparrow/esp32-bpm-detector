@@ -4,9 +4,6 @@
 #include <Arduino.h>
 #include <vector>
 
-// Forward declaration
-class AudioInput;
-
 class BPMDetector {
 public:
     struct BPMData {
@@ -18,13 +15,11 @@ public:
     };
 
     BPMDetector(uint16_t sample_rate = 25000, uint16_t fft_size = 1024);
-    BPMDetector(AudioInput* audio_input, uint16_t sample_rate = 25000, uint16_t fft_size = 1024);
     ~BPMDetector();
 
-    // Initialize audio sampling (legacy method - use constructor injection when possible)
+    // Initialize audio sampling
     void begin(uint8_t adc_pin);
-    
-    // Initialize with AudioInput instance (preferred)
+    void beginStereo(uint8_t left_pin, uint8_t right_pin);
     void begin(AudioInput* audio_input, uint8_t adc_pin);
     
     // Read audio sample from ADC
@@ -50,7 +45,8 @@ private:
     uint16_t sample_rate_;
     uint16_t fft_size_;
     uint8_t adc_pin_;
-    
+    uint8_t adc_pin_right_;
+
     float min_bpm_;
     float max_bpm_;
     float detection_threshold_;
@@ -62,10 +58,6 @@ private:
     float envelope_threshold_;
     std::vector<unsigned long> beat_times_;
     
-    // Audio input dependency (injected or created internally)
-    AudioInput* audio_input_;
-    bool owns_audio_input_;  // True if we created it, false if injected
-    
     // Internal helper methods
     void performFFT();
     void detectBeatEnvelope();
@@ -74,7 +66,6 @@ private:
     
     // Circular buffer management
     void addSample(float value);
-public:
     bool isBufferReady() const;
     
     // Test mode
