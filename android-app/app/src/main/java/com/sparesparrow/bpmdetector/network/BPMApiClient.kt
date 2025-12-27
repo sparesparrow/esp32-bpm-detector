@@ -2,13 +2,16 @@ package com.sparesparrow.bpmdetector.network
 
 import com.google.gson.GsonBuilder
 import com.sparesparrow.bpmdetector.models.*
+import com.sparesparrow.bpmdetector.flatbuffers.sparetools.bpm.*
 import kotlinx.coroutines.delay
 import okhttp3.OkHttpClient
+import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import timber.log.Timber
 import java.io.IOException
+import java.nio.ByteBuffer
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
@@ -21,10 +24,6 @@ class BPMApiClient(private val baseUrl: String) {
     private val apiService: BPMApiService by lazy { createApiService() }
 
     private fun createApiService(): BPMApiService {
-        val gson = GsonBuilder()
-            .setLenient()
-            .create()
-
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = if (BuildConfig.DEBUG) {
                 HttpLoggingInterceptor.Level.BODY
@@ -43,7 +42,6 @@ class BPMApiClient(private val baseUrl: String) {
         val retrofit = Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
 
         return retrofit.create(BPMApiService::class.java)
@@ -58,8 +56,15 @@ class BPMApiClient(private val baseUrl: String) {
         }.fold(
             onSuccess = { response ->
                 if (response.isSuccessful) {
-                    response.body()?.let { Result.success(it) }
-                        ?: Result.failure(IOException("Empty response body"))
+                    response.body()?.let { body ->
+                        try {
+                            val bpmData = deserializeBPMData(body)
+                            Result.success(bpmData)
+                        } catch (e: Exception) {
+                            Timber.e(e, "Failed to deserialize BPM data")
+                            Result.failure(IOException("Failed to deserialize response: ${e.message}"))
+                        }
+                    } ?: Result.failure(IOException("Empty response body"))
                 } else {
                     Result.failure(HttpException("HTTP ${response.code()}: ${response.message()}"))
                 }
@@ -75,8 +80,15 @@ class BPMApiClient(private val baseUrl: String) {
         return try {
             val response = apiService.getSettings()
             if (response.isSuccessful) {
-                response.body()?.let { Result.success(it) }
-                    ?: Result.failure(IOException("Empty response body"))
+                response.body()?.let { body ->
+                    try {
+                        val settings = deserializeBPMSettings(body)
+                        Result.success(settings)
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to deserialize settings")
+                        Result.failure(IOException("Failed to deserialize response: ${e.message}"))
+                    }
+                } ?: Result.failure(IOException("Empty response body"))
             } else {
                 Result.failure(HttpException("HTTP ${response.code()}: ${response.message()}"))
             }
@@ -93,8 +105,15 @@ class BPMApiClient(private val baseUrl: String) {
         return try {
             val response = apiService.getHealth()
             if (response.isSuccessful) {
-                response.body()?.let { Result.success(it) }
-                    ?: Result.failure(IOException("Empty response body"))
+                response.body()?.let { body ->
+                    try {
+                        val health = deserializeBPMHealth(body)
+                        Result.success(health)
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to deserialize health data")
+                        Result.failure(IOException("Failed to deserialize response: ${e.message}"))
+                    }
+                } ?: Result.failure(IOException("Empty response body"))
             } else {
                 Result.failure(HttpException("HTTP ${response.code()}: ${response.message()}"))
             }
@@ -156,6 +175,76 @@ class BPMApiClient(private val baseUrl: String) {
      */
     fun getConnectionInfo(): String {
         return "Connected to: $baseUrl"
+    }
+
+    /**
+     * Deserialize BPM data from FlatBuffers binary
+     */
+    private fun deserializeBPMData(responseBody: ResponseBody): BPMData {
+        val bytes = responseBody.bytes()
+        val buffer = ByteBuffer.wrap(bytes)
+        val envelope = BPMEnvelope.getRootAsBPMEnvelope(buffer)
+
+        if (envelope.messageType() != BPMMessage.BPMData) {
+            throw IOException("Expected BPMData message type, got ${envelope.messageType()}")
+        }
+
+        val bpmDataFb = BPMData(envelope.message(BPMData()) as BPMData?)
+            ?: throw IOException("Failed to parse BPMData")
+
+        return BPMData(
+            bpm = bpmDataFb.bpm(),
+            confidence = bpmDataFb.confidence(),
+            signalLevel = bpmDataFb.signalLevel(),
+            status = bpmDataFb.status() ?: "unknown",
+            timestamp = bpmDataFb.timestamp().toLong()
+        )
+    }
+
+    /**
+     * Deserialize BPM settings from FlatBuffers binary
+     */
+    private fun deserializeBPMSettings(responseBody: ResponseBody): BPMSettings {
+        val bytes = responseBody.bytes()
+        val buffer = ByteBuffer.wrap(bytes)
+        val envelope = BPMEnvelope.getRootAsBPMEnvelope(buffer)
+
+        if (envelope.messageType() != BPMMessage.BPMSettings) {
+            throw IOException("Expected BPMSettings message type, got ${envelope.messageType()}")
+        }
+
+        val settingsFb = BPMSettings(envelope.message(BPMSettings()) as BPMSettings?)
+            ?: throw IOException("Failed to parse BPMSettings")
+
+        return BPMSettings(
+            minBpm = settingsFb.minBpm(),
+            maxBpm = settingsFb.maxBpm(),
+            sampleRate = settingsFb.sampleRate(),
+            fftSize = settingsFb.fftSize(),
+            version = settingsFb.version() ?: "unknown"
+        )
+    }
+
+    /**
+     * Deserialize BPM health from FlatBuffers binary
+     */
+    private fun deserializeBPMHealth(responseBody: ResponseBody): BPMHealth {
+        val bytes = responseBody.bytes()
+        val buffer = ByteBuffer.wrap(bytes)
+        val envelope = BPMEnvelope.getRootAsBPMEnvelope(buffer)
+
+        if (envelope.messageType() != BPMMessage.BPMHealth) {
+            throw IOException("Expected BPMHealth message type, got ${envelope.messageType()}")
+        }
+
+        val healthFb = BPMHealth(envelope.message(BPMHealth()) as BPMHealth?)
+            ?: throw IOException("Failed to parse BPMHealth")
+
+        return BPMHealth(
+            status = healthFb.status() ?: "unknown",
+            uptime = healthFb.uptime().toLong(),
+            heapFree = healthFb.heapFree().toLong()
+        )
     }
 
     companion object {

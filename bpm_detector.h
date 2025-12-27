@@ -19,6 +19,7 @@ public:
 
     // Initialize audio sampling
     void begin(uint8_t adc_pin);
+    void beginStereo(uint8_t left_pin, uint8_t right_pin);
     
     // Read audio sample from ADC
     void sample();
@@ -43,7 +44,8 @@ private:
     uint16_t sample_rate_;
     uint16_t fft_size_;
     uint8_t adc_pin_;
-    
+    uint8_t adc_pin_right_;
+
     float min_bpm_;
     float max_bpm_;
     float detection_threshold_;
