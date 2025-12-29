@@ -311,24 +311,25 @@ void setup() {
     // Initialize audio input
     // #region agent log
     char dataBuf3[128];
-    snprintf(dataBuf3, sizeof(dataBuf3), "{\"adcPin\":%d,\"sampleRate\":%d,\"platform\":\"%s\"}",
-             MICROPHONE_PIN, SAMPLE_RATE, PlatformFactory::getPlatformName());
-    writeLog(timer, "main.cpp:setup:audioInit", "Initializing audio input", "B", dataBuf3);
+    snprintf(dataBuf3, sizeof(dataBuf3), "{\"leftPin\":%d,\"rightPin\":%d,\"sampleRate\":%d,\"platform\":\"%s\"}",
+             MICROPHONE_LEFT_PIN, MICROPHONE_RIGHT_PIN, SAMPLE_RATE, PlatformFactory::getPlatformName());
+    writeLog(timer, "main.cpp:setup:audioInit", "Initializing stereo audio input", "B", dataBuf3);
     // #endregion
 
-    audioInput->begin(MICROPHONE_PIN);
+    // Initialize stereo audio input on GPIO5 (left) and GPIO6 (right)
+    audioInput->beginStereo(MICROPHONE_LEFT_PIN, MICROPHONE_RIGHT_PIN);
 
     // Initialize BPM detector with dependency injection
     // #region agent log
     char dataBuf4[128];
-    snprintf(dataBuf4, sizeof(dataBuf4), "{\"sampleRate\":%d,\"fftSize\":%d,\"adcPin\":%d,\"platform\":\"%s\"}",
-             SAMPLE_RATE, FFT_SIZE, MICROPHONE_PIN, PlatformFactory::getPlatformName());
-    writeLog(timer, "main.cpp:setup:bpmInit", "Initializing BPM detector", "B", dataBuf4);
+    snprintf(dataBuf4, sizeof(dataBuf4), "{\"sampleRate\":%d,\"fftSize\":%d,\"leftPin\":%d,\"rightPin\":%d,\"platform\":\"%s\"}",
+             SAMPLE_RATE, FFT_SIZE, MICROPHONE_LEFT_PIN, MICROPHONE_RIGHT_PIN, PlatformFactory::getPlatformName());
+    writeLog(timer, "main.cpp:setup:bpmInit", "Initializing BPM detector (stereo)", "B", dataBuf4);
     // #endregion
 
     // Use dependency injection: pass interfaces to BPMDetector
     bpmDetector = new BPMDetector(audioInput, timer, SAMPLE_RATE, FFT_SIZE);
-    bpmDetector->begin(audioInput, timer, MICROPHONE_PIN);
+    bpmDetector->begin(audioInput, timer, MICROPHONE_LEFT_PIN);  // Audio input already configured for stereo
 
     // Initialize BPM monitor manager
     monitorManager = new BpmMonitor::BpmMonitorManager(*bpmDetector);
@@ -440,6 +441,63 @@ void loop() {
                 serial->println("Monitor manager not initialized");
             }
         }
+        else if (cmd == 'd' || cmd == 'D') {
+            // Audio diagnostic - show raw ADC values for stereo input (GPIO5, GPIO6)
+            char buf[128];
+            serial->println("\n=== Audio Diagnostic (Stereo) ===");
+            snprintf(buf, sizeof(buf), "Left Channel: GPIO%d, Right Channel: GPIO%d", 
+                     MICROPHONE_LEFT_PIN, MICROPHONE_RIGHT_PIN);
+            serial->println(buf);
+            
+            // Read multiple samples from both channels
+            int leftSamples[50], rightSamples[50];
+            int leftMin = 4095, leftMax = 0, rightMin = 4095, rightMax = 0;
+            long leftSum = 0, rightSum = 0;
+            
+            for (int i = 0; i < 50; i++) {
+                leftSamples[i] = analogRead(MICROPHONE_LEFT_PIN);
+                rightSamples[i] = analogRead(MICROPHONE_RIGHT_PIN);
+                if (leftSamples[i] < leftMin) leftMin = leftSamples[i];
+                if (leftSamples[i] > leftMax) leftMax = leftSamples[i];
+                if (rightSamples[i] < rightMin) rightMin = rightSamples[i];
+                if (rightSamples[i] > rightMax) rightMax = rightSamples[i];
+                leftSum += leftSamples[i];
+                rightSum += rightSamples[i];
+                timer->delay(1);
+            }
+            
+            serial->println("LEFT Channel (GPIO5):");
+            snprintf(buf, sizeof(buf), "  ADC: Min=%d, Max=%d, Avg=%d, Range=%d",
+                     leftMin, leftMax, (int)(leftSum / 50), leftMax - leftMin);
+            serial->println(buf);
+            snprintf(buf, sizeof(buf), "  Voltage: %.3fV - %.3fV (Ref 1.1V)",
+                     leftMin * 1.1f / 4095.0f, leftMax * 1.1f / 4095.0f);
+            serial->println(buf);
+            
+            serial->println("RIGHT Channel (GPIO6):");
+            snprintf(buf, sizeof(buf), "  ADC: Min=%d, Max=%d, Avg=%d, Range=%d",
+                     rightMin, rightMax, (int)(rightSum / 50), rightMax - rightMin);
+            serial->println(buf);
+            snprintf(buf, sizeof(buf), "  Voltage: %.3fV - %.3fV (Ref 1.1V)",
+                     rightMin * 1.1f / 4095.0f, rightMax * 1.1f / 4095.0f);
+            serial->println(buf);
+            
+            // Show signal level from audio input
+            if (audioInput) {
+                snprintf(buf, sizeof(buf), "Signal Level: %.4f, Normalized: %.4f",
+                         audioInput->getSignalLevel(), audioInput->getNormalizedLevel());
+                serial->println(buf);
+            }
+            
+            // Show first 10 stereo samples
+            serial->println("First 10 L/R samples:");
+            for (int i = 0; i < 10; i++) {
+                snprintf(buf, sizeof(buf), "%d/%d ", leftSamples[i], rightSamples[i]);
+                serial->print(buf);
+            }
+            serial->println("");
+            serial->println("=== End Diagnostic ===");
+        }
         else if (cmd == 'h' || cmd == 'H') {
             // Help
             serial->println("\nBPM Monitor Commands:");
@@ -448,6 +506,7 @@ void loop() {
             serial->println("  s - Show monitor status");
             serial->println("  v - Get monitor values");
             serial->println("  x - Stop all monitors");
+            serial->println("  d - Audio diagnostic (raw ADC)");
             serial->println("  h - Show this help");
         }
     }

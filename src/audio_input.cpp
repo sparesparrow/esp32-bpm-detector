@@ -47,6 +47,10 @@ void AudioInput::beginStereo(uint8_t left_pin, uint8_t right_pin) {
 
     // Set ADC resolution (Arduino API)
     analogReadResolution(ADC_RESOLUTION);
+    
+    // Set ADC Attenuation (Arduino API)
+    // 0dB attenuation = 0-1.1V range (High sensitivity for line-level inputs)
+    analogSetAttenuation((adc_attenuation_t)ADC_ATTENUATION);
 
     #ifdef ESP32
         // Map left channel pin to ADC channel (ESP32-S3 uses GPIO1-10 for ADC1)
@@ -138,15 +142,20 @@ void AudioInput::beginStereo(uint8_t left_pin, uint8_t right_pin) {
         raw_value = 2048; // Use midpoint as fallback
     }
 
-    // Convert to voltage (0.0-3.6V for ADC_ATTEN_DB_11)
-    float voltage = (raw_value / 4095.0f) * 3.6f;
+    // Convert to voltage
+    // Reference voltage depends on attenuation:
+    // ADC_ATTEN_DB_0  (0dB)  -> ~1.1V
+    // ADC_ATTEN_DB_11 (11dB) -> ~3.6V
+    const float V_REF = 1.1f; // For ADC_ATTEN_DB_0
+    float voltage = (raw_value / 4095.0f) * V_REF;
 
     // Center around 0 (AC coupling - remove DC offset)
-    static float dc_offset = 1.5f;  // Will adapt over time
+    // Start with low offset for 0-biased signals
+    static float dc_offset = 0.05f;
     float ac_signal = voltage - dc_offset;
 
-    // Update DC offset estimation (slow adaptation)
-    dc_offset = dc_offset * 0.999f + voltage * 0.001f;
+    // Update DC offset estimation (faster adaptation for varying signal levels)
+    dc_offset = dc_offset * 0.995f + voltage * 0.005f;
 
     // Update signal level tracking
     updateSignalLevel(ac_signal);
@@ -162,22 +171,24 @@ void AudioInput::beginStereo(uint8_t left_pin, uint8_t right_pin) {
 
     // Read left channel
     int left_raw = analogRead(adc_pin_);
-    float left_voltage = (left_raw / 4095.0f) * 3.6f;
+    const float V_REF = 1.1f; // For ADC_ATTEN_DB_0
+    float left_voltage = (left_raw / 4095.0f) * V_REF;
 
     // Read right channel
     int right_raw = analogRead(adc_pin_right_);
-    float right_voltage = (right_raw / 4095.0f) * 3.6f;
+    float right_voltage = (right_raw / 4095.0f) * V_REF;
 
     // Apply DC offset removal (separate for each channel)
-    static float left_dc_offset = 1.5f;
-    static float right_dc_offset = 1.5f;
+    // Start with low offset for 0-biased signals
+    static float left_dc_offset = 0.05f;
+    static float right_dc_offset = 0.05f;
 
     left = left_voltage - left_dc_offset;
     right = right_voltage - right_dc_offset;
 
-    // Update DC offset estimation
-    left_dc_offset = left_dc_offset * 0.999f + left_voltage * 0.001f;
-    right_dc_offset = right_dc_offset * 0.999f + right_voltage * 0.001f;
+    // Update DC offset estimation (faster adaptation)
+    left_dc_offset = left_dc_offset * 0.995f + left_voltage * 0.005f;
+    right_dc_offset = right_dc_offset * 0.995f + right_voltage * 0.005f;
 
     // Update signal level tracking (use combined RMS for now)
     float combined_sample = (fabs(left) + fabs(right)) * 0.5f; // Average of both channels

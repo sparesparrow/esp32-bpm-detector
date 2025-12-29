@@ -182,7 +182,8 @@ bool BPMDetector::isBufferReady() const {
     BPMData result;
     result.bpm = 0.0f;
     result.confidence = 0.0f;
-    result.signal_level = audio_input_ ? audio_input_->getSignalLevel() : 0.0f;
+    // Return normalized level for easier debugging
+    result.signal_level = audio_input_ ? audio_input_->getNormalizedLevel() : 0.0f;
     result.quality = result.signal_level;  // Use signal level as quality indicator for now
     result.timestamp = timer_ ? timer_->millis() : 0;
 
@@ -242,8 +243,8 @@ void BPMDetector::performFFT() {
 }
 
 void BPMDetector::detectBeatEnvelope() {
-    // Simple envelope detection using RMS
-    float current_level = audio_input_ ? audio_input_->getSignalLevel() : 0.0f;
+    // Simple envelope detection using normalized RMS (auto-scaling)
+    float current_level = audio_input_ ? audio_input_->getNormalizedLevel() : 0.0f;
 
     // Update envelope with smoothing
     envelope_value_ = envelope_value_ * 0.9f + current_level * 0.1f;
@@ -253,16 +254,25 @@ void BPMDetector::detectBeatEnvelope() {
         unsigned long now = timer_ ? timer_->millis() : 0;
 
         // Add beat timestamp
-        if (beat_times_.size() >= BEAT_HISTORY_SIZE) {
-            beat_times_.erase(beat_times_.begin());
+        // Basic debounce (don't detect another beat within 200ms)
+        if (beat_times_.empty() || (now - beat_times_.back() > 200)) {
+            if (beat_times_.size() >= BEAT_HISTORY_SIZE) {
+                beat_times_.erase(beat_times_.begin());
+            }
+            beat_times_.push_back(now);
+            
+            // Log for debug (optional)
+            // if (audio_input_) Serial.println("Beat!");
         }
-        beat_times_.push_back(now);
 
-        // Update threshold (adaptive)
-        envelope_threshold_ = envelope_value_ * 0.7f;
+        // Update threshold (adaptive) - jump up to avoid double triggering
+        envelope_threshold_ = envelope_value_ * 1.2f; 
     } else {
-        // Gradually lower threshold when no beat detected
-        envelope_threshold_ *= 0.999f;
+        // Gradually lower threshold when no beat detected to track the floor
+        envelope_threshold_ *= 0.99f; // Decay speed
+        
+        // Don't let it go too low (noise floor)
+        if (envelope_threshold_ < 0.05f) envelope_threshold_ = 0.05f;
     }
 }
 
