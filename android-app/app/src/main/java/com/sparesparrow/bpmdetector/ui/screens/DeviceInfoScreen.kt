@@ -17,10 +17,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import java.io.File
 import java.text.DecimalFormat
 
@@ -30,10 +28,9 @@ import java.text.DecimalFormat
 @Composable
 fun DeviceInfoScreen() {
     val context = LocalContext.current
-    val configuration = LocalConfiguration.current
     val scrollState = rememberScrollState()
 
-    val deviceInfo by remember { mutableStateOf(getDeviceInfo(context, configuration)) }
+    val deviceInfo by remember { mutableStateOf(getDeviceInfo(context)) }
 
     Column(
         modifier = Modifier
@@ -264,9 +261,10 @@ private data class DeviceInfo(
     val minSdk: Int
 )
 
-private fun getDeviceInfo(context: Context, configuration: androidx.compose.ui.platform.Configuration): DeviceInfo {
+private fun getDeviceInfo(context: Context): DeviceInfo {
     val packageManager = context.packageManager
     val packageName = context.packageName
+    val configuration = context.resources.configuration
 
     return DeviceInfo(
         // Hardware
@@ -304,9 +302,9 @@ private fun getDeviceInfo(context: Context, configuration: androidx.compose.ui.p
         internalAvailableSpace = formatBytes(getInternalAvailableSpace()),
         internalUsedSpace = formatBytes(getInternalTotalSpace() - getInternalAvailableSpace()),
 
-        externalTotalSpace = formatBytes(getExternalTotalSpace()),
-        externalAvailableSpace = formatBytes(getExternalAvailableSpace()),
-        externalUsedSpace = formatBytes(getExternalTotalSpace() - getExternalAvailableSpace()),
+        externalTotalSpace = formatBytes(getExternalTotalSpace(context)),
+        externalAvailableSpace = formatBytes(getExternalAvailableSpace(context)),
+        externalUsedSpace = formatBytes(getExternalTotalSpace(context) - getExternalAvailableSpace(context)),
 
         // Memory
         totalRam = formatBytes(getTotalRam(context)),
@@ -356,11 +354,11 @@ private fun getInternalAvailableSpace(): Long {
     }
 }
 
-private fun getExternalTotalSpace(): Long {
+private fun getExternalTotalSpace(context: Context): Long {
     return try {
-        val externalDirs = ContextCompat.getExternalFilesDirs(null, null)
-        if (externalDirs.isNotEmpty() && externalDirs[0] != null) {
-            val stat = StatFs(externalDirs[0].path)
+        val externalDir = context.getExternalFilesDir(null)
+        if (externalDir != null) {
+            val stat = StatFs(externalDir.path)
             stat.totalBytes
         } else 0L
     } catch (e: Exception) {
@@ -368,11 +366,11 @@ private fun getExternalTotalSpace(): Long {
     }
 }
 
-private fun getExternalAvailableSpace(): Long {
+private fun getExternalAvailableSpace(context: Context): Long {
     return try {
-        val externalDirs = ContextCompat.getExternalFilesDirs(null, null)
-        if (externalDirs.isNotEmpty() && externalDirs[0] != null) {
-            val stat = StatFs(externalDirs[0].path)
+        val externalDir = context.getExternalFilesDir(null)
+        if (externalDir != null) {
+            val stat = StatFs(externalDir.path)
             stat.availableBytes
         } else 0L
     } catch (e: Exception) {
