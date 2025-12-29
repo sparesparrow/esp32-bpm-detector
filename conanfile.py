@@ -23,30 +23,42 @@ BPM_INCLUDE_REGEX = r"\n#include \"Bpm([\w]+)_generated\.h\""
 BPM_INCLUDE_SUB_REGEX = "\n#include \"Bpm\\g<1>_extracted.h\""
 
 
-class BpmProtocolConan(ConanFile):
-    name = "bpm-protocol"
+class Esp32BpmDetectorConan(ConanFile):
+    name = "sparetools-bpm-detector"
     version = "0.1.0"
-    url = 'https://github.com/sparrowsystems/esp32-bpm-detector'
-    description = 'Conan package wrapping BPM detector FlatBuffers protocol'
-    topics = ("flatbuffers", "bpm", "detector", "protocol")
+    url = 'https://github.com/sparesparrow/esp32-bpm-detector'
+    description = 'ESP32 BPM detector firmware with FlatBuffers protocol support'
+    topics = ("esp32", "bpm", "detector", "embedded", "firmware")
+    license = "Apache-2.0"
 
-    # Dependencies are described here.
-    tool_requires = [
+    # Use foundation packages from SpareTools ecosystem
+    requires = [
         "flatbuffers/24.3.25",
     ]
 
-    requires = [
-    ]
+    # Build tools - use system Python as fallback
+    # Note: sparetools-cpython can be enabled via Cloudsmith remote if needed
+    tool_requires = []
 
-    # Export source files
-    exports_sources = "schemas/*", "include/*"
+    # Export source files and schemas for protocol generation
+    exports_sources = "schemas/*", "src/*", "include/*", "lib/*", "platformio.ini"
 
-    def layout(self):
-        basic_layout(self)
+    # Options for different build configurations
+    options = {
+        "with_display": [True, False],
+        "with_networking": [True, False],
+        "with_websocket": [True, False],
+        "with_audio_calibration": [True, False],
+        "target_board": ["esp32", "esp32s2", "esp32s3", "esp32c3"],
+    }
 
-    def generate(self):
-        # Generate FlatBuffers headers
-        self.generate_cpp_headers()
+    default_options = {
+        "with_display": True,
+        "with_networking": True,
+        "with_websocket": True,
+        "with_audio_calibration": True,
+        "target_board": "esp32s3",
+    }
 
     fbs_files = Path('schemas')
     cpp_header_files = Path('include')
@@ -89,10 +101,23 @@ class BpmProtocolConan(ConanFile):
         with open(header_file_name, 'w') as header_file:
             header_file.write(extracted_content)
 
+    def layout(self):
+        basic_layout(self)
+
+    def generate(self):
+        # Generate FlatBuffers headers for ESP32-specific protocols
+        self.generate_cpp_headers()
+
+        # Generate CMake toolchain (ESP32 uses PlatformIO, not CMake)
+        tc = CMakeToolchain(self)
+        tc.generate()
+
+        # Note: CMakeDeps not needed for header-only packages
+
     def generate_cpp_headers(self):
         import subprocess
 
-        print("Starting FlatBuffers header generation...")
+        print("Starting FlatBuffers header generation for ESP32 BPM detector...")
 
         # Find flatc executable
         flatc_paths = ['flatc', 'flatc.exe', '/usr/local/bin/flatc', '/usr/bin/flatc']
@@ -164,22 +189,24 @@ class BpmProtocolConan(ConanFile):
 
     def build(self):
         # Headers are generated in generate() step
+        # For ESP32, actual building is done via PlatformIO, not CMake
         pass
 
     def package(self):
-        import os
-        # Copy generated headers to package - they are in the build/conan folder
+        # Copy generated headers to package
         conan_include = os.path.join(self.build_folder, "conan", "include")
         if os.path.exists(conan_include):
             copy(self, "*.h", src=conan_include, dst=os.path.join(self.package_folder, "include"))
         else:
-            # Fallback: look in the generators list
-            for gen_path in self.generators:
-                gen_include = os.path.join(gen_path, "include")
-                if os.path.exists(gen_include):
-                    copy(self, "*.h", src=gen_include, dst=os.path.join(self.package_folder, "include"))
-                    break
+            # Copy from the generated include directory
+            if self.cpp_header_files.exists():
+                copy(self, "*.h", src=str(self.cpp_header_files), dst=os.path.join(self.package_folder, "include"))
 
     def package_info(self):
+        # ESP32 firmware provides generated headers
         self.cpp_info.libs = []
         self.cpp_info.includedirs = ["include"]
+
+        # Set up environment for ESP32 development
+        self.runenv_info.define("ESP32_BPM_DETECTOR_VERSION", self.version)
+        self.runenv_info.define("ESP32_TARGET_BOARD", str(self.options.target_board))

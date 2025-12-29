@@ -1,3 +1,5 @@
+include "BpmCommon.fbs";
+
 namespace sparetools.bpm;
 
 // Core BPM detection data structures
@@ -23,7 +25,7 @@ table BPMUpdate {
   bpm: float = 0.0;
   confidence: float = 0.0;
   signal_level: float = 0.0;
-  status: DetectionStatus = DetectionStatus.INITIALIZING;
+  status: DetectionStatus = INITIALIZING;
   analysis: BPMAnalysis;
   quality: BPMQuality;
   timestamp: uint64 = 0;
