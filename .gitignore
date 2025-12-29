@@ -112,3 +112,26 @@ managed_components/
 *.temp
 .cache/
 *.log
+
+# Cursor IDE
+.cursor/
+
+# Compiled test binaries
+comprehensive_tests
+fft_logic_test
+final_test
+simple_validation
+
+# PlatformIO build artifacts (more specific)
+.pio/build/
+
+# Dependency directories
+conan-headers/
+flatbuffers-23.5.26/
+flatbuffers-src/
+
+# Conan build scripts
+conanbuild.sh
+conanbuildenv-*.sh
+conanrunenv-*.sh
+deactivate_conan*.sh

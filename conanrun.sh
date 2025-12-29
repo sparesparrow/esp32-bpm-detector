@@ -1,1 +1,0 @@
-. "/home/sparrow/projects/embedded-systems/esp32-bpm-detector/conanrunenv-release-x86_64.sh"
