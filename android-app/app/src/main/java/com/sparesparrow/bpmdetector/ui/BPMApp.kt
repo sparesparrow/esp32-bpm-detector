@@ -10,6 +10,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.sparesparrow.bpmdetector.ui.screens.BPMDisplayScreen
+import com.sparesparrow.bpmdetector.ui.screens.DeviceInfoScreen
 import com.sparesparrow.bpmdetector.ui.screens.SettingsScreen
 import com.sparesparrow.bpmdetector.viewmodels.BPMViewModel
 
@@ -36,6 +37,9 @@ fun BPMApp(viewModel: BPMViewModel) {
             composable(Screen.Settings.route) {
                 SettingsScreen(viewModel = viewModel)
             }
+            composable(Screen.DeviceInfo.route) {
+                DeviceInfoScreen()
+            }
         }
     }
 }
@@ -47,7 +51,8 @@ fun BPMApp(viewModel: BPMViewModel) {
 fun BPMBottomNavigation(navController: NavHostController) {
     val items = listOf(
         Screen.BPMDisplay,
-        Screen.Settings
+        Screen.Settings,
+        Screen.DeviceInfo
     )
 
     NavigationBar {

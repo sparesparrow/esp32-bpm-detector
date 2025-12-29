@@ -5,6 +5,7 @@
 #include <cmath>
 #include <algorithm>
 #include <cstdlib>
+#include <numeric>
 
 // Global audio input instance (will be initialized by begin())
 static AudioInput* audio_input = nullptr;
@@ -23,8 +24,10 @@ BPMDetector::BPMDetector(uint16_t sample_rate, uint16_t fft_size)
     , test_frequency_(0.0f)
     , test_phase_(0.0f)
     , audio_input_(nullptr)
+    , timer_(nullptr)
     , owns_audio_input_(false)
 {
+#ifdef PLATFORM_ESP32
     // Pre-allocate buffers
     sample_buffer_.reserve(fft_size_);
     sample_buffer_.resize(fft_size_, 0.0f);
@@ -34,6 +37,60 @@ BPMDetector::BPMDetector(uint16_t sample_rate, uint16_t fft_size)
     fft_buffer_.resize(fft_size_ / 2, 0.0f);
 
     beat_times_.reserve(BEAT_HISTORY_SIZE);
+#endif
+#ifdef PLATFORM_ARDUINO
+    // Initialize fixed-size arrays for Arduino
+    for (uint16_t i = 0; i < MAX_SAMPLE_BUFFER; ++i) {
+        sample_buffer_[i] = 0.0f;
+    }
+    for (uint16_t i = 0; i < MAX_FFT_BUFFER; ++i) {
+        fft_buffer_[i] = 0.0f;
+    }
+    beat_times_count_ = 0;
+#endif
+
+    // Initialize envelope threshold
+    envelope_threshold_ = detection_threshold_;
+}
+
+BPMDetector::BPMDetector(IAudioInput* audio_input, ITimer* timer, uint16_t sample_rate, uint16_t fft_size)
+    : sample_rate_(sample_rate)
+    , fft_size_(fft_size)
+    , adc_pin_(0)
+    , adc_pin_right_(0)
+    , min_bpm_(MIN_BPM)
+    , max_bpm_(MAX_BPM)
+    , detection_threshold_(DETECTION_THRESHOLD)
+    , envelope_value_(0.0f)
+    , envelope_threshold_(0.0f)
+    , test_mode_(false)
+    , test_frequency_(0.0f)
+    , test_phase_(0.0f)
+    , audio_input_(audio_input)
+    , timer_(timer)
+    , owns_audio_input_(false)
+{
+#ifdef PLATFORM_ESP32
+    // Pre-allocate buffers
+    sample_buffer_.reserve(fft_size_);
+    sample_buffer_.resize(fft_size_, 0.0f);
+
+    // FFT buffer only needs half size for magnitude data
+    fft_buffer_.reserve(fft_size_ / 2);
+    fft_buffer_.resize(fft_size_ / 2, 0.0f);
+
+    beat_times_.reserve(BEAT_HISTORY_SIZE);
+#endif
+#ifdef PLATFORM_ARDUINO
+    // Initialize fixed-size arrays for Arduino
+    for (uint16_t i = 0; i < MAX_SAMPLE_BUFFER; ++i) {
+        sample_buffer_[i] = 0.0f;
+    }
+    for (uint16_t i = 0; i < MAX_FFT_BUFFER; ++i) {
+        fft_buffer_[i] = 0.0f;
+    }
+    beat_times_count_ = 0;
+#endif
 
     // Initialize envelope threshold
     envelope_threshold_ = detection_threshold_;
@@ -47,36 +104,30 @@ BPMDetector::~BPMDetector() {
 }
 
 void BPMDetector::begin(uint8_t adc_pin) {
+    // Deprecated method - use begin(IAudioInput*, ITimer*, uint8_t) instead
+    // This method exists for backward compatibility but doesn't work with interface-based design
     adc_pin_ = adc_pin;
 
-    // Create audio input instance if not provided
-    if (!audio_input_) {
-        audio_input_ = new AudioInput();
-        audio_input_->begin(adc_pin);
-        owns_audio_input_ = true;
-    } else {
-        // If audio input was injected, initialize it with the pin
+    // Cannot create AudioInput directly since audio_input_ is now IAudioInput*
+    // This method should not be used in the refactored codebase
+    if (audio_input_) {
         audio_input_->begin(adc_pin);
     }
 }
 
 void BPMDetector::beginStereo(uint8_t left_pin, uint8_t right_pin) {
+    // Deprecated method - use interface-based approach instead
     adc_pin_ = left_pin;
     adc_pin_right_ = right_pin;
 
-    // Create audio input instance if not provided
-    if (!audio_input_) {
-        audio_input_ = new AudioInput();
-        audio_input_->beginStereo(left_pin, right_pin);
-        owns_audio_input_ = true;
-    } else {
-        // If audio input was injected, initialize it with the pins
+    if (audio_input_) {
         audio_input_->beginStereo(left_pin, right_pin);
     }
 }
 
-void BPMDetector::begin(AudioInput* audio_input, uint8_t adc_pin) {
+void BPMDetector::begin(IAudioInput* audio_input, ITimer* timer, uint8_t adc_pin) {
     audio_input_ = audio_input;
+    timer_ = timer;
     owns_audio_input_ = false;
     adc_pin_ = adc_pin;
 
@@ -85,7 +136,7 @@ void BPMDetector::begin(AudioInput* audio_input, uint8_t adc_pin) {
     }
 }
 
-void BPMDetector::sample() {
+[[maybe_unused]] void BPMDetector::sample() {
     if (!audio_input_ || !audio_input_->isInitialized()) {
         return;
     }
@@ -98,11 +149,20 @@ void BPMDetector::sample() {
 }
 
 void BPMDetector::addSample(float value) {
+#ifdef PLATFORM_ESP32
     // Shift buffer (FIFO)
     for (size_t i = 1; i < sample_buffer_.size(); ++i) {
         sample_buffer_[i - 1] = sample_buffer_[i];
     }
     sample_buffer_.back() = value;
+#endif
+#ifdef PLATFORM_ARDUINO
+    // Shift buffer (FIFO) for Arduino fixed-size array
+    for (uint16_t i = 1; i < MAX_SAMPLE_BUFFER; ++i) {
+        sample_buffer_[i - 1] = sample_buffer_[i];
+    }
+    sample_buffer_[MAX_SAMPLE_BUFFER - 1] = value;
+#endif
 
     // Update envelope
     detectBeatEnvelope();
@@ -110,15 +170,21 @@ void BPMDetector::addSample(float value) {
 
 bool BPMDetector::isBufferReady() const {
     // Check if we have enough samples
+#ifdef PLATFORM_ESP32
     return sample_buffer_.size() >= fft_size_;
+#endif
+#ifdef PLATFORM_ARDUINO
+    return true;  // Arduino always has fixed-size buffers that are "ready"
+#endif
 }
 
-BPMDetector::BPMData BPMDetector::detect() {
+[[maybe_unused]] BPMDetector::BPMData BPMDetector::detect() {
     BPMData result;
     result.bpm = 0.0f;
     result.confidence = 0.0f;
     result.signal_level = audio_input_ ? audio_input_->getSignalLevel() : 0.0f;
-    result.timestamp = millis();
+    result.quality = result.signal_level;  // Use signal level as quality indicator for now
+    result.timestamp = timer_ ? timer_->millis() : 0;
 
     if (!isBufferReady()) {
         result.status = "Buffer not ready";
@@ -131,6 +197,7 @@ BPMDetector::BPMData BPMDetector::detect() {
     // Calculate BPM from spectral peaks
     result.bpm = calculateBPM();
     result.confidence = calculateConfidence();
+    result.quality = result.signal_level * result.confidence;  // Quality is signal level * confidence
 
     // Determine status
     if (result.confidence > 0.5f) {
@@ -183,7 +250,7 @@ void BPMDetector::detectBeatEnvelope() {
 
     // Check for beat (envelope exceeds threshold)
     if (envelope_value_ > envelope_threshold_) {
-        unsigned long now = millis();
+        unsigned long now = timer_ ? timer_->millis() : 0;
 
         // Add beat timestamp
         if (beat_times_.size() >= BEAT_HISTORY_SIZE) {
@@ -241,11 +308,7 @@ float BPMDetector::calculateConfidence() {
     }
 
     // Calculate mean
-    float mean = 0.0f;
-    for (float interval : intervals) {
-        mean += interval;
-    }
-    mean /= intervals.size();
+    float mean = std::accumulate(intervals.begin(), intervals.end(), 0.0f) / intervals.size();
 
     // Calculate variance
     float variance = 0.0f;
@@ -265,33 +328,33 @@ float BPMDetector::calculateConfidence() {
     return confidence;
 }
 
-void BPMDetector::setMinBPM(float min_bpm) {
+[[maybe_unused]] void BPMDetector::setMinBPM(float min_bpm) {
     min_bpm_ = min_bpm;
 }
 
-void BPMDetector::setMaxBPM(float max_bpm) {
+[[maybe_unused]] void BPMDetector::setMaxBPM(float max_bpm) {
     max_bpm_ = max_bpm;
 }
 
-void BPMDetector::setThreshold(float threshold) {
+[[maybe_unused]] void BPMDetector::setThreshold(float threshold) {
     detection_threshold_ = threshold;
 }
 
-float BPMDetector::getMinBPM() const {
+[[maybe_unused]] float BPMDetector::getMinBPM() const {
     return min_bpm_;
 }
 
-float BPMDetector::getMaxBPM() const {
+[[maybe_unused]] float BPMDetector::getMaxBPM() const {
     return max_bpm_;
 }
 
-void BPMDetector::enableTestMode(float frequency_hz) {
+[[maybe_unused]] void BPMDetector::enableTestMode(float frequency_hz) {
     test_mode_ = true;
     test_frequency_ = frequency_hz;
     test_phase_ = 0.0f;
 }
 
-void BPMDetector::disableTestMode() {
+[[maybe_unused]] void BPMDetector::disableTestMode() {
     test_mode_ = false;
 }
 
@@ -301,7 +364,7 @@ float BPMDetector::generateTestSample() {
     }
 
     // Generate sine wave at test frequency
-    float sample = sin(test_phase_);
+    float test_sample = sin(test_phase_);
     test_phase_ += 2.0f * PI * test_frequency_ / sample_rate_;
 
     // Keep phase in reasonable range
@@ -309,5 +372,5 @@ float BPMDetector::generateTestSample() {
         test_phase_ -= 2.0f * PI;
     }
 
-    return sample;
+    return test_sample;
 }

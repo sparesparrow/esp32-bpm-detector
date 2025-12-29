@@ -1,0 +1,30 @@
+namespace sparetools.bpm;
+
+// Core BPM detection data structures
+
+table BPMAnalysis {
+  stability: float = 0.0;
+  regularity: float = 0.0;
+  dominant_frequency: float = 0.0;
+  spectral_centroid: float = 0.0;
+  beat_position: float = 0.0;
+  tempo_consistency: float = 0.0;
+}
+
+table BPMQuality {
+  snr_db: float = 0.0;
+  consecutive_detections: uint16 = 0;
+  reliability_score: float = 0.0;
+  false_positive_rate: float = 0.0;
+  algorithm_confidence: float = 0.0;
+}
+
+table BPMUpdate {
+  bpm: float = 0.0;
+  confidence: float = 0.0;
+  signal_level: float = 0.0;
+  status: DetectionStatus = DetectionStatus.INITIALIZING;
+  analysis: BPMAnalysis;
+  quality: BPMQuality;
+  timestamp: uint64 = 0;
+}

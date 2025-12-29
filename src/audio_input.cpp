@@ -1,4 +1,5 @@
 #include "audio_input.h"
+#include <numeric>
 
 #ifdef ESP32
 #include <esp_adc_cal.h>
@@ -77,7 +78,7 @@ void AudioInput::beginStereo(uint8_t left_pin, uint8_t right_pin) {
 
             // Allocate and initialize ADC calibration data
             if (!adc_chars) {
-                adc_chars = (esp_adc_cal_characteristics_t*)calloc(1, sizeof(esp_adc_cal_characteristics_t));
+                adc_chars = static_cast<esp_adc_cal_characteristics_t*>(calloc(1, sizeof(esp_adc_cal_characteristics_t)));
                 esp_adc_cal_value_t val_type = esp_adc_cal_characterize(
                     ADC_UNIT_1,
                     ADC_ATTENUATION,
@@ -85,6 +86,7 @@ void AudioInput::beginStereo(uint8_t left_pin, uint8_t right_pin) {
                     1100,  // Default Vref
                     adc_chars
                 );
+                (void)val_type;  // Suppress unused variable warning
             }
         }
 
@@ -123,7 +125,7 @@ void AudioInput::beginStereo(uint8_t left_pin, uint8_t right_pin) {
     initialized_ = true;
 }
 
-float AudioInput::readSample() {
+[[maybe_unused]] float AudioInput::readSample() {
     if (!initialized_) {
         return 0.0f;
     }
@@ -152,7 +154,7 @@ float AudioInput::readSample() {
     return ac_signal;
 }
 
-void AudioInput::readStereoSamples(float& left, float& right) {
+[[maybe_unused]] void AudioInput::readStereoSamples(float& left, float& right) {
     if (!initialized_ || !stereo_mode_) {
         left = right = 0.0f;
         return;
@@ -205,19 +207,17 @@ float AudioInput::calculateRMS() const {
         return 0.0f;
     }
 
-    float sum_squares = 0.0f;
-    for (float sample : rms_buffer_) {
-        sum_squares += sample * sample;
-    }
+    float sum_squares = std::accumulate(rms_buffer_.begin(), rms_buffer_.end(), 0.0f,
+                                       [](float acc, float sample) { return acc + sample * sample; });
 
     return sqrt(sum_squares / rms_buffer_.size());
 }
 
-float AudioInput::getSignalLevel() const {
+[[maybe_unused]] float AudioInput::getSignalLevel() const {
     return signal_level_;
 }
 
-float AudioInput::getNormalizedLevel() const {
+[[maybe_unused]] float AudioInput::getNormalizedLevel() const {
     // Normalize to 0.0-1.0 range
     // Use max_signal_ as reference, but clamp to reasonable range
     float max_ref = max_signal_;
@@ -233,7 +233,7 @@ float AudioInput::getNormalizedLevel() const {
     return normalized;
 }
 
-bool AudioInput::isInitialized() const {
+[[maybe_unused]] bool AudioInput::isInitialized() const {
     return initialized_;
 }
 

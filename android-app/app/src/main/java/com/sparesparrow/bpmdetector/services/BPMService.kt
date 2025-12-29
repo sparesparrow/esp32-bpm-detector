@@ -157,7 +157,7 @@ class BPMService : Service() {
         val result = client.getBPMDataWithRetry()
 
         result.fold(
-            onSuccess = { bpmData ->
+            onSuccess = { bpmData: com.sparesparrow.bpmdetector.models.BPMData ->
                 _bpmData.postValue(bpmData)
                 updateConnectionStatus(ConnectionStatus.CONNECTED)
                 Timber.d("BPM data received: ${bpmData.bpm} BPM, confidence: ${bpmData.confidence}")
@@ -181,8 +181,7 @@ class BPMService : Service() {
      * Update connection status
      */
     private fun updateConnectionStatus(status: ConnectionStatus, errorMessage: String? = null) {
-        val connectionStatus = ConnectionStatus(status, errorMessage)
-        _connectionStatus.postValue(connectionStatus)
+        _connectionStatus.postValue(status)
         Timber.d("Connection status: ${status.name}${errorMessage?.let { " ($it)" } ?: ""}")
     }
 
@@ -221,15 +220,4 @@ enum class ConnectionStatus {
     fun isConnecting(): Boolean = this == CONNECTING
 }
 
-/**
- * Connection status with optional error message
- */
-data class ConnectionStatus(
-    val status: ConnectionStatus,
-    val errorMessage: String? = null
-) {
-    fun isConnected(): Boolean = status.isConnected()
-    fun hasError(): Boolean = status.hasError()
-    fun isConnecting(): Boolean = status.isConnecting()
-}
 

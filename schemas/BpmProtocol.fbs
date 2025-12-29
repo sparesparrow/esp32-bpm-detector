@@ -1,0 +1,18 @@
+// Main BPM Protocol Schema File
+// Includes all domain files and declares root types for serialization
+
+include "BpmCommon.fbs";
+include "BpmCore.fbs";
+include "BpmAudio.fbs";
+include "BpmConfig.fbs";
+include "BpmSystem.fbs";
+include "BpmRequests.fbs";
+include "BpmResponses.fbs";
+
+namespace sparetools.bpm;
+
+// Root types for serialization - following ngaims-icd-dev pattern
+root_type BPMUpdate;
+root_type StatusUpdate;
+root_type Request;
+root_type Response;

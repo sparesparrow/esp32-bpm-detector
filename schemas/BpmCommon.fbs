@@ -1,0 +1,50 @@
+namespace sparetools.bpm;
+
+// Enums - following ngaims-icd-dev pattern of domain-specific enums
+
+enum DetectionStatus : int8 {
+  INITIALIZING = 0,
+  DETECTING = 1,
+  LOW_SIGNAL = 2,
+  NO_SIGNAL = 3,
+  ERROR = 4,
+  CALIBRATING = 5
+}
+
+enum StatusEnum : int {
+  Success = 0,
+  Error = 1,
+  Warning = 2,
+  Info = 3
+}
+
+enum RequestType : int8 {
+  GET_STATUS = 0,
+  GET_CONFIG = 1,
+  SET_CONFIG = 2,
+  RESET_DEVICE = 3,
+  CALIBRATE_AUDIO = 4,
+  START_STREAMING = 5,
+  STOP_STREAMING = 6,
+  GET_DIAGNOSTICS = 7
+}
+
+
+enum StreamType : int8 {
+  WEBSOCKET = 0,
+  HTTP = 1,
+  MQTT = 2
+}
+
+// Tables - following ngaims-icd-dev pattern of common structures
+
+table Header {
+  version: uint16 = 1;
+  timestamp: uint64;
+  sequence_id: uint32;
+}
+
+table Status {
+  status: StatusEnum = Success;
+  message: string;
+}

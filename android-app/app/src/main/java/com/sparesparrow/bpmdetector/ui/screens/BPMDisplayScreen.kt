@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -15,7 +16,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sparesparrow.bpmdetector.services.ConnectionStatus
+import com.sparesparrow.bpmdetector.ui.components.FrequencySpectrumVisualization
+import com.sparesparrow.bpmdetector.ui.components.VisualizationStyle
 import com.sparesparrow.bpmdetector.viewmodels.BPMViewModel
+import com.sparesparrow.bpmdetector.viewmodels.DetectionMode
 import kotlinx.coroutines.delay
 
 /**
@@ -23,9 +27,13 @@ import kotlinx.coroutines.delay
  */
 @Composable
 fun BPMDisplayScreen(viewModel: BPMViewModel) {
-    val bpmData by viewModel.bpmData.observeAsState()
+    val bpmData by viewModel.bpmDataFlow.collectAsState()
     val connectionStatus by viewModel.connectionStatus.collectAsState()
     val isServiceRunning by viewModel.isServiceRunning.collectAsState()
+    val detectionMode by viewModel.detectionMode.collectAsState()
+    val frequencySpectrum by viewModel.frequencySpectrum.collectAsState()
+    val localSampleRate by viewModel.localSampleRate.collectAsState()
+    val localFftSize by viewModel.localFftSize.collectAsState()
 
     // Auto-start monitoring when screen is displayed
     LaunchedEffect(Unit) {
@@ -48,6 +56,33 @@ fun BPMDisplayScreen(viewModel: BPMViewModel) {
             modifier = Modifier.fillMaxWidth()
         )
 
+        // Detection Mode Indicator
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.small,
+            color = when (detectionMode) {
+                DetectionMode.ESP32 -> MaterialTheme.colorScheme.primaryContainer
+                DetectionMode.LOCAL -> MaterialTheme.colorScheme.secondaryContainer
+            }
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = when (detectionMode) {
+                        DetectionMode.ESP32 -> "📡 ESP32 Device"
+                        DetectionMode.LOCAL -> "🎤 Phone Microphone"
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+
         // BPM Display
         BPMDisplay(
             bpm = viewModel.getFormattedBpm(),
@@ -59,6 +94,30 @@ fun BPMDisplayScreen(viewModel: BPMViewModel) {
             hasError = viewModel.hasError(),
             modifier = Modifier.weight(1f)
         )
+
+        // Frequency Spectrum Visualization (only for local mode)
+        if (detectionMode == DetectionMode.LOCAL && frequencySpectrum != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Frequency Spectrum",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                    FrequencySpectrumVisualization(
+                        spectrum = frequencySpectrum,
+                        sampleRate = localSampleRate,
+                        fftSize = localFftSize,
+                        style = VisualizationStyle.BARS
+                    )
+                }
+            }
+        }
 
         // Control Buttons
         BPMControlButtons(
@@ -97,7 +156,7 @@ fun ConnectionStatusIndicator(
         connectionStatus.hasError() -> Triple(
             Color(0xFFF44336), // Red
             Color.White,
-            connectionStatus.errorMessage ?: "Connection Error"
+            "Connection Error"
         )
         else -> Triple(
             Color(0xFF9E9E9E), // Gray

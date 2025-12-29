@@ -1,0 +1,67 @@
+include "BpmCommon.fbs";
+include "BpmCore.fbs";
+include "BpmAudio.fbs";
+include "BpmConfig.fbs";
+include "BpmSystem.fbs";
+
+namespace sparetools.bpm;
+
+// Response domain structures
+
+table GetStatusResponse {
+  status: StatusUpdate;
+}
+
+table GetConfigResponse {
+  config: ConfigUpdate;
+}
+
+table SetConfigResponse {
+  success: bool;
+  message: string;
+}
+
+table ResetDeviceResponse {
+  acknowledged: bool;
+}
+
+table CalibrateAudioResponse {
+  success: bool;
+  calibration_data: AudioCalibrationData;
+  message: string;
+}
+
+table StartStreamingResponse {
+  success: bool;
+  stream_id: string;
+  message: string;
+}
+
+table StopStreamingResponse {
+  success: bool;
+  message: string;
+}
+
+table GetDiagnosticsResponse {
+  diagnostics: DiagnosticsData;
+}
+
+union ResponsePayload {
+  GetStatusResponse,
+  GetConfigResponse,
+  SetConfigResponse,
+  ResetDeviceResponse,
+  CalibrateAudioResponse,
+  StartStreamingResponse,
+  StopStreamingResponse,
+  GetDiagnosticsResponse
+}
+
+table Response {
+  header: Header;
+  status: Status;
+  data_type: ResponsePayload;
+  data: [ubyte];
+}
+
+root_type Response;

@@ -113,9 +113,6 @@ managed_components/
 .cache/
 *.log
 
-# Cursor IDE
-.cursor/
-
 # Compiled test binaries
 comprehensive_tests
 fft_logic_test

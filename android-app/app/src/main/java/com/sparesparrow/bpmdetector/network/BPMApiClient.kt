@@ -1,8 +1,10 @@
 package com.sparesparrow.bpmdetector.network
 
 import com.google.gson.GsonBuilder
-import com.sparesparrow.bpmdetector.models.*
-import com.sparesparrow.bpmdetector.flatbuffers.sparetools.bpm.*
+import com.sparesparrow.bpmdetector.models.BPMData
+import com.sparesparrow.bpmdetector.models.BPMSettings
+import com.sparesparrow.bpmdetector.models.BPMHealth
+import sparetools.bpm.*
 import kotlinx.coroutines.delay
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
@@ -25,11 +27,7 @@ class BPMApiClient(private val baseUrl: String) {
 
     private fun createApiService(): BPMApiService {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = if (BuildConfig.DEBUG) {
-                HttpLoggingInterceptor.Level.BODY
-            } else {
-                HttpLoggingInterceptor.Level.NONE
-            }
+            level = HttpLoggingInterceptor.Level.BODY
         }
 
         val okHttpClient = OkHttpClient.Builder()
@@ -183,21 +181,22 @@ class BPMApiClient(private val baseUrl: String) {
     private fun deserializeBPMData(responseBody: ResponseBody): BPMData {
         val bytes = responseBody.bytes()
         val buffer = ByteBuffer.wrap(bytes)
-        val envelope = BPMEnvelope.getRootAsBPMEnvelope(buffer)
-
-        if (envelope.messageType() != BPMMessage.BPMData) {
-            throw IOException("Expected BPMData message type, got ${envelope.messageType()}")
-        }
-
-        val bpmDataFb = BPMData(envelope.message(BPMData()) as BPMData?)
-            ?: throw IOException("Failed to parse BPMData")
+        val bpmUpdate = BPMUpdate.getRootAsBPMUpdate(buffer)
 
         return BPMData(
-            bpm = bpmDataFb.bpm(),
-            confidence = bpmDataFb.confidence(),
-            signalLevel = bpmDataFb.signalLevel(),
-            status = bpmDataFb.status() ?: "unknown",
-            timestamp = bpmDataFb.timestamp().toLong()
+            bpm = bpmUpdate.bpm().toFloat(),
+            confidence = bpmUpdate.confidence().toFloat(),
+            signalLevel = bpmUpdate.signalLevel().toFloat(),
+            status = when (bpmUpdate.status()) {
+                DetectionStatus.INITIALIZING -> "initializing"
+                DetectionStatus.DETECTING -> "detecting"
+                DetectionStatus.LOW_SIGNAL -> "low_signal"
+                DetectionStatus.NO_SIGNAL -> "no_signal"
+                DetectionStatus.ERROR -> "error"
+                DetectionStatus.CALIBRATING -> "calibrating"
+                else -> "unknown"
+            },
+            timestamp = bpmUpdate.timestamp().toLong()
         )
     }
 
@@ -207,21 +206,15 @@ class BPMApiClient(private val baseUrl: String) {
     private fun deserializeBPMSettings(responseBody: ResponseBody): BPMSettings {
         val bytes = responseBody.bytes()
         val buffer = ByteBuffer.wrap(bytes)
-        val envelope = BPMEnvelope.getRootAsBPMEnvelope(buffer)
-
-        if (envelope.messageType() != BPMMessage.BPMSettings) {
-            throw IOException("Expected BPMSettings message type, got ${envelope.messageType()}")
-        }
-
-        val settingsFb = BPMSettings(envelope.message(BPMSettings()) as BPMSettings?)
-            ?: throw IOException("Failed to parse BPMSettings")
+        val configUpdate = ConfigUpdate.getRootAsConfigUpdate(buffer)
+        val bpmConfig = configUpdate.bpmConfig()
 
         return BPMSettings(
-            minBpm = settingsFb.minBpm(),
-            maxBpm = settingsFb.maxBpm(),
-            sampleRate = settingsFb.sampleRate(),
-            fftSize = settingsFb.fftSize(),
-            version = settingsFb.version() ?: "unknown"
+            minBpm = bpmConfig.minBpm().toInt(),
+            maxBpm = bpmConfig.maxBpm().toInt(),
+            sampleRate = 25000, // Default sample rate
+            fftSize = 1024, // Default FFT size
+            version = "1.0.0" // Default version
         )
     }
 
@@ -231,19 +224,12 @@ class BPMApiClient(private val baseUrl: String) {
     private fun deserializeBPMHealth(responseBody: ResponseBody): BPMHealth {
         val bytes = responseBody.bytes()
         val buffer = ByteBuffer.wrap(bytes)
-        val envelope = BPMEnvelope.getRootAsBPMEnvelope(buffer)
-
-        if (envelope.messageType() != BPMMessage.BPMHealth) {
-            throw IOException("Expected BPMHealth message type, got ${envelope.messageType()}")
-        }
-
-        val healthFb = BPMHealth(envelope.message(BPMHealth()) as BPMHealth?)
-            ?: throw IOException("Failed to parse BPMHealth")
+        val statusUpdate = StatusUpdate.getRootAsStatusUpdate(buffer)
 
         return BPMHealth(
-            status = healthFb.status() ?: "unknown",
-            uptime = healthFb.uptime().toLong(),
-            heapFree = healthFb.heapFree().toLong()
+            status = "online", // StatusUpdate doesn't have a simple status field
+            uptime = statusUpdate.uptimeSeconds().toLong(),
+            heapFree = statusUpdate.freeHeapBytes().toLong()
         )
     }
 

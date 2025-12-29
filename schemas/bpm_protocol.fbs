@@ -1,0 +1,322 @@
+namespace sparetools.bpm;
+
+// Enums
+enum DetectionStatus : int8 {
+  INITIALIZING = 0,
+  DETECTING = 1,
+  LOW_SIGNAL = 2,
+  NO_SIGNAL = 3,
+  ERROR = 4,
+  CALIBRATING = 5
+}
+
+enum StatusEnum : int {
+  Success = 0,
+  Error = 1,
+  Warning = 2,
+  Info = 3
+}
+
+enum RequestType : int8 {
+  GET_STATUS = 0,
+  GET_CONFIG = 1,
+  SET_CONFIG = 2,
+  RESET_DEVICE = 3,
+  CALIBRATE_AUDIO = 4,
+  START_STREAMING = 5,
+  STOP_STREAMING = 6,
+  GET_DIAGNOSTICS = 7
+}
+
+enum ResponsePayload : uint8 {
+  NONE = 0,
+  GetStatusResponse = 1,
+  GetConfigResponse = 2,
+  SetConfigResponse = 3,
+  ResetDeviceResponse = 4,
+  CalibrateAudioResponse = 5,
+  StartStreamingResponse = 6,
+  StopStreamingResponse = 7,
+  GetDiagnosticsResponse = 8
+}
+
+enum RequestPayload : uint8 {
+  NONE = 0,
+  GetStatusRequest = 1,
+  GetConfigRequest = 2,
+  SetConfigRequest = 3,
+  ResetDeviceRequest = 4,
+  CalibrateAudioRequest = 5,
+  StartStreamingRequest = 6,
+  StopStreamingRequest = 7,
+  GetDiagnosticsRequest = 8
+}
+
+enum StreamType : int8 {
+  WEBSOCKET = 0,
+  HTTP = 1,
+  MQTT = 2
+}
+
+// Tables
+table Header {
+  version: uint16 = 1;
+  timestamp: uint64;
+  sequence_id: uint32;
+}
+
+table GetStatusRequest {
+  // Empty request
+}
+
+table GetConfigRequest {
+  // Empty request
+}
+
+table SetConfigRequest {
+  config: ConfigUpdate;
+}
+
+table ResetDeviceRequest {
+  // Empty request
+}
+
+table CalibrateAudioRequest {
+  duration_seconds: uint16 = 10;
+  target_frequency: float = 440.0;
+}
+
+table StartStreamingRequest {
+  stream_type: StreamType = WEBSOCKET;
+  endpoint: string;
+  interval_ms: uint16 = 1000;
+}
+
+table StopStreamingRequest {
+  // Empty request
+}
+
+table GetDiagnosticsRequest {
+  include_audio: bool = true;
+  include_network: bool = true;
+  include_performance: bool = true;
+}
+
+table Request {
+  header: Header;
+  request_type: RequestType;
+  data_type: RequestPayload;
+  data: [ubyte];
+}
+
+table BPMAnalysis {
+  stability: float = 0.0;
+  regularity: float = 0.0;
+  dominant_frequency: float = 0.0;
+  spectral_centroid: float = 0.0;
+  beat_position: float = 0.0;
+  tempo_consistency: float = 0.0;
+}
+
+table BPMQuality {
+  snr_db: float = 0.0;
+  consecutive_detections: uint16 = 0;
+  reliability_score: float = 0.0;
+  false_positive_rate: float = 0.0;
+  algorithm_confidence: float = 0.0;
+}
+
+table BPMUpdate {
+  bpm: float = 0.0;
+  confidence: float = 0.0;
+  signal_level: float = 0.0;
+  status: DetectionStatus = INITIALIZING;
+  analysis: BPMAnalysis;
+  quality: BPMQuality;
+  timestamp: uint64 = 0;
+}
+
+table AudioStatus {
+  sample_rate: uint32 = 25000;
+  buffer_size: uint16 = 1024;
+  channels: uint8 = 1;
+  is_calibrated: bool = false;
+  last_calibration: uint64 = 0;
+  noise_floor_db: float = -60.0;
+}
+
+table AudioCalibrationData {
+  reference_frequency: float = 440.0;
+  measured_frequency: float = 0.0;
+  calibration_offset: float = 0.0;
+  snr_improvement_db: float = 0.0;
+  timestamp: uint64 = 0;
+}
+
+table StatusUpdate {
+  uptime_seconds: uint64 = 0;
+  free_heap_bytes: uint32 = 0;
+  min_free_heap_bytes: uint32 = 0;
+  cpu_usage_percent: uint8 = 0;
+  wifi_rssi: int8 = 0;
+  audio_status: AudioStatus;
+  temperature_celsius: float = 0.0;
+  battery_level_percent: uint8 = 0;
+}
+
+table ConfigUpdate {
+  bpm_config: BPMConfig;
+  audio_config: AudioConfig;
+  network_config: NetworkConfig;
+  display_config: DisplayConfig;
+}
+
+table BPMConfig {
+  min_bpm: uint8 = 60;
+  max_bpm: uint8 = 180;
+  confidence_threshold: float = 0.7;
+  stability_weight: float = 0.3;
+  regularity_weight: float = 0.4;
+  quality_weight: float = 0.3;
+}
+
+table AudioConfig {
+  sample_rate: uint32 = 25000;
+  buffer_size: uint16 = 1024;
+  gain_db: float = 0.0;
+  high_pass_cutoff: float = 20.0;
+  low_pass_cutoff: float = 8000.0;
+  enable_noise_gate: bool = true;
+  noise_gate_threshold_db: float = -40.0;
+}
+
+table NetworkConfig {
+  wifi_ssid: string;
+  wifi_password: string;
+  enable_mdns: bool = true;
+  mdns_hostname: string;
+  web_port: uint16 = 80;
+  websocket_port: uint16 = 81;
+}
+
+table DisplayConfig {
+  enable_display: bool = true;
+  brightness_percent: uint8 = 100;
+  timeout_seconds: uint16 = 30;
+  show_bpm: bool = true;
+  show_confidence: bool = true;
+  show_status: bool = true;
+}
+
+table ErrorReport {
+  error_code: int32;
+  error_message: string;
+  timestamp: uint64;
+  context: string;
+}
+
+table SystemInfo {
+  firmware_version: string;
+  hardware_version: string;
+  esp_idf_version: string;
+  build_date: string;
+  flash_size_bytes: uint32;
+  psram_size_bytes: uint32;
+}
+
+table AudioDiagnostics {
+  peak_level_db: float;
+  rms_level_db: float;
+  clipping_count: uint32;
+  underrun_count: uint32;
+  sample_rate_actual: uint32;
+  buffer_utilization_percent: uint8;
+  fft_computation_time_us: uint32;
+}
+
+table NetworkDiagnostics {
+  wifi_connected: bool;
+  ip_address: string;
+  gateway: string;
+  subnet: string;
+  dns_server: string;
+  rssi: int8;
+  channel: uint8;
+  tx_power: int8;
+  connection_time_seconds: uint64;
+  reconnect_count: uint32;
+}
+
+table PerformanceMetrics {
+  free_heap_bytes: uint32;
+  min_free_heap_bytes: uint32;
+  largest_free_block_bytes: uint32;
+  cpu_usage_percent: uint8;
+  task_count: uint8;
+  uptime_seconds: uint64;
+  reset_reason: string;
+}
+
+table DiagnosticsData {
+  system_info: SystemInfo;
+  audio_diagnostics: AudioDiagnostics;
+  network_diagnostics: NetworkDiagnostics;
+  performance_metrics: PerformanceMetrics;
+  timestamp: uint64;
+}
+
+table GetStatusResponse {
+  status: StatusUpdate;
+}
+
+table GetConfigResponse {
+  config: ConfigUpdate;
+}
+
+table SetConfigResponse {
+  success: bool;
+  message: string;
+}
+
+table ResetDeviceResponse {
+  acknowledged: bool;
+}
+
+table CalibrateAudioResponse {
+  success: bool;
+  calibration_data: AudioCalibrationData;
+  message: string;
+}
+
+table StartStreamingResponse {
+  success: bool;
+  stream_id: string;
+  message: string;
+}
+
+table StopStreamingResponse {
+  success: bool;
+  message: string;
+}
+
+table GetDiagnosticsResponse {
+  diagnostics: DiagnosticsData;
+}
+
+table Status {
+  status: StatusEnum = Success;
+  message: string;
+}
+
+table Response {
+  header: Header;
+  status: Status;
+  data_type: ResponsePayload;
+  data: [ubyte];
+}
+
+// Root types for serialization
+root_type BPMUpdate;
+root_type StatusUpdate;
+root_type Request;
+root_type Response;

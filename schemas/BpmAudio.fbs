@@ -1,0 +1,30 @@
+namespace sparetools.bpm;
+
+// Audio domain structures
+
+table AudioStatus {
+  sample_rate: uint32 = 25000;
+  buffer_size: uint16 = 1024;
+  channels: uint8 = 1;
+  is_calibrated: bool = false;
+  last_calibration: uint64 = 0;
+  noise_floor_db: float = -60.0;
+}
+
+table AudioCalibrationData {
+  reference_frequency: float = 440.0;
+  measured_frequency: float = 0.0;
+  calibration_offset: float = 0.0;
+  snr_improvement_db: float = 0.0;
+  timestamp: uint64 = 0;
+}
+
+table AudioDiagnostics {
+  peak_level_db: float;
+  rms_level_db: float;
+  clipping_count: uint32;
+  underrun_count: uint32;
+  sample_rate_actual: uint32;
+  buffer_utilization_percent: uint8;
+  fft_computation_time_us: uint32;
+}

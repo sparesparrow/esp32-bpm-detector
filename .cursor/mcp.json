@@ -1,0 +1,37 @@
+{
+  "mcpServers": {
+    "esp32-serial-monitor": {
+      "command": "uv",
+      "args": ["run", "--with", "mcp", "python3", "/home/sparrow/mcp/servers/esp32_serial_monitor/esp32_serial_monitor_mcp_server.py"],
+      "env": {
+        "ESP32_LOG_LEVEL": "INFO",
+        "ESP32_LOG_DIR": "/home/sparrow/esp32_logs",
+        "ESP32_SESSION_STORAGE": "/home/sparrow/.mcp/esp32_sessions.json"
+      },
+      "cwd": "${workspaceFolder}"
+    },
+    "android-dev-tools": {
+      "command": "/home/sparrow/mcp/servers/android_dev_tools/.venv/bin/python",
+      "args": ["/home/sparrow/mcp/servers/android_dev_tools/android_dev_tools_mcp_server.py"],
+      "env": {
+        "ANDROID_LOG_LEVEL": "INFO",
+        "ANDROID_LOG_DIR": "/home/sparrow/android_logs",
+        "ANDROID_SESSION_STORAGE": "/home/sparrow/.mcp/android_sessions.json"
+      },
+      "cwd": "${workspaceFolder}"
+    },
+    "conan-cloudsmith": {
+      "command": "/home/sparrow/mcp/servers/conan_cloudsmith/.venv/bin/python",
+      "args": ["/home/sparrow/mcp/servers/conan_cloudsmith/conan_cloudsmith_mcp_server.py"],
+      "env": {
+        "CONAN_LOG_LEVEL": "INFO",
+        "CONAN_LOG_DIR": "/home/sparrow/conan_logs",
+        "CONAN_SESSION_STORAGE": "/home/sparrow/.mcp/conan_sessions.json",
+        "CLOUDSMITH_API_KEY": "",
+        "CLOUDSMITH_ORG": ""
+      },
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}
+

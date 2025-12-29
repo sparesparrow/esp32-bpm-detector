@@ -2,10 +2,25 @@
 #define CONFIG_H
 
 // ============================================================================
-// WiFi Configuration
+// Platform Configuration
 // ============================================================================
+// Define the target platform - only one should be defined at compile time
+// #define PLATFORM_ESP32      // For ESP32-S3 and other ESP32 variants
+// #define PLATFORM_ARDUINO    // For Arduino Uno, Nano, and compatible boards
+
+#ifndef PLATFORM_ESP32
+#ifndef PLATFORM_ARDUINO
+    #define PLATFORM_ESP32    // Default to ESP32 if not specified
+#endif
+#endif
+
+// ============================================================================
+// WiFi Configuration (ESP32 only)
+// ============================================================================
+#ifdef PLATFORM_ESP32
 #define WIFI_SSID "Prospects"
 #define WIFI_PASSWORD "Romy1337"
+#endif
 
 // ============================================================================
 // Hardware Configuration

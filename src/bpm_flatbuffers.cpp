@@ -1,17 +1,16 @@
 #include "bpm_flatbuffers.h"
 #include <flatbuffers/flatbuffers.h>
-#include "BPM_generated.h"
 
 // Static method implementations
-flatbuffers::Offset<sparesparrow::bpm::BPMUpdate> BPMFlatBuffers::createBPMUpdate(
+flatbuffers::Offset<sparetools::bpm::BPMUpdate> BPMFlatBuffers::createBPMUpdate(
     float bpm,
     float confidence,
     float signal_level,
-    sparesparrow::bpm::DetectionStatus status,
+    sparetools::bpm::DetectionStatus status,
     flatbuffers::FlatBufferBuilder& builder) {
 
     // Create BPM analysis data
-    auto analysis_offset = sparesparrow::bpm::CreateBPMAnalysis(
+    auto analysis_offset = sparetools::bpm::CreateBPMAnalysis(
         builder,
         0.85f,  // stability
         0.78f,  // regularity
@@ -22,7 +21,7 @@ flatbuffers::Offset<sparesparrow::bpm::BPMUpdate> BPMFlatBuffers::createBPMUpdat
     );
 
     // Create BPM quality metrics
-    auto quality_offset = sparesparrow::bpm::CreateBPMQuality(
+    auto quality_offset = sparetools::bpm::CreateBPMQuality(
         builder,
         -23.5f, // snr_db
         15,     // consecutive_detections
@@ -32,7 +31,7 @@ flatbuffers::Offset<sparesparrow::bpm::BPMUpdate> BPMFlatBuffers::createBPMUpdat
     );
 
     // Create the BPM update
-    return sparesparrow::bpm::CreateBPMUpdate(
+    return sparetools::bpm::CreateBPMUpdate(
         builder,
         bpm,
         confidence,
@@ -43,7 +42,7 @@ flatbuffers::Offset<sparesparrow::bpm::BPMUpdate> BPMFlatBuffers::createBPMUpdat
     );
 }
 
-flatbuffers::Offset<sparesparrow::bpm::StatusUpdate> BPMFlatBuffers::createStatusUpdate(
+flatbuffers::Offset<sparetools::bpm::StatusUpdate> BPMFlatBuffers::createStatusUpdate(
     uint64_t uptime_seconds,
     uint32_t free_heap_bytes,
     uint8_t cpu_usage_percent,
@@ -51,7 +50,7 @@ flatbuffers::Offset<sparesparrow::bpm::StatusUpdate> BPMFlatBuffers::createStatu
     flatbuffers::FlatBufferBuilder& builder) {
 
     // Create audio status
-    auto audio_status_offset = sparesparrow::bpm::CreateAudioStatus(
+    auto audio_status_offset = sparetools::bpm::CreateAudioStatus(
         builder,
         true,   // input_active
         25000,  // sample_rate
@@ -62,7 +61,7 @@ flatbuffers::Offset<sparesparrow::bpm::StatusUpdate> BPMFlatBuffers::createStatu
     );
 
     // Create status update
-    return sparesparrow::bpm::CreateStatusUpdate(
+    return sparetools::bpm::CreateStatusUpdate(
         builder,
         uptime_seconds,
         free_heap_bytes,
@@ -75,21 +74,11 @@ flatbuffers::Offset<sparesparrow::bpm::StatusUpdate> BPMFlatBuffers::createStatu
 }
 
 std::vector<uint8_t> BPMFlatBuffers::serializeBPMUpdate(
-    flatbuffers::Offset<sparesparrow::bpm::BPMUpdate> bpm_update_offset,
+    flatbuffers::Offset<sparetools::bpm::BPMUpdate> bpm_update_offset,
     flatbuffers::FlatBufferBuilder& builder) {
 
-    // Create a status object
-    auto status_offset = sparesparrow::bpm::CreateStatus(builder, sparesparrow::bpm::StatusEnum::Success, builder.CreateString("OK"));
-
-    // For testing, create a minimal Response (BPMUpdate would normally be sent via streaming)
-    auto response_offset = sparesparrow::bpm::CreateResponse(
-        builder,
-        0, // No header
-        status_offset,
-        sparesparrow::bpm::ResponsePayload::NONE, // No payload for testing
-        0 // Union (empty)
-    );
-    builder.Finish(response_offset);
+    // Finish the builder with the BPMUpdate as the root object
+    builder.Finish(bpm_update_offset);
 
     const uint8_t* buffer = builder.GetBufferPointer();
     size_t size = builder.GetSize();
@@ -98,24 +87,11 @@ std::vector<uint8_t> BPMFlatBuffers::serializeBPMUpdate(
 }
 
 std::vector<uint8_t> BPMFlatBuffers::serializeStatusUpdate(
-    flatbuffers::Offset<sparesparrow::bpm::StatusUpdate> status_update_offset,
+    flatbuffers::Offset<sparetools::bpm::StatusUpdate> status_update_offset,
     flatbuffers::FlatBufferBuilder& builder) {
 
-    // Create a status object for the response
-    auto response_status_offset = sparesparrow::bpm::CreateStatus(builder, sparesparrow::bpm::StatusEnum::Success, builder.CreateString("OK"));
-
-    // Create a GetStatusResponse containing the StatusUpdate
-    auto status_response_offset = sparesparrow::bpm::CreateGetStatusResponse(builder, status_update_offset);
-
-    // Create a Response containing the GetStatusResponse
-    auto response_offset = sparesparrow::bpm::CreateResponse(
-        builder,
-        0, // No header
-        response_status_offset,
-        sparesparrow::bpm::ResponsePayload::GetStatusResponse,
-        status_response_offset.Union()
-    );
-    builder.Finish(response_offset);
+    // Finish the builder with the StatusUpdate as the root object
+    builder.Finish(status_update_offset);
 
     const uint8_t* buffer = builder.GetBufferPointer();
     size_t size = builder.GetSize();
@@ -123,35 +99,28 @@ std::vector<uint8_t> BPMFlatBuffers::serializeStatusUpdate(
     return std::vector<uint8_t>(buffer, buffer + size);
 }
 
-const sparesparrow::bpm::BPMUpdate* BPMFlatBuffers::deserializeBPMUpdate(
+const sparetools::bpm::BPMUpdate* BPMFlatBuffers::deserializeBPMUpdate(
     const std::vector<uint8_t>& buffer) {
 
-    // BPMUpdate is not directly serializable as root - return nullptr for testing
-    return nullptr;
+    // Deserialize the BPMUpdate directly as the root object
+    return flatbuffers::GetRoot<sparetools::bpm::BPMUpdate>(buffer.data());
 }
 
-const sparesparrow::bpm::StatusUpdate* BPMFlatBuffers::deserializeStatusUpdate(
+const sparetools::bpm::StatusUpdate* BPMFlatBuffers::deserializeStatusUpdate(
     const std::vector<uint8_t>& buffer) {
 
-    // Deserialize the Response, then extract the GetStatusResponse, then get StatusUpdate
-    auto response = sparesparrow::bpm::GetResponse(buffer.data());
-    if (response && response->data_type() == sparesparrow::bpm::ResponsePayload::GetStatusResponse) {
-        auto status_response = response->data_as_GetStatusResponse();
-        if (status_response) {
-            return status_response->status();
-        }
-    }
-    return nullptr;
+    // Deserialize the StatusUpdate directly as the root object
+    return flatbuffers::GetRoot<sparetools::bpm::StatusUpdate>(buffer.data());
 }
 
-const char* BPMFlatBuffers::detectionStatusToString(sparesparrow::bpm::DetectionStatus status) {
+const char* BPMFlatBuffers::detectionStatusToString(sparetools::bpm::DetectionStatus status) {
     switch (status) {
-        case sparesparrow::bpm::DetectionStatus::INITIALIZING: return "INITIALIZING";
-        case sparesparrow::bpm::DetectionStatus::DETECTING: return "DETECTING";
-        case sparesparrow::bpm::DetectionStatus::LOW_SIGNAL: return "LOW_SIGNAL";
-        case sparesparrow::bpm::DetectionStatus::NO_SIGNAL: return "NO_SIGNAL";
-        case sparesparrow::bpm::DetectionStatus::ERROR: return "ERROR";
-        case sparesparrow::bpm::DetectionStatus::CALIBRATING: return "CALIBRATING";
+        case sparetools::bpm::DetectionStatus_INITIALIZING: return "INITIALIZING";
+        case sparetools::bpm::DetectionStatus_DETECTING: return "DETECTING";
+        case sparetools::bpm::DetectionStatus_LOW_SIGNAL: return "LOW_SIGNAL";
+        case sparetools::bpm::DetectionStatus_NO_SIGNAL: return "NO_SIGNAL";
+        case sparetools::bpm::DetectionStatus_ERROR: return "ERROR";
+        case sparetools::bpm::DetectionStatus_CALIBRATING: return "CALIBRATING";
         default: return "UNKNOWN";
     }
 }
