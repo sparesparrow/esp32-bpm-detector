@@ -46,7 +46,7 @@ void handleBpmCurrent() {
         bpmData.bpm,
         bpmData.confidence,
         bpmData.signal_level,
-        sparetools::bpm::DetectionStatus_DETECTING,
+        sparetools::bpm::ExtEnum::DetectionStatus_DETECTING,
         builder
     );
 

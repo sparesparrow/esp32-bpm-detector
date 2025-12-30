@@ -183,15 +183,58 @@ SSD1306 OLED (optional):
 
 ## Building & Deploying
 
-### Option 1: PlatformIO (Recommended)
+### Option 1: Multi-Device Deployment (Recommended for Multiple Devices)
+
+Deploy to multiple ESP32 and Arduino devices simultaneously using Conan profiles:
+
 ```bash
-cd firmware
-pio run              # Build
-pio run -t upload    # Upload to ESP32
-pio device monitor   # View serial output
+# Detect connected devices
+python3 scripts/detect_devices.py
+
+# Deploy to all devices sequentially with monitoring
+python3 scripts/deploy_all_devices.py --mode sequential --monitor
+
+# Deploy to specific device types only
+python3 scripts/deploy_all_devices.py --filter esp32s3 esp32
+
+# Dry run to see what would be deployed
+python3 scripts/deploy_all_devices.py --dry-run
 ```
 
-### Option 2: Arduino IDE
+**Deployment modes:**
+- `--mode sequential`: Deploy to devices one at a time (safer, more detailed logs)
+- `--mode parallel`: Deploy to all devices simultaneously (faster)
+- `--filter`: Deploy only to specific device types (esp32s3, esp32, arduino_uno)
+- `--monitor`: Monitor serial output after upload
+- `--monitor-duration N`: Monitor each device for N seconds
+
+**Supported devices:**
+- ESP32-S3 DevKitC (with USB CDC and JTAG)
+- Generic ESP32 (ESP32-WROOM-32)
+- Arduino Uno (limited features due to memory constraints)
+
+### Option 2: Single Device with PlatformIO
+```bash
+# Build for specific environment
+pio run --environment esp32s3
+
+# Upload to specific port
+pio run --environment esp32s3 --target upload --upload-port /dev/ttyACM0
+
+# Monitor serial output
+pio device monitor --port /dev/ttyACM0
+```
+
+### Option 3: Build with Conan Profile
+```bash
+# Install dependencies for specific target
+python3 scripts/conan_install.py --profile esp32s3
+
+# Build with PlatformIO
+pio run --environment esp32s3
+```
+
+### Option 4: Arduino IDE
 1. Install ESP32 board support
 2. Open `firmware/src/main.cpp` in Arduino IDE
 3. Select board: "ESP32 Dev Module"
@@ -248,6 +291,110 @@ cd android-app
 2. Open app and enter ESP32 IP
 3. Verify BPM updates in real-time
 4. Test reconnection after WiFi dropout
+
+### Hardware Emulation Testing (No Physical Devices Required)
+
+Test the ESP32 BPM Detector without physical hardware using TCP/IP-based emulation:
+
+#### Quick Start with Emulation
+```bash
+# Start hardware emulator
+unified-deployment.start_hardware_emulator device_type="esp32"
+
+# Run tests against emulator
+python3 run_tests.py --emulator
+
+# Check emulator status
+unified-deployment.get_emulator_status
+```
+
+#### Docker-based Testing
+```bash
+# Run complete test suite in containers
+python3 scripts/docker_test_runner.py --suite all
+
+# Or use MCP tools
+unified-deployment.run_docker_tests test_suite="all"
+```
+
+#### Benefits of Emulation Testing
+- ✅ **No hardware required**: Develop and test without ESP32 devices
+- ✅ **CI/CD ready**: Automated testing in headless environments
+- ✅ **Multi-device simulation**: Test interactions between devices
+- ✅ **Error simulation**: Test network failures and edge cases
+- ✅ **Cross-platform**: Consistent testing across different machines
+
+### Docker-based Development
+
+Use containerized environments for development and testing:
+
+#### Development Environment
+```bash
+# Start development containers
+docker-compose up -d esp32-build
+
+# Build firmware in container
+docker-compose exec esp32-build pio run --environment esp32
+
+# Run tests in container
+docker-compose exec esp32-build python3 run_tests.py
+```
+
+#### Testing Environment
+```bash
+# Build test containers
+unified-deployment.build_test_containers
+
+# Start test environment
+unified-deployment.start_test_environment
+
+# Run integration tests
+unified-deployment.run_docker_tests
+
+# Get test results
+unified-deployment.get_test_results
+```
+
+#### Container Architecture
+- **esp32-build**: PlatformIO development environment
+- **esp32-emulator**: Hardware emulation server
+- **integration-tests**: Automated test execution
+- **mock-services**: Simulated ESP32 API and WebSocket servers
+
+See [HARDWARE_EMULATION_TESTING.md](docs/HARDWARE_EMULATION_TESTING.md) for detailed documentation.
+
+### CI/CD Integration
+
+#### GitHub Actions Example
+```yaml
+name: ESP32 BPM Detector CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Docker
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker.io docker-compose
+    - name: Run Tests
+      run: python3 scripts/docker_test_runner.py --suite all
+    - name: Upload Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: test_results/
+```
+
+#### Automated Testing Workflows
+- **Hardware Emulation**: Test without physical devices
+- **Docker Integration**: Isolated, repeatable test execution
+- **Multi-platform**: Linux containers on any CI platform
+- **Parallel Execution**: Run tests across multiple CI runners
+- **Result Reporting**: JUnit XML and JSON reports for CI integration
 
 ## Troubleshooting
 

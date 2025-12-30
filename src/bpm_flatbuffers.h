@@ -15,6 +15,7 @@
 
 #include <flatbuffers/flatbuffers.h>
 #include "bpm_protocol_generated.h"
+#include "BpmCommon_extracted.h"
 
 /**
  * BPM FlatBuffers Integration Header
@@ -38,7 +39,7 @@ public:
         float bpm,
         float confidence,
         float signal_level,
-        sparetools::bpm::DetectionStatus status,
+        sparetools::bpm::ExtEnum::DetectionStatus status,
         flatbuffers::FlatBufferBuilder& builder);
 
     /**
@@ -98,7 +99,7 @@ public:
      * @param status Detection status enum
      * @return Human-readable string
      */
-    static const char* detectionStatusToString(sparetools::bpm::DetectionStatus status);
+    static const char* detectionStatusToString(sparetools::bpm::ExtEnum::DetectionStatus status);
 
     /**
      * Calculate required buffer size for BPM update message

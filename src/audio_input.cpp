@@ -63,8 +63,10 @@ void AudioInput::beginStereo(uint8_t left_pin, uint8_t right_pin) {
         else if (adc_pin_ == 6) left_channel = ADC1_CHANNEL_5;
         else if (adc_pin_ == 7) left_channel = ADC1_CHANNEL_6;
         else if (adc_pin_ == 8) left_channel = ADC1_CHANNEL_7;
+#ifdef CONFIG_IDF_TARGET_ESP32S3
         else if (adc_pin_ == 9) left_channel = ADC1_CHANNEL_8;
         else if (adc_pin_ == 10) left_channel = ADC1_CHANNEL_9;
+#endif
         // Legacy ESP32 GPIO32-39 mapping
         else if (adc_pin_ == 32) left_channel = ADC1_CHANNEL_4;
         else if (adc_pin_ == 33) left_channel = ADC1_CHANNEL_5;
@@ -105,8 +107,10 @@ void AudioInput::beginStereo(uint8_t left_pin, uint8_t right_pin) {
             else if (adc_pin_right_ == 6) right_channel = ADC1_CHANNEL_5;
             else if (adc_pin_right_ == 7) right_channel = ADC1_CHANNEL_6;
             else if (adc_pin_right_ == 8) right_channel = ADC1_CHANNEL_7;
+#ifdef CONFIG_IDF_TARGET_ESP32S3
             else if (adc_pin_right_ == 9) right_channel = ADC1_CHANNEL_8;
             else if (adc_pin_right_ == 10) right_channel = ADC1_CHANNEL_9;
+#endif
             // Legacy ESP32 GPIO32-39 mapping
             else if (adc_pin_right_ == 32) right_channel = ADC1_CHANNEL_4;
             else if (adc_pin_right_ == 33) right_channel = ADC1_CHANNEL_5;

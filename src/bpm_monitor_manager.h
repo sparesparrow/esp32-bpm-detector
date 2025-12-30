@@ -70,3 +70,4 @@ private:
 } // namespace BpmMonitor
 
 #endif // BPM_MONITOR_MANAGER_H
+

@@ -104,7 +104,7 @@ void BpmDetectorAdapter::reset() {
     // Use existing FlatBuffers implementation directly
     auto bpmUpdateOffset = BPMFlatBuffers::createBPMUpdate(m_detector.bpm, m_detector.confidence,
                                                           m_detector.signalLevel,
-                                                          sparetools::bpm::DetectionStatus_DETECTING,
+                                                           sparetools::bpm::ExtEnum::DetectionStatus_DETECTING,
                                                           builder);
 
     return BPMFlatBuffers::serializeBPMUpdate(bpmUpdateOffset, builder);

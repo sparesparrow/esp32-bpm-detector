@@ -1,0 +1,19 @@
+{
+  "remotes": [
+    {
+      "name": "conancenter",
+      "url": "https://center2.conan.io",
+      "verify_ssl": true
+    },
+    {
+      "name": "sparetools",
+      "url": "https://conan.cloudsmith.io/sparesparrow-conan/sparetools/",
+      "verify_ssl": true
+    },
+    {
+      "name": "cloudsmith-sparetools",
+      "url": "https://dl.cloudsmith.io/basic/sparesparrow-conan/sparetools/conan/",
+      "verify_ssl": true
+    }
+  ]
+}

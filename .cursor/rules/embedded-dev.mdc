@@ -1,0 +1,280 @@
+---
+globs: ["**/*.cpp", "**/*.h", "**/*.py"]
+description: "Embedded development rules for ESP32 BPM Detector"
+alwaysApply: true
+---
+
+# ESP32 BPM Detector Development Rules
+
+## MCP Servers Available
+- **esp32-serial-monitor**: Device detection, serial I/O, log capture
+- **android-dev-tools**: APK building, ADB operations, device management
+- **conan-cloudsmith**: Package management with Cloudsmith
+- **unified-deployment**: Multi-device deployment coordination and device detection
+- **composed-embedded**: Combined embedded development capabilities
+- **repo-cleanup**: Repository maintenance and cleanup
+
+## Development Workflow
+
+### 1. Initial Setup
+```bash
+# Install dependencies from Cloudsmith
+conan install . --build=missing -r sparetools
+
+# Generate FlatBuffers headers
+python scripts/generate_flatbuffers.py
+```
+
+### 2. Device Detection and Deployment
+Use `unified-deployment` tools:
+- `unified-deployment.detect_devices`: Identify connected platforms (ESP32, Arduino)
+- `unified-deployment.deploy`: Deploy firmware to devices
+- `unified-deployment.list_profiles`: Manage Conan profiles
+
+### 3. Serial Monitoring
+Use `esp32-serial-monitor.start_serial_monitor` for real-time log capture:
+- Configurable baud rate (default: 115200)
+- Background log storage
+- Pattern matching for errors
+
+## Code Style
+
+### C++ (Firmware)
+- C++20 standard
+- ESP-IDF framework conventions
+- FlatBuffers for protocol definitions
+- RAII for resource management
+
+### Python (Scripts/Tools)
+- Python 3.10+
+- Type hints required
+- asyncio for concurrent operations
+- pytest for testing
+
+## FlatBuffers Protocol
+Schema files are in `schemas/` directory:
+- `BpmCommon.fbs` - Shared types
+- `BpmRequests.fbs` - Request messages
+- `BpmResponses.fbs` - Response messages
+- `BpmConfig.fbs` - Configuration messages
+
+Generated headers go to `include/` directory.
+
+## Testing Strategy
+1. **Unit tests**: Component-level testing
+2. **Integration tests**: Hardware-in-loop testing with emulation
+3. **Docker-based tests**: Containerized testing environment
+4. **E2E tests**: Full system validation with Android app
+
+### Hardware Emulation Testing Guidelines
+
+#### When to Use Hardware Emulation
+- **No physical hardware available**: Test without ESP32/Arduino devices
+- **CI/CD pipelines**: Automated testing in headless environments
+- **Rapid prototyping**: Quick iteration during development
+- **Multi-device scenarios**: Test interactions between multiple devices
+
+#### Hardware Emulator Features
+- **TCP/IP Protocol**: Realistic device communication over network sockets
+- **Device Types**: ESP32, ESP32-S3, Arduino with different characteristics
+- **Realistic Simulation**: BPM detection, sensor data, device status
+- **Error Simulation**: Network issues, device failures, timing problems
+- **Multi-client Support**: Handle concurrent connections like real devices
+
+#### Emulator Commands
+```
+GET_BPM          - Get current BPM reading with confidence/signal data
+GET_STATUS       - Device status, uptime, connection info
+GET_SENSORS      - Available sensors (microphone, accelerometer, etc.)
+SET_CONFIG       - Configure detection parameters
+PING             - Basic connectivity test
+RESET            - Device reset simulation
+```
+
+#### Testing with Emulator
+```bash
+# Start emulator via MCP
+unified-deployment.start_hardware_emulator
+
+# Run tests against emulator
+python3 run_tests.py --emulator
+
+# Check emulator status
+unified-deployment.get_emulator_status
+
+# Send custom commands
+unified-deployment.send_emulator_command GET_STATUS
+```
+
+### Docker-based Testing Workflows
+
+#### Containerized Testing Benefits
+- **Isolated Environment**: Consistent test execution across machines
+- **Service Orchestration**: Emulator, mock services, and tests in containers
+- **Cross-platform**: Linux containers work on any host OS
+- **CI/CD Ready**: Perfect for automated pipelines
+- **Resource Control**: Memory, CPU, and network isolation
+
+#### Docker Test Architecture
+```
+esp32-emulator      - Hardware emulator container (port 12345)
+mock-services       - Mock ESP32 API server (port 8080) + WebSocket (8000)
+integration-tests   - Test execution container
+test_net           - Isolated network for service communication
+emulator_net       - Network for emulator communication
+```
+
+#### Running Docker Tests
+```bash
+# Full test suite
+python3 scripts/docker_test_runner.py --suite all
+
+# Quick emulator tests only
+python3 scripts/docker_test_runner.py --suite hardware_emulation
+
+# Via MCP tools
+unified-deployment.run_docker_tests
+unified-deployment.build_test_containers
+unified-deployment.start_test_environment
+```
+
+#### Docker Test Results
+- **JUnit XML**: `test_results/integration-tests.xml`
+- **Logs**: `logs/` directory with container-specific logs
+- **Reports**: `test_results/test_report_*.json` with comprehensive results
+- **Coverage**: Integration with pytest-cov for coverage reports
+
+### Test Environment Setup
+
+#### Local Development Setup
+```bash
+# Install Docker and Docker Compose
+# Ubuntu/Debian:
+sudo apt-get install docker.io docker-compose
+
+# macOS:
+brew install docker docker-compose
+
+# Windows: Install Docker Desktop
+
+# Clone and setup project
+git clone <repository>
+cd esp32-bpm-detector
+
+# Make scripts executable
+chmod +x scripts/docker_test_runner.py
+chmod +x run_tests.py
+```
+
+#### MCP Server Configuration
+Ensure `.cursor/mcp.json` includes:
+```json
+{
+  "unified-deployment": {
+    "env": {
+      "HARDWARE_EMULATOR_HOST": "127.0.0.1",
+      "HARDWARE_EMULATOR_PORT": "12345",
+      "DOCKER_TEST_ENABLED": "true",
+      "TEST_RESULTS_DIR": "${workspaceFolder}/test_results"
+    }
+  }
+}
+```
+
+#### Test Directory Structure
+```
+tests/
+├── integration/
+│   ├── test_hardware_emulation.py    - Hardware emulator tests
+│   └── test_docker_integration.py    - Docker integration tests
+├── unit/                            - Unit tests (future)
+└── e2e/                            - End-to-end tests (future)
+
+test_results/                       - Test outputs and reports
+logs/                              - Container and test logs
+scripts/
+└── docker_test_runner.py          - Docker orchestration
+```
+
+### Troubleshooting Emulation Issues
+
+#### Emulator Connection Problems
+**Issue**: Cannot connect to hardware emulator
+```
+Error: Connection refused on port 12345
+```
+**Solutions**:
+- Check if emulator is started: `unified-deployment.get_emulator_status`
+- Verify port availability: `netstat -tln | grep 12345`
+- Check firewall settings
+- Try different port: `unified-deployment.start_hardware_emulator port=12346`
+
+#### Docker Container Issues
+**Issue**: Containers fail to start or communicate
+```
+Error: docker-compose up failed
+```
+**Solutions**:
+- Check Docker daemon: `docker info`
+- Clean containers: `docker-compose down -v`
+- Rebuild images: `docker-compose build --no-cache`
+- Check logs: `docker-compose logs`
+- Verify network: `docker network ls`
+
+#### Test Execution Failures
+**Issue**: Tests pass locally but fail in Docker
+```
+Error: Test timeout or assertion failures
+```
+**Solutions**:
+- Check container resource limits
+- Verify network connectivity between containers
+- Examine container logs: `docker-compose logs integration-tests`
+- Run tests with verbose output: `pytest -v -s`
+- Check for race conditions in multi-container setup
+
+#### Performance Issues
+**Issue**: Emulator or tests running slowly
+```
+Warning: Response time > 500ms
+```
+**Solutions**:
+- Check container resource allocation
+- Monitor CPU/memory usage: `docker stats`
+- Adjust emulator response delays in configuration
+- Use faster storage for volume mounts
+- Consider parallel test execution
+
+#### Port Conflicts
+**Issue**: Port already in use errors
+```
+Error: Port 12345 already in use
+```
+**Solutions**:
+- Find conflicting process: `lsof -i :12345`
+- Use different ports in configuration
+- Stop conflicting services
+- Use Docker port mapping: `docker-compose up -d --scale`
+
+#### Cleanup Problems
+**Issue**: Zombie containers or volumes not cleaning up
+```
+Error: Container still running after tests
+```
+**Solutions**:
+- Force cleanup: `docker-compose down -v --remove-orphans`
+- Manual cleanup: `docker system prune -f`
+- Check for dependent containers
+- Use `--abort-on-container-exit` in docker-compose
+
+## Directory Structure
+```
+esp32-bpm-detector/
+├── src/              # C++ source files
+├── include/          # Generated headers
+├── schemas/          # FlatBuffers definitions
+├── scripts/          # Python automation
+├── android-app/      # Companion Android app
+├── tests/            # Test files
+└── docs/             # Documentation
+```

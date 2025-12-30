@@ -2,7 +2,7 @@
   "mcpServers": {
     "esp32-serial-monitor": {
       "command": "uv",
-      "args": ["run", "--with", "mcp", "python3", "/home/sparrow/mcp/servers/esp32_serial_monitor/esp32_serial_monitor_mcp_server.py"],
+      "args": ["run", "--with", "mcp", "python3", "/home/sparrow/mcp/servers/python/esp32_serial_monitor/esp32_serial_monitor_mcp_server.py"],
       "env": {
         "ESP32_LOG_LEVEL": "INFO",
         "ESP32_LOG_DIR": "/home/sparrow/esp32_logs",
@@ -12,36 +12,58 @@
     },
     "android-dev-tools": {
       "command": "uv",
-      "args": ["run", "--project", "/home/sparrow/mcp/servers/android_dev_tools", "python", "/home/sparrow/mcp/servers/android_dev_tools/android_dev_tools_mcp_server.py"],
+      "args": ["run", "--project", "/home/sparrow/mcp/servers/python/android_dev_tools", "python", "/home/sparrow/mcp/servers/python/android_dev_tools/android_dev_tools_mcp_server.py"],
       "env": {
         "ANDROID_LOG_LEVEL": "INFO",
         "ANDROID_LOG_DIR": "/home/sparrow/android_logs",
         "ANDROID_SESSION_STORAGE": "/home/sparrow/.mcp/android_sessions.json"
       },
-      "cwd": "/home/sparrow/mcp/servers/android_dev_tools"
+      "cwd": "/home/sparrow/mcp/servers/python/android_dev_tools"
     },
     "conan-cloudsmith": {
       "command": "uv",
-      "args": ["run", "--project", "/home/sparrow/mcp/servers/conan_cloudsmith", "python", "/home/sparrow/mcp/servers/conan_cloudsmith/conan_cloudsmith_mcp_server.py"],
+      "args": ["run", "--project", "/home/sparrow/mcp/servers/python/conan_cloudsmith", "python", "/home/sparrow/mcp/servers/python/conan_cloudsmith/conan_cloudsmith_mcp_server.py"],
       "env": {
         "CONAN_LOG_LEVEL": "INFO",
         "CONAN_LOG_DIR": "/home/sparrow/conan_logs",
         "CONAN_SESSION_STORAGE": "/home/sparrow/.mcp/conan_sessions.json",
-        "CLOUDSMITH_API_KEY": "",
-        "CLOUDSMITH_ORG": ""
+        "CLOUDSMITH_API_KEY": "${CLOUDSMITH_API_KEY}",
+        "CLOUDSMITH_ORG": "sparesparrow-conan"
       },
-      "cwd": "/home/sparrow/mcp/servers/conan_cloudsmith"
+      "cwd": "/home/sparrow/mcp/servers/python/conan_cloudsmith"
     },
     "repo-cleanup": {
       "command": "uv",
-      "args": ["run", "--project", "/home/sparrow/mcp/servers/repo-cleanup-server", "python", "-m", "repo_cleanup.server_simple"],
+      "args": ["run", "--project", "/home/sparrow/mcp/servers/python/repo_cleanup", "python", "-m", "repo_cleanup.server_simple"],
       "env": {
         "REPO_PATH": "${workspaceFolder}",
         "LOG_LEVEL": "INFO",
-        "PYTHONPATH": "/home/sparrow/mcp/servers/repo-cleanup-server/src"
+        "PYTHONPATH": "/home/sparrow/mcp/servers/python/repo_cleanup/src"
       },
-      "cwd": "/home/sparrow/mcp/servers/repo-cleanup-server"
+      "cwd": "/home/sparrow/mcp/servers/python/repo_cleanup"
+    },
+    "unified-deployment": {
+      "command": "uv",
+      "args": ["run", "--with", "mcp", "python3", "/home/sparrow/mcp/servers/python/unified_deployment/unified_deployment_mcp_server.py"],
+      "env": {
+        "PROJECT_DIR": "${workspaceFolder}",
+        "CONAN_PROFILES_DIR": "${workspaceFolder}/conan-profiles",
+        "HARDWARE_EMULATOR_HOST": "127.0.0.1",
+        "HARDWARE_EMULATOR_PORT": "12345",
+        "DOCKER_TEST_ENABLED": "true",
+        "TEST_RESULTS_DIR": "${workspaceFolder}/test_results",
+        "LOG_LEVEL": "INFO"
+      },
+      "cwd": "${workspaceFolder}"
+    },
+    "composed-embedded": {
+      "command": "uv",
+      "args": ["run", "--with", "mcp", "python3", "/home/sparrow/mcp/servers/python/composed_embedded/composed_server.py"],
+      "env": {
+        "PROJECT_DIR": "${workspaceFolder}",
+        "LOG_LEVEL": "INFO"
+      },
+      "cwd": "${workspaceFolder}"
     }
   }
 }
-

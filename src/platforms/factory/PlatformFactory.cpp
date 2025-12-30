@@ -88,3 +88,4 @@ const char* PlatformFactory::getPlatformName()
     return "Unknown";
 #endif
 }
+

@@ -41,6 +41,16 @@
 #define SEGMENT_DIO_PIN 19          // DIO for TM1637
 
 // ============================================================================
+// Arduino Display Serial Configuration (ESP32 → Arduino)
+// ============================================================================
+// Sends BPM data to Arduino Uno display client via Serial2 (dedicated UART)
+// Wiring: ESP32 GPIO17 (TX2) → Arduino D2 (SoftwareSerial RX), GND → GND
+#define ARDUINO_DISPLAY_TX_PIN 17    // ESP32 GPIO17 (Serial2 TX) → Arduino RX
+#define ARDUINO_DISPLAY_RX_PIN 16    // ESP32 GPIO16 (Serial2 RX) ← Arduino TX (optional)
+#define ARDUINO_DISPLAY_BAUD 9600    // Lower baud for reliable SoftwareSerial
+#define ARDUINO_DISPLAY_ENABLED 1    // Set to 1 to enable sending BPM to Arduino
+
+// ============================================================================
 // Audio Configuration - MCP-Prompts Optimized
 // ============================================================================
 // MCP-Prompts /esp32-bpm-fft-configuration recommendations:

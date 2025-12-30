@@ -22,3 +22,4 @@ public:
 };
 
 #endif // IDISPLAY_HANDLER_H
+

@@ -28,13 +28,14 @@ services:
       - .:/workspace
       - /tmp/platformio:/opt/platformio
     working_dir: /workspace
-    command: bash -c "
+    command: >
+      bash -c "
       echo '🧪 MCP-Prompts: Running test suite...' &&
       echo '✅ FFT Configuration: Validated' &&
       echo '✅ Code Review: Passed' &&
       echo '✅ Build: Successful' &&
       echo '🎉 All tests completed!'
-    "
+      "
     environment:
       - PLATFORMIO_CORE_DIR=/opt/platformio
 
@@ -44,7 +45,89 @@ services:
     volumes:
       - ../sparetools:/sparetools
     working_dir: /sparetools/packages/embedded/sparetools-bpm
-    command: bash -c "
+    command: >
+      bash -c "
       conan create . --build missing -o with_tests=True &&
       echo '✅ SpareTools BPM module built successfully'
-    "
+      "
+
+  # Hardware Emulation Services
+  esp32-emulator:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: esp32-bpm-emulator
+    volumes:
+      - .:/workspace
+      - ./test_results:/workspace/test_results
+      - ./logs:/workspace/logs
+    working_dir: /workspace
+    networks:
+      - emulator_net
+    environment:
+      - HARDWARE_EMULATOR_HOST=0.0.0.0
+      - HARDWARE_EMULATOR_PORT=12345
+      - LOG_LEVEL=INFO
+    ports:
+      - "12345:12345"
+    command: ["python3", "/workspace/scripts/start_emulator.py"]
+    depends_on:
+      - esp32-build
+
+  integration-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: esp32-bpm-integration-tests
+    volumes:
+      - .:/workspace
+      - ./test_results:/workspace/test_results
+      - ./logs:/workspace/logs
+    working_dir: /workspace
+    networks:
+      - emulator_net
+      - test_net
+    environment:
+      - HARDWARE_EMULATOR_HOST=esp32-emulator
+      - HARDWARE_EMULATOR_PORT=12345
+      - DOCKER_TEST_ENABLED=true
+      - TEST_RESULTS_DIR=/workspace/test_results
+      - LOG_LEVEL=INFO
+      - PYTHONPATH=/workspace
+    command: ["bash", "/workspace/scripts/run_integration_tests.sh"]
+    depends_on:
+      - esp32-emulator
+      - mock-services
+
+  mock-services:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: esp32-bpm-mock-services
+    volumes:
+      - .:/workspace
+      - ./test_results:/workspace/test_results
+      - ./logs:/workspace/logs
+    working_dir: /workspace
+    networks:
+      - test_net
+    environment:
+      - MOCK_API_PORT=8080
+      - MOCK_WEBSOCKET_PORT=8000
+      - LOG_LEVEL=INFO
+    ports:
+      - "8080:8080"  # Mock ESP32 API server
+      - "8000:8000"  # Mock WebSocket server
+    command: ["python3", "/workspace/scripts/mock_services.py"]
+
+networks:
+  emulator_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+  test_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

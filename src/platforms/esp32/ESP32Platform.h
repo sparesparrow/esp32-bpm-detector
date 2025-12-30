@@ -21,3 +21,4 @@ public:
 };
 
 #endif // ESP32_PLATFORM_H
+

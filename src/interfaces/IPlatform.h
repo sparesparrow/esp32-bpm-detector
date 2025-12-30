@@ -31,3 +31,4 @@ public:
 };
 
 #endif // IPLATFORM_H
+

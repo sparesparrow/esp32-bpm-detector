@@ -36,3 +36,4 @@ public:
 };
 
 #endif // PLATFORM_FACTORY_H
+

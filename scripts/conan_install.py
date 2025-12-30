@@ -11,7 +11,7 @@ import sys
 import subprocess
 import platform
 
-def run_conan_install():
+def run_conan_install(profile=None):
     """Run conan install to set up dependencies."""
 
     # Get the project root directory
@@ -20,15 +20,21 @@ def run_conan_install():
     # Change to project directory
     os.chdir(project_dir)
 
-    print("Installing Conan dependencies for ESP32 BPM Detector...")
+    print(f"Installing Conan dependencies for profile: {profile or 'default'}...")
 
     # Run conan install
     # Use --build=missing to build any missing dependencies
-    # For now, skip the profile to test basic functionality
     cmd = [
         "conan", "install", ".",
         "--build=missing"
     ]
+    
+    # Add profile if specified
+    if profile:
+        # Use profile name with .profile extension for Conan 2.x
+        profile_name = f"{profile}.profile"
+        cmd.extend(["--profile", profile_name])
+        print(f"Using Conan profile: {profile_name}")
 
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
@@ -38,7 +44,7 @@ def run_conan_install():
 
         # Copy headers to local include directory for PlatformIO
         print("Setting up headers for PlatformIO...")
-        setup_platformio_headers(project_dir)
+        setup_platformio_headers(project_dir, profile=profile)
         return True
     except subprocess.CalledProcessError as e:
         print(f"Error installing Conan dependencies: {e}")
@@ -52,15 +58,18 @@ def run_conan_install():
         print("Visit: https://conan.io/downloads.html")
         return False
 
-def setup_platformio_headers(project_dir):
+def setup_platformio_headers(project_dir, profile=None):
     """Copy Conan-generated headers to a location PlatformIO can find."""
     import shutil
 
-    # Create local conan-headers directory
-    headers_dir = os.path.join(project_dir, "conan-headers")
+    # Create profile-specific header directory
+    profile_suffix = f"-{profile}" if profile else ""
+    headers_dir = os.path.join(project_dir, f"conan-headers{profile_suffix}")
     if os.path.exists(headers_dir):
         shutil.rmtree(headers_dir)
     os.makedirs(headers_dir, exist_ok=True)
+    
+    print(f"Headers directory: {headers_dir}")
 
     # Create firmware directory for ESP32-Bus-Pirate binaries
     firmware_dir = os.path.join(project_dir, "firmware")
@@ -137,10 +146,16 @@ def setup_platformio_headers(project_dir):
 
 def main():
     """Main entry point."""
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Install Conan dependencies")
+    parser.add_argument("--profile", help="Conan profile to use (esp32s3, esp32, arduino_uno)", default=None)
+    args = parser.parse_args()
+    
     print("ESP32 BPM Detector - Conan Dependency Setup")
     print("=" * 50)
 
-    success = run_conan_install()
+    success = run_conan_install(profile=args.profile)
 
     if success:
         print("✅ Conan dependencies ready for PlatformIO build")

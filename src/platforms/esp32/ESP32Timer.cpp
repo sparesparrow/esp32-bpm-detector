@@ -23,3 +23,4 @@ void ESP32Timer::delayMicroseconds(uint32_t microseconds)
 {
     ::delayMicroseconds(microseconds);
 }
+

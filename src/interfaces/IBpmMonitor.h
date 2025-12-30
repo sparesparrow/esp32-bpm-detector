@@ -124,3 +124,4 @@ public:
 } // namespace BpmMonitor
 
 #endif // I_BPM_MONITOR_H
+

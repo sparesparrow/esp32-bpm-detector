@@ -11,6 +11,7 @@
 #include "interfaces/IPlatform.h"
 #include "platforms/factory/PlatformFactory.h"
 #include "bpm_monitor_manager.h"
+#include "bpm_serial_sender.h"
 
 // #region agent log
 // JTAG-based logging: Use a circular buffer in memory that can be read via JTAG/GDB
@@ -56,6 +57,10 @@ ISerial* serial = nullptr;
 ITimer* timer = nullptr;
 IPlatform* platform = nullptr;
 BpmMonitor::BpmMonitorManager* monitorManager = nullptr;
+
+#if ARDUINO_DISPLAY_ENABLED
+BPMSerialSender* arduinoDisplaySender = nullptr;
+#endif
 
 // Timing variables
 unsigned long lastDetectionTime = 0;
@@ -103,7 +108,7 @@ bool testFlatBuffers() {
         128.5f,     // bpm
         0.85f,      // confidence
         0.75f,      // signal_level
-        sparetools::bpm::DetectionStatus_DETECTING,
+        sparetools::bpm::ExtEnum::DetectionStatus_DETECTING,
         builder1
     );
 
@@ -133,7 +138,7 @@ bool testFlatBuffers() {
     // Since BPMUpdate is not a root type, we test creation instead of deserialization
     flatbuffers::FlatBufferBuilder test_builder(1024);
     auto test_bpm_offset = BPMFlatBuffers::createBPMUpdate(
-        120.0f, 0.9f, 0.8f, sparetools::bpm::DetectionStatus_DETECTING, test_builder
+        120.0f, 0.9f, 0.8f, sparetools::bpm::ExtEnum::DetectionStatus_DETECTING, test_builder
     );
 
     // Just test that creation succeeded (offset is valid)
@@ -220,7 +225,7 @@ bool testFlatBuffers() {
     delay(5);
 
     // Test that the FlatBuffers API functions exist and are callable
-    const char* status_str = BPMFlatBuffers::detectionStatusToString(sparetools::bpm::DetectionStatus_DETECTING);
+    const char* status_str = BPMFlatBuffers::detectionStatusToString(sparetools::bpm::ExtEnum::DetectionStatus_DETECTING);
     bool api_test = (status_str != nullptr && strlen(status_str) > 0);
 
     bool test5_pass = (test_bpm_offset.o != 0 && status_update != nullptr && api_test);
@@ -333,6 +338,21 @@ void setup() {
 
     // Initialize BPM monitor manager
     monitorManager = new BpmMonitor::BpmMonitorManager(*bpmDetector);
+
+#if ARDUINO_DISPLAY_ENABLED
+    // Initialize Serial2 for Arduino display communication
+    Serial2.begin(ARDUINO_DISPLAY_BAUD, SERIAL_8N1, ARDUINO_DISPLAY_RX_PIN, ARDUINO_DISPLAY_TX_PIN);
+    arduinoDisplaySender = new BPMSerialSender(Serial2, ARDUINO_DISPLAY_BAUD);
+    arduinoDisplaySender->begin();
+    arduinoDisplaySender->setSendInterval(500);  // Send every 500ms
+    serial->println("Arduino Display Serial initialized on Serial2");
+    serial->print("  TX Pin: GPIO");
+    serial->print(ARDUINO_DISPLAY_TX_PIN);
+    serial->print(", RX Pin: GPIO");
+    serial->print(ARDUINO_DISPLAY_RX_PIN);
+    serial->print(", Baud: ");
+    serial->println(ARDUINO_DISPLAY_BAUD);
+#endif
 
     // Skip web server initialization (requires WiFi)
     serial->println("Web server disabled - no WiFi");
@@ -564,6 +584,13 @@ void loop() {
             if (displayHandler) {
                 displayHandler->showBPM(currentBPM, currentConfidence);
             }
+
+#if ARDUINO_DISPLAY_ENABLED
+            // Send BPM to Arduino display via Serial2
+            if (arduinoDisplaySender) {
+                arduinoDisplaySender->sendBPM(currentBPM, currentConfidence);
+            }
+#endif
 
             // Log successful BPM update
             // #region agent log

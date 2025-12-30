@@ -21,3 +21,4 @@ private:
 };
 
 #endif // ESP32_DISPLAY_HANDLER_H
+

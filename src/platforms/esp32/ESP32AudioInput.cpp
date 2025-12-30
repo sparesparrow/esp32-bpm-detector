@@ -83,3 +83,4 @@ void ESP32AudioInput::resetCalibration()
         audio_input_->resetCalibration();
     }
 }
+

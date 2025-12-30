@@ -6,7 +6,7 @@ flatbuffers::Offset<sparetools::bpm::BPMUpdate> BPMFlatBuffers::createBPMUpdate(
     float bpm,
     float confidence,
     float signal_level,
-    sparetools::bpm::DetectionStatus status,
+    sparetools::bpm::ExtEnum::DetectionStatus status,
     flatbuffers::FlatBufferBuilder& builder) {
 
     // Create BPM analysis data
@@ -36,7 +36,7 @@ flatbuffers::Offset<sparetools::bpm::BPMUpdate> BPMFlatBuffers::createBPMUpdate(
         bpm,
         confidence,
         signal_level,
-        status,
+        static_cast<sparetools::bpm::DetectionStatus>(status),
         analysis_offset,
         quality_offset
     );
@@ -113,14 +113,14 @@ const sparetools::bpm::StatusUpdate* BPMFlatBuffers::deserializeStatusUpdate(
     return flatbuffers::GetRoot<sparetools::bpm::StatusUpdate>(buffer.data());
 }
 
-const char* BPMFlatBuffers::detectionStatusToString(sparetools::bpm::DetectionStatus status) {
+const char* BPMFlatBuffers::detectionStatusToString(sparetools::bpm::ExtEnum::DetectionStatus status) {
     switch (status) {
-        case sparetools::bpm::DetectionStatus_INITIALIZING: return "INITIALIZING";
-        case sparetools::bpm::DetectionStatus_DETECTING: return "DETECTING";
-        case sparetools::bpm::DetectionStatus_LOW_SIGNAL: return "LOW_SIGNAL";
-        case sparetools::bpm::DetectionStatus_NO_SIGNAL: return "NO_SIGNAL";
-        case sparetools::bpm::DetectionStatus_ERROR: return "ERROR";
-        case sparetools::bpm::DetectionStatus_CALIBRATING: return "CALIBRATING";
+        case sparetools::bpm::ExtEnum::DetectionStatus_INITIALIZING: return "INITIALIZING";
+        case sparetools::bpm::ExtEnum::DetectionStatus_DETECTING: return "DETECTING";
+        case sparetools::bpm::ExtEnum::DetectionStatus_LOW_SIGNAL: return "LOW_SIGNAL";
+        case sparetools::bpm::ExtEnum::DetectionStatus_NO_SIGNAL: return "NO_SIGNAL";
+        case sparetools::bpm::ExtEnum::DetectionStatus_ERROR: return "ERROR";
+        case sparetools::bpm::ExtEnum::DetectionStatus_CALIBRATING: return "CALIBRATING";
         default: return "UNKNOWN";
     }
 }

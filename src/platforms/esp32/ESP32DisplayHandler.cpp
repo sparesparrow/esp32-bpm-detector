@@ -35,3 +35,4 @@ void ESP32DisplayHandler::showBPM(int bpm, float confidence)
         display_handler_->showBPM(bpm, confidence);
     }
 }
+

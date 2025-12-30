@@ -34,6 +34,7 @@ class Esp32BpmDetectorConan(ConanFile):
     # Use foundation packages from SpareTools ecosystem
     requires = [
         "flatbuffers/24.3.25",
+        "sparetools-mcp-core/1.0.0",  # Available from Cloudsmith (sparetools remote)
     ]
 
     # Build tools - use system Python as fallback
@@ -49,7 +50,7 @@ class Esp32BpmDetectorConan(ConanFile):
         "with_networking": [True, False],
         "with_websocket": [True, False],
         "with_audio_calibration": [True, False],
-        "target_board": ["esp32", "esp32s2", "esp32s3", "esp32c3"],
+        "target_board": ["esp32", "esp32s2", "esp32s3", "esp32c3", "arduino_uno"],
     }
 
     default_options = {
@@ -105,8 +106,12 @@ class Esp32BpmDetectorConan(ConanFile):
         basic_layout(self)
 
     def generate(self):
-        # Generate FlatBuffers headers for ESP32-specific protocols
-        self.generate_cpp_headers()
+        # Skip FlatBuffers for Arduino Uno (memory constraints)
+        # Arduino Uno has only 32KB flash and 2KB RAM
+        if str(self.options.target_board) != "arduino_uno":
+            self.generate_cpp_headers()
+        else:
+            print("Skipping FlatBuffers generation for Arduino Uno (memory constraints)")
 
         # Generate CMake toolchain (ESP32 uses PlatformIO, not CMake)
         tc = CMakeToolchain(self)
