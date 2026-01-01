@@ -24,8 +24,18 @@ BPM_INCLUDE_SUB_REGEX = "\n#include \"Bpm\\g<1>_extracted.h\""
 
 
 class Esp32BpmDetectorConan(ConanFile):
+
+    python_requires = [
+    "sparetools-lvgl/8.3.11",
+    "sparetools-hal-sunton/1.0.0",
+    "sparesparrow-protocols/1.0.0",
+    "sparetools-bpm-schemas/2.0.0",
+    "sparetools-protocols/1.0.0",
+    "sparetools-embedded/1.0.0",
+        "sparetools-base/2.0.3",
+    ]
     name = "sparetools-bpm-detector"
-    version = "0.1.0"
+    version = "0.1.1"
     url = 'https://github.com/sparesparrow/esp32-bpm-detector'
     description = 'ESP32 BPM detector firmware with FlatBuffers protocol support'
     topics = ("esp32", "bpm", "detector", "embedded", "firmware")
@@ -33,13 +43,16 @@ class Esp32BpmDetectorConan(ConanFile):
 
     # Use foundation packages from SpareTools ecosystem
     requires = [
-        "flatbuffers/24.3.25",
+        "sparetools-flatbuffers/24.3.25",
         "sparetools-mcp-core/1.0.0",  # Available from Cloudsmith (sparetools remote)
+        "sparetools-esp32-bpm-prompts/1.0.0",  # ESP32 BPM detector specific prompts
     ]
 
-    # Build tools - use system Python as fallback
-    # Note: sparetools-cpython can be enabled via Cloudsmith remote if needed
-    tool_requires = []
+    # Build tools - use SpareTools consistent tooling
+    tool_requires = [
+        "sparetools-flatbuffers/24.3.25",  # Consistent FlatBuffers compiler + library
+        "sparetools-cpython/3.12.7",       # Consistent Python runtime
+    ]
 
     # Export source files and schemas for protocol generation
     exports_sources = "schemas/*", "src/*", "include/*", "lib/*", "platformio.ini"
@@ -124,22 +137,15 @@ class Esp32BpmDetectorConan(ConanFile):
 
         print("Starting FlatBuffers header generation for ESP32 BPM detector...")
 
-        # Find flatc executable
-        flatc_paths = ['flatc', 'flatc.exe', '/usr/local/bin/flatc', '/usr/bin/flatc']
-        flatc_cmd = None
-        for path in flatc_paths:
-            try:
-                result = subprocess.run([path, '--version'], capture_output=True, text=True)
-                if result.returncode == 0:
-                    flatc_cmd = path
-                    break
-            except (FileNotFoundError, subprocess.SubprocessError):
-                continue
+        # Use SpareTools flatc (guaranteed to be in PATH via tool_requires)
+        flatc_cmd = "flatc"
 
-        if not flatc_cmd:
-            raise RuntimeError("Could not find flatc executable. Please install FlatBuffers compiler.")
-
-        print(f"Found flatc at: {flatc_cmd}")
+        # Verify SpareTools flatc is available
+        try:
+            result = subprocess.run([flatc_cmd, '--version'], capture_output=True, text=True, check=True)
+            print(f"Using SpareTools flatc: {result.stdout.strip()}")
+        except (subprocess.SubprocessError, FileNotFoundError) as e:
+            raise RuntimeError(f"SpareTools flatc not found. Ensure sparetools-flatbuffers is properly installed: {e}")
 
         # Ensure output directory exists
         self.cpp_header_files.mkdir(parents=True, exist_ok=True)
