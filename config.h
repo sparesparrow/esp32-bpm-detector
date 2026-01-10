@@ -4,8 +4,8 @@
 // ============================================================================
 // WiFi Configuration
 // ============================================================================
-#define WIFI_SSID "BPM"
-#define WIFI_PASSWORD "pppppppp"
+#define WIFI_SSID "Prospects"
+#define WIFI_PASSWORD "Romy1337"
 
 // ============================================================================
 // Hardware Configuration
@@ -33,6 +33,26 @@
 #define ADC_RESOLUTION 12           // ESP32 ADC resolution (12 bits max)
 
 // ============================================================================
+// Audio Filter Configuration
+// ============================================================================
+#define HIGH_PASS_CUTOFF_HZ 20.0f   // High-pass filter cutoff (Hz)
+#define DC_BLOCKER_POLE 0.995f     // DC blocker filter pole (closer to 1 = sharper cutoff)
+
+// ============================================================================
+// BPM Detection Algorithm Configuration
+// ============================================================================
+#define SPECTRAL_BPM_WEIGHT 0.4f           // Weight given to spectral BPM analysis (0.0-1.0)
+#define BEAT_DEBOUNCE_BASE_MS 300          // Base debounce time between beats (ms)
+#define MIN_BEAT_INTERVAL_MS 200           // Minimum interval between beats (ms)
+#define MAX_BEAT_INTERVAL_MS 2000          // Maximum interval between beats (ms)
+
+// ============================================================================
+// Spectral Analysis Configuration
+// ============================================================================
+#define SPECTRAL_PEAK_THRESHOLD 0.3f       // Threshold for spectral peak detection (0.0-1.0)
+#define MIN_SPECTRAL_PEAK_MAGNITUDE 0.1f   // Minimum magnitude for spectral peaks
+
+// ============================================================================
 // BPM Detection Configuration
 // ============================================================================
 #define MIN_BPM 60                  // Minimum BPM to detect
@@ -50,6 +70,8 @@
 // ============================================================================
 #define ENVELOPE_DECAY 0.9          // Envelope decay factor (0.8-0.99)
 #define ENVELOPE_RELEASE 0.95       // Envelope release factor (0.9-0.99)
+#define ENVELOPE_ATTACK_FACTOR 0.1f // Envelope attack factor for rise time
+#define ENVELOPE_RELEASE_FACTOR 0.05f // Envelope release factor for fall time
 #define MIN_BEAT_INTERVAL 300       // Minimum milliseconds between beats (60-200 BPM)
 #define MAX_BEAT_INTERVAL 1000      // Maximum milliseconds between beats
 

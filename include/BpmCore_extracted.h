@@ -3,18 +3,13 @@
 #pragma once
 
 #include <cstdint>
-
 #include "BpmCommon_extracted.h"
-
 
 namespace sparetools {
 
 namespace bpm {
-
 namespace ExtEnum {
 
 }
-
 }
-
 }

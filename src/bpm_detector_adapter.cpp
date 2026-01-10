@@ -39,7 +39,7 @@ void BpmDetectorAdapter::begin(uint8_t adc_pin) {
     m_detector.reset();
 }
 
-[[maybe_unused]] void BpmDetectorAdapter::sample() {
+void BpmDetectorAdapter::sample() {
     if (!m_initialized || !m_audioInput) {
         return;
     }
@@ -52,23 +52,23 @@ void BpmDetectorAdapter::begin(uint8_t adc_pin) {
     m_detector.processSample(rawSample, currentTime);
 }
 
-[[maybe_unused]] float BpmDetectorAdapter::getBPM() const {
+float BpmDetectorAdapter::getBPM() const {
     return m_detector.bpm;
 }
 
-[[maybe_unused]] float BpmDetectorAdapter::getConfidence() const {
+float BpmDetectorAdapter::getConfidence() const {
     return m_detector.confidence;
 }
 
-[[maybe_unused]] float BpmDetectorAdapter::getSignalLevel() const {
+float BpmDetectorAdapter::getSignalLevel() const {
     return m_detector.signalLevel;
 }
 
-[[maybe_unused]] bool BpmDetectorAdapter::isStable() const {
+bool BpmDetectorAdapter::isStable() const {
     return m_detector.isStable;
 }
 
-[[maybe_unused]] const char* BpmDetectorAdapter::getStatusString() const {
+const char* BpmDetectorAdapter::getStatusString() const {
     if (!m_initialized) {
         return "NOT_INITIALIZED";
     }
@@ -81,7 +81,7 @@ void BpmDetectorAdapter::begin(uint8_t adc_pin) {
     return "DETECTING";
 }
 
-[[maybe_unused]] String BpmDetectorAdapter::getStatsJson() const {
+String BpmDetectorAdapter::getStatsJson() const {
     // Create JSON-compatible string for existing code compatibility
     char buffer[256];
     snprintf(buffer, sizeof(buffer),
@@ -98,19 +98,20 @@ void BpmDetectorAdapter::reset() {
     m_detector.reset();
 }
 
-[[maybe_unused]] std::vector<uint8_t> BpmDetectorAdapter::createBPMUpdateFlatBuffer(
+std::vector<uint8_t> BpmDetectorAdapter::createBPMUpdateFlatBuffer(
     flatbuffers::FlatBufferBuilder& builder) const {
 
     // Use existing FlatBuffers implementation directly
     auto bpmUpdateOffset = BPMFlatBuffers::createBPMUpdate(m_detector.bpm, m_detector.confidence,
                                                           m_detector.signalLevel,
-                                                           sparetools::bpm::ExtEnum::DetectionStatus_DETECTING,
+                                                          sparetools::bpm::DetectionStatus_DETECTING,
+                                                          millis(), "esp32-s3", "1.1.0",
                                                           builder);
 
     return BPMFlatBuffers::serializeBPMUpdate(bpmUpdateOffset, builder);
 }
 
-[[maybe_unused]] std::vector<uint8_t> BpmDetectorAdapter::createStatusUpdateFlatBuffer(
+std::vector<uint8_t> BpmDetectorAdapter::createStatusUpdateFlatBuffer(
     uint64_t uptime_seconds,
     uint32_t free_heap_bytes,
     uint8_t cpu_usage_percent,

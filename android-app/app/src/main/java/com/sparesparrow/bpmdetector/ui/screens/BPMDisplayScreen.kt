@@ -2,6 +2,8 @@ package com.sparesparrow.bpmdetector.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,39 +22,90 @@ import com.sparesparrow.bpmdetector.ui.components.FrequencySpectrumVisualization
 import com.sparesparrow.bpmdetector.ui.components.VisualizationStyle
 import com.sparesparrow.bpmdetector.viewmodels.BPMViewModel
 import com.sparesparrow.bpmdetector.viewmodels.DetectionMode
+import com.sparesparrow.bpmdetector.models.BPMData
 import kotlinx.coroutines.delay
+
+/**
+ * UI State for BPM Display Screen
+ */
+private data class BPMDisplayUiState(
+    val bpmData: BPMData?,
+    val connectionStatus: ConnectionStatus,
+    val isServiceRunning: Boolean,
+    val detectionMode: DetectionMode,
+    val frequencySpectrum: FloatArray?,
+    val localSampleRate: Int,
+    val localFftSize: Int
+)
+
+/**
+ * Pre-computed display values to avoid recomputation
+ */
+private data class DisplayValues(
+    val bpm: String,
+    val confidence: Int,
+    val signalLevel: Int,
+    val status: String,
+    val isDetecting: Boolean,
+    val hasLowSignal: Boolean,
+    val hasError: Boolean
+)
 
 /**
  * BPM Display Screen - Main screen showing live BPM data
  */
 @Composable
 fun BPMDisplayScreen(viewModel: BPMViewModel) {
-    val bpmData by viewModel.bpmDataFlow.collectAsState()
-    val connectionStatus by viewModel.connectionStatus.collectAsState()
-    val isServiceRunning by viewModel.isServiceRunning.collectAsState()
-    val detectionMode by viewModel.detectionMode.collectAsState()
-    val frequencySpectrum by viewModel.frequencySpectrum.collectAsState()
-    val localSampleRate by viewModel.localSampleRate.collectAsState()
-    val localFftSize by viewModel.localFftSize.collectAsState()
+    // Collect all state flows efficiently
+    val uiState by remember {
+        derivedStateOf {
+            BPMDisplayUiState(
+                bpmData = viewModel.bpmDataFlow.value,
+                connectionStatus = viewModel.connectionStatus.value,
+                isServiceRunning = viewModel.isServiceRunning.value,
+                detectionMode = viewModel.detectionMode.value,
+                frequencySpectrum = viewModel.frequencySpectrum.value,
+                localSampleRate = viewModel.localSampleRate.value,
+                localFftSize = viewModel.localFftSize.value
+            )
+        }
+    }
 
     // Auto-start monitoring when screen is displayed
-    LaunchedEffect(Unit) {
-        if (!isServiceRunning) {
-            delay(500) // Small delay to ensure service is bound
+    LaunchedEffect(uiState.isServiceRunning) {
+        if (!uiState.isServiceRunning) {
             viewModel.startMonitoring()
+        }
+    }
+
+    // Pre-compute display values to avoid recomputation
+    val displayValues by remember(uiState.bpmData) {
+        derivedStateOf {
+            uiState.bpmData?.let { data ->
+                DisplayValues(
+                    bpm = viewModel.getFormattedBpm(),
+                    confidence = viewModel.getConfidencePercentage(),
+                    signalLevel = viewModel.getSignalLevelPercentage(),
+                    status = viewModel.getStatusDescription(),
+                    isDetecting = viewModel.isDetecting(),
+                    hasLowSignal = viewModel.hasLowSignal(),
+                    hasError = viewModel.hasError()
+                )
+            }
         }
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         // Connection Status
         ConnectionStatusIndicator(
-            connectionStatus = connectionStatus,
+            connectionStatus = uiState.connectionStatus,
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -60,7 +113,7 @@ fun BPMDisplayScreen(viewModel: BPMViewModel) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.small,
-            color = when (detectionMode) {
+            color = when (uiState.detectionMode) {
                 DetectionMode.ESP32 -> MaterialTheme.colorScheme.primaryContainer
                 DetectionMode.LOCAL -> MaterialTheme.colorScheme.secondaryContainer
             }
@@ -73,7 +126,7 @@ fun BPMDisplayScreen(viewModel: BPMViewModel) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = when (detectionMode) {
+                    text = when (uiState.detectionMode) {
                         DetectionMode.ESP32 -> "📡 ESP32 Device"
                         DetectionMode.LOCAL -> "🎤 Phone Microphone"
                     },
@@ -84,19 +137,26 @@ fun BPMDisplayScreen(viewModel: BPMViewModel) {
         }
 
         // BPM Display
-        BPMDisplay(
-            bpm = viewModel.getFormattedBpm(),
-            confidence = viewModel.getConfidencePercentage(),
-            signalLevel = viewModel.getSignalLevelPercentage(),
-            status = viewModel.getStatusDescription(),
-            isDetecting = viewModel.isDetecting(),
-            hasLowSignal = viewModel.hasLowSignal(),
-            hasError = viewModel.hasError(),
-            modifier = Modifier.weight(1f)
-        )
+        displayValues?.let { values ->
+            BPMDisplay(
+                bpm = values.bpm,
+                confidence = values.confidence,
+                signalLevel = values.signalLevel,
+                status = values.status,
+                isDetecting = values.isDetecting,
+                hasLowSignal = values.hasLowSignal,
+                hasError = values.hasError,
+                modifier = Modifier.weight(1f)
+            )
+        } ?: run {
+            // Loading state
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+        }
 
         // Frequency Spectrum Visualization (only for local mode)
-        if (detectionMode == DetectionMode.LOCAL && frequencySpectrum != null) {
+        if (uiState.detectionMode == DetectionMode.LOCAL && uiState.frequencySpectrum != null) {
             Card(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -110,9 +170,9 @@ fun BPMDisplayScreen(viewModel: BPMViewModel) {
                         modifier = Modifier.padding(horizontal = 8.dp)
                     )
                     FrequencySpectrumVisualization(
-                        spectrum = frequencySpectrum,
-                        sampleRate = localSampleRate,
-                        fftSize = localFftSize,
+                        spectrum = uiState.frequencySpectrum,
+                        sampleRate = uiState.localSampleRate,
+                        fftSize = uiState.localFftSize,
                         style = VisualizationStyle.BARS
                     )
                 }
@@ -121,9 +181,9 @@ fun BPMDisplayScreen(viewModel: BPMViewModel) {
 
         // Control Buttons
         BPMControlButtons(
-            isServiceRunning = isServiceRunning,
+            isServiceRunning = uiState.isServiceRunning,
             onStartStopClick = {
-                if (isServiceRunning) {
+                if (uiState.isServiceRunning) {
                     viewModel.stopMonitoring()
                 } else {
                     viewModel.startMonitoring()

@@ -3,30 +3,13 @@
 #pragma once
 
 #include <cstdint>
-
-#include "BpmAudio_extracted.h"
-
 #include "BpmCommon_extracted.h"
-
-#include "BpmConfig_extracted.h"
-
-#include "BpmCore_extracted.h"
-
-#include "BpmRequests_extracted.h"
-
-#include "BpmResponses_extracted.h"
-
-#include "BpmSystem_extracted.h"
-
 
 namespace sparetools {
 
 namespace bpm {
-
 namespace ExtEnum {
 
 }
-
 }
-
 }

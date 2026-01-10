@@ -1,0 +1,85 @@
+{
+  "timestamp": "2026-01-01T03:19:16.630001+00:00",
+  "tests": {
+    "MCP Prompts Discovery": {
+      "success": true,
+      "prompts_found": 1,
+      "errors": [],
+      "duration_ms": 182178.30276489258
+    },
+    "Parallel Builds": {
+      "success": true,
+      "esp32_build": {
+        "success": true,
+        "time_ms": 41053.09748649597
+      },
+      "android_build": {
+        "success": true,
+        "time_ms": 6767.720937728882
+      },
+      "parallel_time_ms": 41068.214893341064,
+      "errors": [],
+      "duration_ms": 44570.42837142944
+    },
+    "Parallel Tests": {
+      "success": true,
+      "esp32_test": {
+        "success": false,
+        "time_ms": 11140.942811965942
+      },
+      "android_test": {
+        "success": false,
+        "time_ms": 55274.898290634155
+      },
+      "parallel_time_ms": 58560.789346694946,
+      "errors": [],
+      "duration_ms": 58561.08736991882
+    },
+    "Timeout Configuration": {
+      "success": true,
+      "timeouts_verified": {
+        "cursor_agent": 300,
+        "build": 900,
+        "test": 600,
+        "e2e": 900
+      },
+      "errors": [],
+      "duration_ms": 3004.194736480713
+    },
+    "Notification System": {
+      "success": true,
+      "notifications_tested": [
+        "audio",
+        "light",
+        "phase_start",
+        "success",
+        "progress"
+      ],
+      "errors": [],
+      "duration_ms": 1977.489948272705
+    },
+    "Learning Loop Recording": {
+      "success": true,
+      "interactions_recorded": 3,
+      "errors": [],
+      "duration_ms": 72.16572761535645
+    },
+    "Workflow Integration": {
+      "success": true,
+      "phases_tested": [
+        "initialization",
+        "prompt_discovery",
+        "notifications"
+      ],
+      "errors": [],
+      "duration_ms": 93005.117893219
+    }
+  },
+  "summary": {
+    "total_tests": 7,
+    "passed": 7,
+    "failed": 0,
+    "success_rate": 100.0,
+    "total_duration_ms": 383368.7868118286
+  }
+}

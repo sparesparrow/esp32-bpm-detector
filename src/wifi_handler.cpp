@@ -47,7 +47,7 @@ bool WiFiHandler::begin(const char* ssid, const char* password) {
     return true;
 }
 
-[[maybe_unused]] bool WiFiHandler::connect() {
+bool WiFiHandler::connect() {
     if (_ssid.isEmpty() || _password.isEmpty()) {
         _errorMessage = "No credentials set";
         _currentState = WIFI_ERROR;
@@ -97,11 +97,11 @@ bool WiFiHandler::reconnect() {
     return _attemptConnection();
 }
 
-[[maybe_unused]] bool WiFiHandler::isConnected() {
+bool WiFiHandler::isConnected() {
     return (WiFi.status() == WL_CONNECTED) && (_currentState == WIFI_CONNECTED);
 }
 
-[[maybe_unused]] WiFiStatus WiFiHandler::getStatus() {
+WiFiStatus WiFiHandler::getStatus() {
     WiFiStatus status;
     status.state = _currentState;
     status.ssid = _ssid;
@@ -164,7 +164,7 @@ bool WiFiHandler::setupAccessPoint(const char* ap_ssid, const char* ap_password)
     }
 }
 
-[[maybe_unused]] void WiFiHandler::setCredentials(const char* ssid, const char* password) {
+void WiFiHandler::setCredentials(const char* ssid, const char* password) {
     if (ssid && password) {
         _ssid = ssid;
         _password = password;
@@ -174,15 +174,15 @@ bool WiFiHandler::setupAccessPoint(const char* ap_ssid, const char* ap_password)
     }
 }
 
-[[maybe_unused]] void WiFiHandler::setReconnectionAttempts(int max_attempts) {
+void WiFiHandler::setReconnectionAttempts(int max_attempts) {
     _maxReconnectionAttempts = max_attempts;
 }
 
-[[maybe_unused]] void WiFiHandler::setReconnectionDelay(unsigned long initial_delay_ms) {
+void WiFiHandler::setReconnectionDelay(unsigned long initial_delay_ms) {
     _reconnectionDelay = initial_delay_ms;
 }
 
-[[maybe_unused]] void WiFiHandler::update() {
+void WiFiHandler::update() {
     _updateState();
 
     // Handle reconnection logic
@@ -191,7 +191,7 @@ bool WiFiHandler::setupAccessPoint(const char* ap_ssid, const char* ap_password)
     }
 }
 
-[[maybe_unused]] void WiFiHandler::resetConnectionAttempts() {
+void WiFiHandler::resetConnectionAttempts() {
     _currentReconnectionAttempt = 0;
     _lastReconnectionAttempt = 0;
 }
@@ -300,7 +300,9 @@ bool WiFiHandler::_attemptConnection() {
 
 void WiFiHandler::_updateState() {
     if (WiFi.getMode() == WIFI_AP) {
-        _currentState = WIFI_AP_MODE;
+        if (_currentState != WIFI_AP_MODE) {
+            _currentState = WIFI_AP_MODE;
+        }
         return;
     }
 
@@ -351,14 +353,14 @@ void WiFiHandler::_handleReconnection() {
 
     if (_currentReconnectionAttempt < _maxReconnectionAttempts) {
         reconnect();
-    } else {
+    } else if (_currentState != WIFI_AP_MODE) {
         // All reconnection attempts failed, fall back to AP mode
         DEBUG_PRINTLN("[WiFi] All reconnection attempts failed, enabling AP mode");
         setupAccessPoint();
     }
 }
 
-[[maybe_unused]] bool WiFiHandler::_validateCredentials() {
+bool WiFiHandler::_validateCredentials() {
     return (!_ssid.isEmpty() && !_password.isEmpty());
 }
 
@@ -408,6 +410,6 @@ void WiFiHandler::setupWebServer() {
 unsigned long WiFiHandler::_calculateBackoffDelay() {
     // Exponential backoff: delay = base_delay * 2^attempt
     // Cap at 30 seconds maximum
-    unsigned long backoff_delay = _reconnectionDelay * (1UL << min(_currentReconnectionAttempt, 5));
-    return min(backoff_delay, 30000UL);
+    unsigned long delay = _reconnectionDelay * (1UL << min(_currentReconnectionAttempt, 5));
+    return min(delay, 30000UL);
 }

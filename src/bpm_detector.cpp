@@ -7,6 +7,9 @@
 #include <cstdlib>
 #include <numeric>
 
+// Ensure enums are available (arduinoFFT 2.0.4 includes enumsFFT.h automatically)
+// If using older version, may need explicit include
+
 // Global audio input instance (will be initialized by begin())
 static AudioInput* audio_input = nullptr;
 
@@ -26,6 +29,19 @@ BPMDetector::BPMDetector(uint16_t sample_rate, uint16_t fft_size)
     , audio_input_(nullptr)
     , timer_(nullptr)
     , owns_audio_input_(false)
+    , envelope_attack_rate_(0.1f)
+    , envelope_release_rate_(0.95f)
+    , last_beat_time_(0)
+    , current_tempo_estimate_(0.0f)
+    , beat_quality_history_(0.0f)
+    , samples_added_(0)
+#if ENABLE_PERFORMANCE_MONITORING
+    , fft_compute_time_us_(0)
+    , total_detect_time_us_(0)
+    , peak_memory_usage_(0)
+    , average_fft_time_ms_(0.0f)
+    , performance_sample_count_(0)
+#endif
 {
 #ifdef PLATFORM_ESP32
     // Pre-allocate buffers
@@ -69,6 +85,19 @@ BPMDetector::BPMDetector(IAudioInput* audio_input, ITimer* timer, uint16_t sampl
     , audio_input_(audio_input)
     , timer_(timer)
     , owns_audio_input_(false)
+    , envelope_attack_rate_(0.1f)
+    , envelope_release_rate_(0.95f)
+    , last_beat_time_(0)
+    , current_tempo_estimate_(0.0f)
+    , beat_quality_history_(0.0f)
+    , samples_added_(0)
+#if ENABLE_PERFORMANCE_MONITORING
+    , fft_compute_time_us_(0)
+    , total_detect_time_us_(0)
+    , peak_memory_usage_(0)
+    , average_fft_time_ms_(0.0f)
+    , performance_sample_count_(0)
+#endif
 {
 #ifdef PLATFORM_ESP32
     // Pre-allocate buffers
@@ -213,22 +242,38 @@ bool BPMDetector::isBufferReady() const {
 }
 
 void BPMDetector::performFFT() {
-    // Prepare data for FFT
+#ifdef PLATFORM_ESP32
+    // Pre-allocate buffers to avoid heap fragmentation (ESP32 optimization)
+    // Resize if needed (shouldn't be necessary if fft_size_ is constant)
+    #if FFT_PREALLOCATE_BUFFERS
+    fft_real_buffer_.resize(fft_size_);
+    fft_imag_buffer_.resize(fft_size_);
+    double* vReal = fft_real_buffer_.data();
+    double* vImag = fft_imag_buffer_.data();
+    #else
+    // Fallback: allocate on stack if pre-allocation not enabled
+    // For ESP32, prefer pre-allocation to avoid fragmentation
     double* vReal = new double[fft_size_];
     double* vImag = new double[fft_size_];
+    #endif
+#else
+    // For Arduino/other platforms, use dynamic allocation
+    double* vReal = new double[fft_size_];
+    double* vImag = new double[fft_size_];
+#endif
 
     for (size_t i = 0; i < fft_size_; ++i) {
         vReal[i] = sample_buffer_[i];
         vImag[i] = 0.0;
     }
 
-    // Create FFT object
-    arduinoFFT FFT = arduinoFFT(vReal, vImag, fft_size_, sample_rate_);
+    // Create FFT object using ArduinoFFT 2.0 API
+    ArduinoFFT<double> FFT(vReal, vImag, fft_size_, sample_rate_);
 
-    // Perform FFT
-    FFT.Windowing(FFT_WIN_TYP_HAMMING, FFT_FORWARD);
-    FFT.Compute(FFT_FORWARD);
-    FFT.ComplexToMagnitude();
+    // Perform FFT with ArduinoFFT 2.0 API
+    FFT.windowing(FFTWindow::Hamming, FFTDirection::Forward);
+    FFT.compute(FFTDirection::Forward);
+    FFT.complexToMagnitude();
 
     // Extract magnitude data (only first half is useful)
     size_t half_size = fft_size_ / 2;
@@ -237,9 +282,16 @@ void BPMDetector::performFFT() {
         fft_buffer_[i] = vReal[i];
     }
 
-    // Clean up
+    // Clean up if using dynamic allocation
+#ifdef PLATFORM_ESP32
+    #if !FFT_PREALLOCATE_BUFFERS
     delete[] vReal;
     delete[] vImag;
+    #endif
+#else
+    delete[] vReal;
+    delete[] vImag;
+#endif
 }
 
 void BPMDetector::detectBeatEnvelope() {

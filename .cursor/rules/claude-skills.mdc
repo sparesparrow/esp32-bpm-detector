@@ -1,0 +1,151 @@
+---
+globs: ["**/*"]
+description: "Claude Skills Configuration - dev-intelligence-orchestrator, embedded-audio-analyzer, and oms-cpp-style"
+alwaysApply: true
+---
+
+# Claude Skills Configuration
+
+This project uses three specialized Claude skills located in `.claude/skills/`. These skills provide intelligent development assistance, audio processing optimization, and C++ style guidance.
+
+## Active Skills
+
+### 1. dev-intelligence-orchestrator
+**Location**: `.claude/skills/dev-intelligence-orchestrator/`
+
+**Purpose**: Intelligent development tool orchestration with self-improving learning capabilities through mcp-prompts integration.
+
+**Key Features**:
+- Project type detection (languages, frameworks, project nature)
+- Intelligent build error analysis with pattern recognition
+- Static code analysis (C++ via cppcheck, Python via pylint) with learned configurations
+- Framework-aware test execution (pytest, PlatformIO, gtest, etc.)
+- Self-improving learning loop that captures and reuses successful configurations
+
+**When to Use**:
+- Analyzing build errors and compilation issues
+- Running static code analysis on C++ or Python code
+- Executing tests with framework detection
+- Detecting project characteristics and dependencies
+- Learning from successful tool configurations for future use
+
+**Scripts Available**:
+- `detect_project_type.sh` - Detects project characteristics
+- `parse_build_errors.py` - Intelligent build error analysis
+- `analyze_cpp.sh` - C++ static analysis with learning
+- `analyze_python.sh` - Python static analysis with learning
+- `run_tests.sh` - Test execution with framework detection
+- `mcp_query.sh` - mcp-prompts API wrapper
+
+**Learning Behavior**:
+- First execution: Uses defaults and captures learnings
+- Subsequent executions: Uses learned configurations automatically
+- Confidence tracking: low → medium → high based on success rate
+
+### 2. embedded-audio-analyzer
+**Location**: `.claude/skills/embedded-audio-analyzer/`
+
+**Purpose**: Optimize ESP32 audio processing, improve beat detection accuracy, and debug signal processing issues.
+
+**Key Features**:
+- Performance profiling for FFT configuration
+- Beat detection accuracy testing and optimization
+- Signal processing refinement and analysis
+- Hardware calibration for different microphones/devices
+- Cross-device learning and optimization
+
+**When to Use**:
+- Optimizing FFT configuration for ESP32 audio processing
+- Improving BPM detection accuracy
+- Debugging signal processing issues
+- Calibrating for different hardware (microphones, ESP32 variants)
+- Analyzing frequency response and audio characteristics
+
+**Workflow Phases**:
+1. **Performance Profiling**: Analyze current FFT configuration and profile performance
+2. **Beat Detection Optimization**: Test accuracy and get optimization guidance
+3. **Signal Processing Refinement**: Analyze frequency response and optimize preprocessing
+4. **Hardware Calibration**: Create device-specific optimizations
+5. **Cross-Device Learning**: Document and share optimizations across devices
+
+### 3. oms-cpp-style
+**Location**: `.claude/skills/oms-cpp-style/`
+
+**Purpose**: C++ coding standards and best practices analyzer that learns from OMS projects and applies patterns to new code.
+
+**Key Features**:
+- Analyzes OMS code in `~/projects/oms/` to extract patterns
+- Documents naming conventions, code style, testing patterns
+- Applies learned patterns to new code in any project
+- Self-improving: updates documentation as new patterns are discovered
+- Covers: naming conventions, code style, testing patterns, FlatBuffers usage, smart pointers, RAII, polymorphism
+
+**When to Use**:
+- Writing new C++ code that should match OMS conventions
+- Creating FlatBuffers schemas following OMS patterns
+- Writing unit tests using OMS testing patterns
+- Reviewing code for style compliance
+- Refactoring to match OMS conventions (smart pointers, RAII, etc.)
+
+**Reference Files** (in `references/` subdirectory):
+- `naming_conventions.md` - Variables, functions, classes, files
+- `code_style.md` - Formatting, organization, comments
+- `testing_patterns.md` - Unit tests, integration tests, mocking
+- `flatbuffers_patterns.md` - Schema design, usage patterns
+- `design_patterns.md` - Smart pointers, RAII, polymorphism, abstractions
+
+**Workflow**:
+1. **Learning Phase**: Analyze OMS projects and document patterns
+2. **Application Phase**: Apply documented conventions to new code
+3. **Continuous Improvement**: Update references as new patterns are discovered
+
+## Integration Guidelines
+
+### Using Multiple Skills Together
+
+**Example: Optimizing C++ Audio Code**
+1. Use `oms-cpp-style` to ensure code follows OMS conventions
+2. Use `embedded-audio-analyzer` to optimize FFT and signal processing
+3. Use `dev-intelligence-orchestrator` to analyze code quality and run tests
+
+**Example: Debugging Build Issues**
+1. Use `dev-intelligence-orchestrator` to parse and diagnose build errors
+2. Use `oms-cpp-style` to ensure fixes match coding standards
+3. Use `embedded-audio-analyzer` if errors relate to audio processing
+
+### Skill Script Execution
+
+When using skill scripts, reference them by their full path:
+```bash
+# Example: Run C++ analysis
+.claude/skills/dev-intelligence-orchestrator/scripts/analyze_cpp.sh src/main.cpp memory .
+
+# Example: Detect project type
+.claude/skills/dev-intelligence-orchestrator/scripts/detect_project_type.sh .
+```
+
+### MCP Prompts Integration
+
+The `dev-intelligence-orchestrator` skill integrates with mcp-prompts for learning:
+- Tool configurations are stored as prompts
+- Error patterns and solutions are captured
+- Project-specific optimizations are learned and reused
+
+Ensure mcp-prompts server is configured in `.claude/mcp.json` (already configured).
+
+**Slash Commands Available**: The mcp-prompts server provides slash commands for quick access to prompt templates. See `.cursor/rules/mcp-prompts-slash-commands.mdc` for the complete list of available commands including `/analysis`, `/architecture`, `/refactoring`, `/conan`, and more.
+
+## Skill Documentation
+
+For detailed documentation on each skill, refer to:
+- `.claude/skills/dev-intelligence-orchestrator/SKILL.md`
+- `.claude/skills/embedded-audio-analyzer/SKILL.md`
+- `.claude/skills/oms-cpp-style/SKILL.md`
+
+## Best Practices
+
+1. **Always check skill documentation** before using skill-specific features
+2. **Let learning systems capture patterns** - don't manually override unless necessary
+3. **Use appropriate skill for the task** - each skill has specific strengths
+4. **Combine skills when appropriate** - they complement each other well
+5. **Review learned configurations** periodically to ensure they remain optimal

@@ -1,0 +1,54 @@
+{
+  "mcpServers": {
+    "mcp-prompts": {
+      "command": "node",
+      "args": ["/home/sparrow/simple-mcp-server.js"],
+      "env": {}
+    },
+    "mcp-prompts-postgres": {
+      "command": "node",
+      "args": ["/home/sparrow/projects/ai-mcp-monorepo/packages/mcp-prompts/dist/mcp-server-standalone.js"],
+      "env": {
+        "MODE": "mcp",
+        "STORAGE_TYPE": "postgres",
+        "POSTGRES_URL": "postgresql://postgres:postgres@localhost:5432/mcp_prompts",
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_DATABASE": "mcp_prompts",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "postgres",
+        "LOG_LEVEL": "info",
+        "NODE_OPTIONS": "--no-warnings"
+      }
+    },
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://postgres:postgres@localhost:5432/mcp_prompts"
+      ],
+      "env": {
+        "POSTGRES_URL": "postgresql://postgres:postgres@localhost:5432/mcp_prompts"
+      }
+    },
+    "unified-dev-tools": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--project",
+        "/home/sparrow/mcp/servers/python/unified_dev_tools",
+        "python",
+        "unified_dev_tools_mcp_server.py"
+      ],
+      "env": {
+        "LOG_LEVEL": "INFO",
+        "MCP_PROMPTS_PATH": "/home/sparrow/projects/ai-mcp-monorepo/packages/mcp-prompts/data/prompts",
+        "ESP32_LOG_DIR": "/home/sparrow/esp32_logs",
+        "ANDROID_LOG_DIR": "/home/sparrow/android_logs",
+        "CONAN_SESSION_STORAGE": "/home/sparrow/.mcp/conan_sessions.json",
+        "PROJECT_DIR": "/home/sparrow/projects/embedded-systems/esp32-bpm-detector"
+      }
+    }
+  }
+}

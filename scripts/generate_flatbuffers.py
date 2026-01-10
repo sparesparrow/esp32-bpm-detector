@@ -25,73 +25,51 @@ import subprocess
 import platform
 from pathlib import Path
 
-def is_sparetools_python():
-    """Check if current Python is sparetools bundled CPython"""
-    python_exe = sys.executable
-    python_path = os.path.dirname(python_exe)
-    
-    # Check if Python path contains sparetools indicators
-    if "sparetools" in python_exe.lower() or "sparetools" in python_path.lower():
-        return True
-    
-    # Check environment variables
-    if os.environ.get("SPARETOOLS_PYTHON") or os.environ.get("SPARE_PYTHON"):
-        return True
-    
-    return False
+# Add scripts directory to path
+sys.path.insert(0, str(Path(__file__).parent))
+
+# Import SpareTools utilities
+from sparetools_utils import (
+    setup_logging,
+    run_command,
+    get_project_root,
+    get_python_command,
+    is_using_bundled_python
+)
+
+# Set up logging
+logger = setup_logging(__name__)
 
 def find_python():
-    """Find Python interpreter, preferring sparetools bundled CPython"""
-    # Check if already running under sparetools Python
-    if is_sparetools_python():
-        print(f"Already using sparetools bundled CPython: {sys.executable}")
-        return [sys.executable]
+    """Find Python interpreter, preferring sparetools bundled CPython."""
+    # Use SpareTools utilities to ensure bundled CPython
+    python_cmd = get_python_command()
     
-    # Try sparetools bundled CPython first
-    sparetools_paths = [
-        # Primary sparetools location (user specified)
-        os.path.expanduser("~/sparetools/packages/foundation/sparetools-base/test_env/bin/python"),
-        os.path.expanduser("~/sparetools/bin/python"),
-        os.path.expanduser("~/sparetools/python"),
-        # Other common sparetools locations
-        os.path.expanduser("~/.sparetools/bin/python"),
-        os.path.expanduser("~/.sparetools/python"),
-        "/opt/sparetools/bin/python",
-        "/usr/local/sparetools/bin/python",
-        # Environment variable override
-        os.environ.get("SPARETOOLS_PYTHON"),
-        os.environ.get("SPARE_PYTHON"),
-    ]
+    if is_using_bundled_python():
+        logger.info(f"Already using sparetools bundled CPython: {sys.executable}")
+    elif python_cmd != [sys.executable]:
+        logger.info(f"Using sparetools bundled CPython: {python_cmd}")
+    else:
+        logger.warning("Using system Python (sparetools bundled CPython not found)")
+        logger.warning("To use bundled CPython: conan install sparetools-cpython/3.12.7 -r sparetools")
     
-    # Try sparetools command first
-    try:
-        result = subprocess.run(
-            ["sparetools", "python", "--version"],
-            capture_output=True,
-            text=True,
-            timeout=2
-        )
-        if result.returncode == 0:
-            print("Using sparetools bundled CPython (via sparetools command)")
-            return ["sparetools", "python"]
-    except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
-        pass
-    
-    # Try direct paths
-    for path in sparetools_paths:
-        if path and os.path.exists(path) and os.access(path, os.X_OK):
-            print(f"Using sparetools bundled CPython: {path}")
-            return [path]
-    
-    # Fall back to system Python
-    python_cmd = sys.executable
-    print(f"Using system Python: {python_cmd}")
-    print("Note: To use sparetools bundled CPython, set SPARETOOLS_PYTHON env var or run: sparetools python scripts/generate_flatbuffers.py")
-    return [python_cmd]
+    return python_cmd
 
 def find_flatc():
-    """Find the flatc (FlatBuffers compiler) executable"""
-    # Check common installation locations
+    """Find the flatc (FlatBuffers compiler) executable using SpareTools utilities"""
+    # Prefer SpareTools flatc (guaranteed consistent version)
+    sparetools_flatc = "flatc"
+
+    try:
+        result = run_command([sparetools_flatc, "--version"], timeout=5, check=False)
+        if result.returncode == 0:
+            logger.info(f"Using SpareTools flatc: {result.stdout.strip()}")
+            return sparetools_flatc
+    except Exception:
+        pass
+
+    # Fallback to system flatc (for compatibility)
+    logger.warning("SpareTools flatc not found, falling back to system flatc")
     possible_paths = [
         "/usr/local/bin/flatc",
         "/usr/bin/flatc",
@@ -105,11 +83,10 @@ def find_flatc():
 
     # Try to find in PATH
     try:
-        result = subprocess.run(["which", "flatc"],
-                              capture_output=True, text=True)
+        result = run_command(["which", "flatc"], check=False)
         if result.returncode == 0:
             return result.stdout.strip()
-    except:
+    except Exception:
         pass
 
     return None
@@ -174,29 +151,27 @@ def download_flatc(python_cmd=None):
     return False
 
 def generate_cpp_code(schema_file, output_dir, flatc_path):
-    """Generate C++ code from FlatBuffers schema"""
-    print(f"Generating C++ code from {schema_file}...")
+    """Generate C++ code from FlatBuffers schema using SpareTools utilities"""
+    logger.info(f"Generating C++ code from {schema_file}...")
 
     cmd = [
         flatc_path,
         "--cpp",
-        "--gen-object-api",
         "--gen-mutable",
-        "--scoped-enums",
         "-o", output_dir,
         schema_file
     ]
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = run_command(cmd, check=False)
         if result.returncode == 0:
-            print(f"✅ Successfully generated C++ code in {output_dir}")
+            logger.info(f"✅ Successfully generated C++ code in {output_dir}")
             return True
         else:
-            print(f"❌ Failed to generate code: {result.stderr}")
+            logger.error(f"❌ Failed to generate code: {result.stderr}")
             return False
     except Exception as e:
-        print(f"❌ Error running flatc: {e}")
+        logger.error(f"❌ Error running flatc: {e}")
         return False
 
 def main():
@@ -205,7 +180,8 @@ def main():
     python_cmd = find_python()
     
     script_dir = Path(__file__).parent
-    project_root = script_dir.parent
+    # Use SpareTools path utilities
+    project_root = get_project_root(script_dir)
 
     # Schema and output directories
     schema_dir = project_root / "schemas"
@@ -229,7 +205,7 @@ def main():
     print(f"Using flatc: {flatc_path}")
 
     # Check schema file
-    schema_file = schema_dir / "bpm_protocol.fbs"
+    schema_file = schema_dir / "BpmProtocol.fbs"
     if not schema_file.exists():
         print(f"❌ Schema file not found: {schema_file}")
         sys.exit(1)
@@ -238,6 +214,24 @@ def main():
     success = generate_cpp_code(str(schema_file), str(include_dir), flatc_path)
 
     if success:
+        # Extract enums from generated headers
+        print("\n🔧 Extracting enums from generated headers...")
+        extract_script = script_dir / "extract_flatbuffers_enums.py"
+
+        # python_cmd is always a list from get_python_command()
+        extract_cmd = python_cmd + [str(extract_script)]
+
+        try:
+            result = subprocess.run(extract_cmd, capture_output=True, text=True)
+            if result.returncode == 0:
+                print("✅ Enum extraction completed successfully!")
+            else:
+                print(f"❌ Enum extraction failed: {result.stderr}")
+                return False
+        except Exception as e:
+            print(f"❌ Error running enum extraction: {e}")
+            return False
+
         # List generated files
         print("\n📁 Generated files:")
         for file in include_dir.glob("*.h"):
@@ -245,12 +239,13 @@ def main():
         for file in src_dir.glob("*.cpp"):
             print(f"  Source: {file.name}")
 
-        print("\n✅ FlatBuffers code generation completed successfully!")
+        print("\n✅ FlatBuffers code generation and enum extraction completed successfully!")
         print("\nNext steps:")
         print("1. Add generated headers to your ESP32 project includes")
         print("2. Include flatbuffers library in your PlatformIO project")
-        print("3. Implement BPM detector message serialization")
-        print("4. Update REST API to support binary FlatBuffers format")
+        print("3. Use extracted enums in your source files (e.g., #include \"BpmCommon_extracted.h\")")
+        print("4. Implement BPM detector message serialization")
+        print("5. Update REST API to support binary FlatBuffers format")
     else:
         print("❌ Code generation failed")
         sys.exit(1)

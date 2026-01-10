@@ -1,0 +1,185 @@
+---
+globs: ["**/*"]
+description: "MCP Prompts Slash Commands Configuration - Available slash commands from mcp-prompts server"
+alwaysApply: true
+---
+
+# MCP Prompts Slash Commands
+
+This project uses the mcp-prompts MCP server which provides intelligent prompt templates accessible via slash commands. These commands are automatically available in Cursor's chat interface.
+
+## Available Slash Commands
+
+### Analysis & Insights Commands
+These commands activate the **Analysis Assistant** prompt template:
+
+- `/analysis` - Activate analysis assistant for code or project analysis
+- `/insights` - Get insights about code, architecture, or project structure
+- `/ai-assistant` - General AI assistant powered by analysis prompts
+- `/analysis-assistant` - Full command name for analysis assistant
+
+**Use Cases:**
+- Analyzing code quality and patterns
+- Getting insights on project structure
+- Understanding codebase relationships
+- Performance analysis
+- Security analysis
+
+**Example Usage:**
+```
+/analysis Analyze the BPM detection algorithm for performance bottlenecks
+/insights What are the key architectural patterns in this ESP32 project?
+```
+
+### Architecture & Design Commands
+These commands activate the **Architecture Design Assistant** prompt template:
+
+- `/architecture` - Get architecture design guidance
+- `/design` - Design patterns and system design assistance
+- `/programming` - Programming best practices and patterns
+- `/architecture-design-assistant` - Full command name for architecture assistant
+
+**Use Cases:**
+- System architecture design
+- Design pattern recommendations
+- Code organization and structure
+- Component design
+- API design
+
+**Example Usage:**
+```
+/architecture Design a modular audio processing pipeline for ESP32
+/design Suggest design patterns for the BPM detector state machine
+```
+
+### Build System & Automation Commands
+These commands activate the **automate-cpython-orchestration** prompt template:
+
+- `/cpython` - CPython-specific automation and orchestration
+- `/conan` - Conan package management automation
+- `/zero-copy` - Zero-copy optimization strategies
+- `/automation` - General automation assistance
+- `/orchestration` - Build and deployment orchestration
+- `/ci-cd` - CI/CD pipeline configuration and optimization
+- `/symlinks` - Symbolic link management and strategies
+- `/build-system` - Build system configuration and optimization
+- `/automate-cpython-orchestration` - Full command name
+
+**Use Cases:**
+- Conan package management workflows
+- Build system optimization
+- CI/CD pipeline setup
+- Zero-copy performance optimization
+- Cross-platform build orchestration
+- Symbolic link strategies for development
+
+**Example Usage:**
+```
+/conan Optimize the Conan profile configuration for ESP32 builds
+/ci-cd Set up a CI/CD pipeline for this embedded project
+/build-system Improve the CMake build configuration
+```
+
+### Code Refactoring Commands
+These commands activate the **Code Refactoring Assistant** prompt template:
+
+- `/refactoring` - Code refactoring assistance
+- `/optimization` - Code optimization guidance
+- `/code-refactoring-assistant` - Full command name
+
+**Use Cases:**
+- Refactoring legacy code
+- Performance optimization
+- Code quality improvement
+- Reducing technical debt
+- Modernizing code patterns
+
+**Example Usage:**
+```
+/refactoring Refactor the audio processing code to use modern C++ patterns
+/optimization Optimize the FFT implementation for ESP32 memory constraints
+```
+
+## How to Use Slash Commands
+
+### In Cursor Chat
+1. Type `/` in the chat input to see available commands
+2. Select a command or type the full command name
+3. Add your query or context after the command
+4. The command will apply the appropriate prompt template from mcp-prompts
+
+### Command Format
+```
+/command [your query or context]
+```
+
+### Examples
+```
+/analysis What are the memory usage patterns in src/main.cpp?
+
+/architecture Design a message passing system for ESP32 to Android communication
+
+/conan How should I configure Conan profiles for multi-target deployment?
+
+/refactoring Refactor bpm_detector.h to use smart pointers and RAII
+```
+
+## Integration with Project Skills
+
+These slash commands work alongside the project's Claude skills:
+
+- **dev-intelligence-orchestrator**: Use `/analysis` or `/optimization` before running static analysis
+- **embedded-audio-analyzer**: Use `/optimization` for FFT and signal processing improvements
+- **oms-cpp-style**: Use `/refactoring` to apply OMS patterns to code
+
+## MCP Server Configuration
+
+The mcp-prompts server is configured in `.claude/mcp.json`:
+```json
+{
+  "mcpServers": {
+    "prompts": {
+      "command": "mcp-prompts",
+      "args": ["--storage", "file", "--path", "/home/sparrow/projects/ai-mcp-monorepo/packages/mcp-prompts/data/prompts"]
+    }
+  }
+}
+```
+
+## Command Categories
+
+### General Purpose
+- `/analysis`, `/insights`, `/ai-assistant` - General analysis and insights
+- `/architecture`, `/design`, `/programming` - Design and architecture guidance
+
+### Build & Automation
+- `/conan`, `/build-system`, `/ci-cd` - Build and deployment automation
+- `/automation`, `/orchestration` - General automation tasks
+
+### Code Quality
+- `/refactoring`, `/optimization` - Code improvement and optimization
+
+### Specialized
+- `/cpython`, `/zero-copy`, `/symlinks` - Specific technical domains
+
+## Best Practices
+
+1. **Be Specific**: Include context in your query after the slash command
+2. **Combine Commands**: Use multiple commands in sequence for complex tasks
+3. **Iterate**: Use commands iteratively to refine solutions
+4. **Document Results**: Save useful prompt responses for future reference
+5. **Leverage Templates**: The mcp-prompts server learns from successful interactions
+
+## Troubleshooting
+
+If slash commands don't appear:
+1. Verify mcp-prompts server is running and configured in `.claude/mcp.json`
+2. Check MCP server status in Cursor: `View: Open MCP Settings`
+3. Restart Cursor if commands don't appear after configuration
+4. Check mcp-prompts server logs for connection issues
+
+## Related Documentation
+
+- MCP Prompts Server: Configured in `.claude/mcp.json`
+- Claude Skills: See `.cursor/rules/claude-skills.mdc`
+- Project Rules: See `.cursor/rules/embedded-dev.mdc`

@@ -1,6 +1,8 @@
 package com.sparesparrow.bpmdetector.network
 
+import android.util.Log
 import com.google.gson.GsonBuilder
+import com.sparesparrow.bpmdetector.BuildConfig
 import com.sparesparrow.bpmdetector.models.BPMData
 import com.sparesparrow.bpmdetector.models.BPMSettings
 import com.sparesparrow.bpmdetector.models.BPMHealth
@@ -27,7 +29,11 @@ class BPMApiClient(private val baseUrl: String) {
 
     private fun createApiService(): BPMApiService {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BODY
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
         }
 
         val okHttpClient = OkHttpClient.Builder()
@@ -238,7 +244,7 @@ class BPMApiClient(private val baseUrl: String) {
          * Create API client with default base URL
          */
         fun createDefault(): BPMApiClient {
-            return BPMApiClient("http://192.168.1.100") // Default ESP32 IP
+            return BPMApiClient("http://192.168.4.1") // Default ESP32 IP
         }
 
         /**

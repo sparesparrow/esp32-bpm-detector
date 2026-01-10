@@ -1,69 +1,81 @@
 {
   "mcpServers": {
-    "esp32-serial-monitor": {
-      "command": "uv",
-      "args": ["run", "--with", "mcp", "python3", "/home/sparrow/mcp/servers/python/esp32_serial_monitor/esp32_serial_monitor_mcp_server.py"],
+    "mcp-prompts": {
+      "command": "npx",
+      "args": ["-y", "@sparesparrow/mcp-prompts"],
       "env": {
-        "ESP32_LOG_LEVEL": "INFO",
-        "ESP32_LOG_DIR": "/home/sparrow/esp32_logs",
-        "ESP32_SESSION_STORAGE": "/home/sparrow/.mcp/esp32_sessions.json"
-      },
-      "cwd": "${workspaceFolder}"
+        "STORAGE_TYPE": "postgres",
+        "POSTGRES_URL": "postgresql://postgres:postgres@localhost:5432/mcp_prompts",
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_DATABASE": "mcp_prompts",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "postgres",
+        "LOG_LEVEL": "info",
+        "MODE": "mcp"
+      }
     },
-    "android-dev-tools": {
-      "command": "uv",
-      "args": ["run", "--project", "/home/sparrow/mcp/servers/python/android_dev_tools", "python", "/home/sparrow/mcp/servers/python/android_dev_tools/android_dev_tools_mcp_server.py"],
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
       "env": {
-        "ANDROID_LOG_LEVEL": "INFO",
-        "ANDROID_LOG_DIR": "/home/sparrow/android_logs",
-        "ANDROID_SESSION_STORAGE": "/home/sparrow/.mcp/android_sessions.json"
-      },
-      "cwd": "/home/sparrow/mcp/servers/python/android_dev_tools"
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
     },
-    "conan-cloudsmith": {
-      "command": "uv",
-      "args": ["run", "--project", "/home/sparrow/mcp/servers/python/conan_cloudsmith", "python", "/home/sparrow/mcp/servers/python/conan_cloudsmith/conan_cloudsmith_mcp_server.py"],
-      "env": {
-        "CONAN_LOG_LEVEL": "INFO",
-        "CONAN_LOG_DIR": "/home/sparrow/conan_logs",
-        "CONAN_SESSION_STORAGE": "/home/sparrow/.mcp/conan_sessions.json",
-        "CLOUDSMITH_API_KEY": "${CLOUDSMITH_API_KEY}",
-        "CLOUDSMITH_ORG": "sparesparrow-conan"
-      },
-      "cwd": "/home/sparrow/mcp/servers/python/conan_cloudsmith"
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/sparrow"
+      ],
+      "env": {}
     },
-    "repo-cleanup": {
-      "command": "uv",
-      "args": ["run", "--project", "/home/sparrow/mcp/servers/python/repo_cleanup", "python", "-m", "repo_cleanup.server_simple"],
+    "server-memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
       "env": {
-        "REPO_PATH": "${workspaceFolder}",
+        "MEMORY_FILE_PATH": "${workspaceRoot}/memory.json"
+      }
+    },
+    "mcp-server-fetch": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-fetch"
+      ]
+    },
+    "server-sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "env": {}
+    },
+    "unified-dev-tools": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--project",
+        "/home/sparrow/mcp/servers/python/unified_dev_tools",
+        "python",
+        "/home/sparrow/mcp/servers/python/unified_dev_tools/unified_dev_tools_mcp_server.py"
+      ],
+      "env": {
         "LOG_LEVEL": "INFO",
-        "PYTHONPATH": "/home/sparrow/mcp/servers/python/repo_cleanup/src"
-      },
-      "cwd": "/home/sparrow/mcp/servers/python/repo_cleanup"
-    },
-    "unified-deployment": {
-      "command": "uv",
-      "args": ["run", "--with", "mcp", "python3", "/home/sparrow/mcp/servers/python/unified_deployment/unified_deployment_mcp_server.py"],
-      "env": {
-        "PROJECT_DIR": "${workspaceFolder}",
-        "CONAN_PROFILES_DIR": "${workspaceFolder}/conan-profiles",
-        "HARDWARE_EMULATOR_HOST": "127.0.0.1",
-        "HARDWARE_EMULATOR_PORT": "12345",
-        "DOCKER_TEST_ENABLED": "true",
-        "TEST_RESULTS_DIR": "${workspaceFolder}/test_results",
-        "LOG_LEVEL": "INFO"
-      },
-      "cwd": "${workspaceFolder}"
-    },
-    "composed-embedded": {
-      "command": "uv",
-      "args": ["run", "--with", "mcp", "python3", "/home/sparrow/mcp/servers/python/composed_embedded/composed_server.py"],
-      "env": {
-        "PROJECT_DIR": "${workspaceFolder}",
-        "LOG_LEVEL": "INFO"
-      },
-      "cwd": "${workspaceFolder}"
+        "MCP_PROMPTS_PATH": "/home/sparrow/projects/ai-mcp-monorepo/packages/mcp-prompts/data/prompts",
+        "ESP32_LOG_DIR": "/home/sparrow/esp32_logs",
+        "ANDROID_LOG_DIR": "/home/sparrow/android_logs",
+        "CONAN_SESSION_STORAGE": "/home/sparrow/.mcp/conan_sessions.json",
+        "PROJECT_DIR": "/home/sparrow/projects/embedded-systems/esp32-bpm-detector",
+        "POSTGRES_URL": "postgresql://postgres:postgres@localhost:5432/mcp_prompts"
+      }
     }
   }
 }

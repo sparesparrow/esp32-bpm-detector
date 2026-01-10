@@ -1,0 +1,125 @@
+---
+globs: ["**/*"]
+description: "Cursor Custom Commands - Project-specific commands for ESP32 BPM Detector"
+alwaysApply: true
+---
+
+# Cursor Custom Commands
+
+This project includes custom Cursor commands located in `.cursor/commands/`. These commands integrate with the project's Claude skills, mcp-prompts server, and MCP tools to provide streamlined workflows.
+
+## Available Commands
+
+Type `/` in Cursor's chat to see all available commands. Commands are named based on their filename (without `.md` extension).
+
+### Audio & BPM Detection Commands
+
+#### `/analyze-bpm-detector`
+Analyze the BPM detection algorithm and audio processing code for performance bottlenecks, memory usage, and optimization opportunities. Uses the embedded-audio-analyzer skill.
+
+#### `/optimize-fft-config`
+Optimize the FFT configuration for ESP32 audio processing. Follows the embedded-audio-analyzer workflow phases for performance profiling, beat detection optimization, and signal processing refinement.
+
+#### `/calibrate-hardware`
+Calibrate BPM detection for specific hardware (microphone, ESP32 variant). Creates device-specific optimization prompts in mcp-prompts for future use.
+
+### Code Quality & Analysis Commands
+
+#### `/analyze-build-errors`
+Intelligently analyze build errors using dev-intelligence-orchestrator skill. Parses compilation/linking errors and queries mcp-prompts for learned solutions.
+
+#### `/run-static-analysis`
+Run static code analysis (C++ via cppcheck, Python via pylint) with learning capabilities. Captures successful configurations for future use.
+
+#### `/review-code-quality`
+Comprehensive code review combining oms-cpp-style, dev-intelligence-orchestrator, and mcp-prompts analysis. Checks for memory leaks, performance, security, and style compliance.
+
+### Code Style & Refactoring Commands
+
+#### `/refactor-to-oms-style`
+Refactor code to match OMS C++ coding standards. Applies naming conventions, smart pointers, RAII, and OMS patterns from learned references.
+
+#### `/generate-flatbuffers`
+Generate or update FlatBuffers schemas following OMS patterns. Ensures schema design follows OMS naming conventions and versioning strategies.
+
+### Build & Deployment Commands
+
+#### `/setup-conan-profile`
+Set up or optimize Conan profile configuration for ESP32 cross-compilation. Uses mcp-prompts for Conan best practices and cross-compilation guidance.
+
+#### `/deploy-firmware`
+Deploy firmware to connected ESP32 devices using unified-dev-tools MCP server. Detects devices, builds with appropriate profile, and monitors deployment.
+
+### Testing Commands
+
+#### `/run-tests`
+Run tests with framework detection (pytest, PlatformIO, gtest). Uses learned test configurations from mcp-prompts. Supports Docker-based testing.
+
+### Project Management Commands
+
+#### `/detect-project-type`
+Detect project characteristics (languages, frameworks, test frameworks, project nature). Useful for selecting appropriate tools and configurations.
+
+## Command Integration
+
+### With Claude Skills
+- Commands automatically use the appropriate skill (dev-intelligence-orchestrator, embedded-audio-analyzer, oms-cpp-style)
+- Skills provide specialized knowledge and workflows
+- Learning systems capture successful patterns for future use
+
+### With MCP Prompts
+- Commands can trigger mcp-prompts slash commands (e.g., `/analysis`, `/conan`, `/refactoring`)
+- Learned configurations are stored and reused
+- Prompt templates provide structured guidance
+
+### With MCP Tools
+- Commands integrate with unified-dev-tools for device operations
+- Conan package management via MCP tools
+- Serial monitoring and deployment automation
+
+## Usage Examples
+
+### Quick Analysis
+```
+/analyze-bpm-detector
+```
+Analyzes the entire BPM detection system for optimization opportunities.
+
+### Refactoring Workflow
+```
+/refactor-to-oms-style
+```
+Then select the code to refactor. The command will apply OMS patterns.
+
+### Build Error Debugging
+```
+/analyze-build-errors
+```
+Paste the build log, and the command will parse and diagnose errors.
+
+### Hardware Calibration
+```
+/calibrate-hardware
+```
+Follows the embedded-audio-analyzer calibration workflow for your specific hardware.
+
+## Command Structure
+
+Commands are Markdown files in `.cursor/commands/`:
+- Filename (without `.md`) becomes the command name
+- Content is inserted into chat when command is triggered
+- Commands can reference skills, MCP tools, and project structure
+
+## Best Practices
+
+1. **Use Specific Commands**: Choose the most specific command for your task
+2. **Combine Commands**: Use multiple commands in sequence for complex workflows
+3. **Provide Context**: Add additional context after triggering a command
+4. **Review Output**: Commands provide structured guidance - review and apply recommendations
+5. **Learn from Results**: Successful patterns are captured for future use
+
+## Related Documentation
+
+- Claude Skills: `.cursor/rules/claude-skills.mdc`
+- MCP Prompts Slash Commands: `.cursor/rules/mcp-prompts-slash-commands.mdc`
+- Embedded Development Rules: `.cursor/rules/embedded-dev.mdc`

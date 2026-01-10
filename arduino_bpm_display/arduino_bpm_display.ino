@@ -93,13 +93,13 @@ unsigned long modeStartTime = 0;
 // ============================================================================
 void setup() {
   // Initialize hardware serial for USB debugging
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println(F("BPM Display Starting..."));
   Serial.println(F("USB Serial: Debug output"));
   Serial.println(F("SoftwareSerial D2/D3: ESP32 data"));
   
   // Initialize SoftwareSerial for ESP32 communication
-  esp32Serial.begin(9600);
+  esp32Serial.begin(115200);
   
   // Reserve buffer space
   inputBuffer.reserve(MAX_BUFFER_SIZE);

@@ -4,11 +4,9 @@
 
 #include <cstdint>
 
-
 namespace sparetools {
 
 namespace bpm {
-
 namespace ExtEnum {
 
 
@@ -19,8 +17,9 @@ enum DetectionStatus : int8_t {
   DetectionStatus_NO_SIGNAL = 3,
   DetectionStatus_ERROR = 4,
   DetectionStatus_CALIBRATING = 5,
+  DetectionStatus_READY = 6,
   DetectionStatus_MIN = DetectionStatus_INITIALIZING,
-  DetectionStatus_MAX = DetectionStatus_CALIBRATING
+  DetectionStatus_MAX = DetectionStatus_READY
 };
 
 
@@ -43,8 +42,10 @@ enum RequestType : int8_t {
   RequestType_START_STREAMING = 5,
   RequestType_STOP_STREAMING = 6,
   RequestType_GET_DIAGNOSTICS = 7,
+  RequestType_GET_HEALTH = 8,
+  RequestType_SET_DIAGNOSTICS = 9,
   RequestType_MIN = RequestType_GET_STATUS,
-  RequestType_MAX = RequestType_GET_DIAGNOSTICS
+  RequestType_MAX = RequestType_SET_DIAGNOSTICS
 };
 
 
@@ -52,12 +53,37 @@ enum StreamType : int8_t {
   StreamType_WEBSOCKET = 0,
   StreamType_HTTP = 1,
   StreamType_MQTT = 2,
+  StreamType_TCP = 3,
   StreamType_MIN = StreamType_WEBSOCKET,
-  StreamType_MAX = StreamType_MQTT
+  StreamType_MAX = StreamType_TCP
+};
+
+
+enum AudioSource : int8_t {
+  AudioSource_MICROPHONE = 0,
+  AudioSource_LINE_IN = 1,
+  AudioSource_BLUETOOTH = 2,
+  AudioSource_FILE = 3,
+  AudioSource_MIN = AudioSource_MICROPHONE,
+  AudioSource_MAX = AudioSource_FILE
+};
+
+
+enum ErrorCode : int16_t {
+  ErrorCode_NONE = 0,
+  ErrorCode_INVALID_REQUEST = 1,
+  ErrorCode_HARDWARE_ERROR = 2,
+  ErrorCode_AUDIO_CONFIG_ERROR = 3,
+  ErrorCode_NETWORK_ERROR = 4,
+  ErrorCode_TIMEOUT_ERROR = 5,
+  ErrorCode_BUFFER_OVERFLOW = 6,
+  ErrorCode_CALIBRATION_FAILED = 7,
+  ErrorCode_MEMORY_ERROR = 8,
+  ErrorCode_UNKNOWN_ERROR = 999,
+  ErrorCode_MIN = ErrorCode_NONE,
+  ErrorCode_MAX = ErrorCode_UNKNOWN_ERROR
 };
 
 }
-
 }
-
 }

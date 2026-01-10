@@ -116,8 +116,8 @@ services:
       - MOCK_WEBSOCKET_PORT=8000
       - LOG_LEVEL=INFO
     ports:
-      - "8080:8080"  # Mock ESP32 API server
-      - "8000:8000"  # Mock WebSocket server
+      - "18080:8080"  # Mock ESP32 API server
+      - "18000:8000"  # Mock WebSocket server
     command: ["python3", "/workspace/scripts/mock_services.py"]
 
 networks:
@@ -125,9 +125,9 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.20.0.0/16
+        - subnet: 172.25.0.0/16
   test_net:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.21.0.0/16
+        - subnet: 172.26.0.0/16

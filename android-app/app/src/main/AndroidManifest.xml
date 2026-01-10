@@ -9,6 +9,12 @@
     <!-- Audio recording permission for local BPM detection -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- WiFi scanning and connection permissions -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <application
         android:name=".BPMApplication"
         android:allowBackup="true"

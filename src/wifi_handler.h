@@ -91,7 +91,7 @@ private:
     bool _attemptConnection();
     void _updateState();
     void _handleReconnection();
-    [[maybe_unused]] bool _validateCredentials();
+    bool _validateCredentials();
     String _getWiFiErrorString(wl_status_t status);
 
     // Exponential backoff calculation

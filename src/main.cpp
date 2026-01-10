@@ -1,17 +1,30 @@
 #include "config.h"
 #include "bpm_detector.h"
+#include "audio_input.h"
 #include <flatbuffers/flatbuffers.h>
-#include "bpm_flatbuffers.h"  // Real FlatBuffers implementation
+#include "bpm_flatbuffers.h"
+#include <memory>
+
+// WiFi and HTTP server includes
+#include "wifi_handler.h"
+#include "api_endpoints.h"
+#include <WebServer.h>
 
 // Platform abstraction includes
 #include "interfaces/IAudioInput.h"
-#include "interfaces/IDisplayHandler.h"
-#include "interfaces/ISerial.h"
 #include "interfaces/ITimer.h"
-#include "interfaces/IPlatform.h"
-#include "platforms/factory/PlatformFactory.h"
+#include "interfaces/ILEDController.h"
+#include "platforms/esp32/ESP32Timer.h"
 #include "bpm_monitor_manager.h"
+#include "main_setup_helpers.h"
+
+// Optional features (conditionally compiled)
+#if ARDUINO_DISPLAY_ENABLED
 #include "bpm_serial_sender.h"
+#endif
+
+// LED controller includes
+#include "led_strip_controller.h"
 
 // #region agent log
 // JTAG-based logging: Use a circular buffer in memory that can be read via JTAG/GDB
@@ -49,17 +62,22 @@ void writeLog(ITimer* timer, const char* location, const char* message, const ch
 }
 // #endregion
 
-// Global instances
-BPMDetector* bpmDetector = nullptr;
-IAudioInput* audioInput = nullptr;
-IDisplayHandler* displayHandler = nullptr;
-ISerial* serial = nullptr;
-ITimer* timer = nullptr;
-IPlatform* platform = nullptr;
-BpmMonitor::BpmMonitorManager* monitorManager = nullptr;
+// Global instances using smart pointers for RAII compliance
+std::unique_ptr<BPMDetector> bpmDetector;
+std::unique_ptr<AudioInput> audioInput;
+std::unique_ptr<ITimer> timer;
+
+// HTTP server instance (single server to avoid port conflict)
+std::unique_ptr<WebServer> apiServer;        // WebServer for all API endpoints
+
+// Monitor manager instance
+std::unique_ptr<sparetools::bpm::BPMMonitorManager> monitorManager;
+
+// LED controller instance
+std::unique_ptr<ILEDController> ledController;
 
 #if ARDUINO_DISPLAY_ENABLED
-BPMSerialSender* arduinoDisplaySender = nullptr;
+std::unique_ptr<BPMSerialSender> arduinoDisplaySender;
 #endif
 
 // Timing variables
@@ -108,7 +126,10 @@ bool testFlatBuffers() {
         128.5f,     // bpm
         0.85f,      // confidence
         0.75f,      // signal_level
-        sparetools::bpm::ExtEnum::DetectionStatus_DETECTING,
+        sparetools::bpm::DetectionStatus_DETECTING,
+        millis(),   // timestamp
+        "esp32-s3", // device_type
+        "1.1.0",    // firmware_version
         builder1
     );
 
@@ -138,7 +159,8 @@ bool testFlatBuffers() {
     // Since BPMUpdate is not a root type, we test creation instead of deserialization
     flatbuffers::FlatBufferBuilder test_builder(1024);
     auto test_bpm_offset = BPMFlatBuffers::createBPMUpdate(
-        120.0f, 0.9f, 0.8f, sparetools::bpm::ExtEnum::DetectionStatus_DETECTING, test_builder
+        120.0f, 0.9f, 0.8f, sparetools::bpm::DetectionStatus_DETECTING,
+        1234567890ULL, "esp32-s3", "1.1.0", test_builder
     );
 
     // Just test that creation succeeded (offset is valid)
@@ -225,7 +247,7 @@ bool testFlatBuffers() {
     delay(5);
 
     // Test that the FlatBuffers API functions exist and are callable
-    const char* status_str = BPMFlatBuffers::detectionStatusToString(sparetools::bpm::ExtEnum::DetectionStatus_DETECTING);
+    const char* status_str = BPMFlatBuffers::detectionStatusToString(sparetools::bpm::DetectionStatus_DETECTING);
     bool api_test = (status_str != nullptr && strlen(status_str) > 0);
 
     bool test5_pass = (test_bpm_offset.o != 0 && status_update != nullptr && api_test);
@@ -272,285 +294,291 @@ bool testFlatBuffers() {
 // #endregion
 
 void setup() {
-    // Create platform instances using factory
-    serial = PlatformFactory::createSerial();
-    timer = PlatformFactory::createTimer();
-    platform = PlatformFactory::createPlatform();
+    // Track heap usage for monitoring
+    unsigned long heapBefore = ESP.getFreeHeap();
+    
+    // Blink RGB LED to show firmware is starting (ESP32-S3 specific)
+    BpmSetupHelpers::updateRGBLED(0, 64, 0);  // Green = starting
+    delay(500);
+    BpmSetupHelpers::updateRGBLED(0, 0, 0);   // Off
+    delay(200);
+    BpmSetupHelpers::updateRGBLED(0, 64, 0);  // Green
+    delay(500);
 
-    // Initialize serial communication
-    serial->begin(115200);
-    timer->delay(1000); // Allow Serial to initialize
+    // Initialize Serial communication
+    if (!BpmSetupHelpers::initializeSerial()) {
+        Serial.println("ERROR: Serial initialization failed");
+        while (true) delay(1000); // Halt on failure
+    }
+    
+    // Initialize timer (CRITICAL: must be done before any code uses timer->millis())
+    timer = std::unique_ptr<ITimer>(new ESP32Timer());
+    Serial.println("Timer initialized");
+    BpmSetupHelpers::updateRGBLED(0, 0, 64);  // Blue = Serial initialized
 
-    // #region agent log
-    char dataBuf1[128];
-    unsigned long heapBefore = platform->getFreeHeap();
-    snprintf(dataBuf1, sizeof(dataBuf1), "{\"freeHeap\":%lu,\"serialBaud\":115200,\"platform\":\"%s\"}",
-             heapBefore, PlatformFactory::getPlatformName());
-    writeLog(timer, "main.cpp:setup:serialInit", "Serial initialized", "A", dataBuf1);
-    // #endregion
+    // Initialize WiFi Access Point
+    if (!BpmSetupHelpers::initializeWiFiAP("ESP32-BPM-Detector", "bpm12345")) {
+        Serial.println("ERROR: WiFi AP initialization failed - halting");
+        while (true) delay(1000); // Halt on failure
+    }
 
-    serial->println("\n=== ESP32 BPM Detector Starting ===");
-    serial->print("Platform: ");
-    serial->println(PlatformFactory::getPlatformName());
-    serial->print("Free heap: ");
-    serial->println(platform->getFreeHeap());
-
-    // Skip WiFi initialization for now to avoid TCP stack crashes
-    serial->println("WiFi disabled - focusing on BPM detection");
-
-    // #region agent log
-    writeLog(timer, "main.cpp:setup:wifiSkipped", "WiFi initialization skipped to avoid TCP stack issues", "D", "{}");
-    // #endregion
-
-    // Create platform-specific components
-    displayHandler = PlatformFactory::createDisplayHandler();
-    audioInput = PlatformFactory::createAudioInput();
-
-    // Initialize display handler
-    displayHandler->begin();
-
-    // #region agent log
-    writeLog(timer, "main.cpp:setup:displayInit", "Display handler initialized", "E", "{}");
-    // #endregion
+    // Initialize LED controller
+    if (!BpmSetupHelpers::initializeLEDController(ledController)) {
+        Serial.println("WARNING: LED controller initialization failed - continuing");
+    }
 
     // Initialize audio input
-    // #region agent log
-    char dataBuf3[128];
-    snprintf(dataBuf3, sizeof(dataBuf3), "{\"leftPin\":%d,\"rightPin\":%d,\"sampleRate\":%d,\"platform\":\"%s\"}",
-             MICROPHONE_LEFT_PIN, MICROPHONE_RIGHT_PIN, SAMPLE_RATE, PlatformFactory::getPlatformName());
-    writeLog(timer, "main.cpp:setup:audioInit", "Initializing stereo audio input", "B", dataBuf3);
-    // #endregion
+    if (!BpmSetupHelpers::initializeAudioInput(audioInput, MICROPHONE_PIN)) {
+        Serial.println("ERROR: Audio input initialization failed - halting");
+        while (true) delay(1000); // Halt on failure
+    }
 
-    // Initialize stereo audio input on GPIO5 (left) and GPIO6 (right)
-    audioInput->beginStereo(MICROPHONE_LEFT_PIN, MICROPHONE_RIGHT_PIN);
+    // Initialize BPM detector
+    if (!BpmSetupHelpers::initializeBPMDetector(bpmDetector, MICROPHONE_PIN)) {
+        Serial.println("ERROR: BPM detector initialization failed - halting");
+        while (true) delay(1000); // Halt on failure
+    }
 
-    // Initialize BPM detector with dependency injection
-    // #region agent log
-    char dataBuf4[128];
-    snprintf(dataBuf4, sizeof(dataBuf4), "{\"sampleRate\":%d,\"fftSize\":%d,\"leftPin\":%d,\"rightPin\":%d,\"platform\":\"%s\"}",
-             SAMPLE_RATE, FFT_SIZE, MICROPHONE_LEFT_PIN, MICROPHONE_RIGHT_PIN, PlatformFactory::getPlatformName());
-    writeLog(timer, "main.cpp:setup:bpmInit", "Initializing BPM detector (stereo)", "B", dataBuf4);
-    // #endregion
-
-    // Use dependency injection: pass interfaces to BPMDetector
-    bpmDetector = new BPMDetector(audioInput, timer, SAMPLE_RATE, FFT_SIZE);
-    bpmDetector->begin(audioInput, timer, MICROPHONE_LEFT_PIN);  // Audio input already configured for stereo
+    // Update LED status to BPM detecting mode
+    if (ledController) {
+        ledController->showStatus(LedStatus::LED_STATUS_BPM_DETECTING);
+    }
 
     // Initialize BPM monitor manager
-    monitorManager = new BpmMonitor::BpmMonitorManager(*bpmDetector);
+    uint32_t defaultMonitorId = BpmSetupHelpers::initializeMonitorManager(monitorManager, "Default Monitor");
+    if (defaultMonitorId == 0) {
+        Serial.println("WARNING: Default monitor spawn failed - continuing");
+    }
 
 #if ARDUINO_DISPLAY_ENABLED
     // Initialize Serial2 for Arduino display communication
     Serial2.begin(ARDUINO_DISPLAY_BAUD, SERIAL_8N1, ARDUINO_DISPLAY_RX_PIN, ARDUINO_DISPLAY_TX_PIN);
-    arduinoDisplaySender = new BPMSerialSender(Serial2, ARDUINO_DISPLAY_BAUD);
+    arduinoDisplaySender = std::unique_ptr<BPMSerialSender>(new BPMSerialSender(Serial2, ARDUINO_DISPLAY_BAUD));
     arduinoDisplaySender->begin();
     arduinoDisplaySender->setSendInterval(500);  // Send every 500ms
-    serial->println("Arduino Display Serial initialized on Serial2");
-    serial->print("  TX Pin: GPIO");
-    serial->print(ARDUINO_DISPLAY_TX_PIN);
-    serial->print(", RX Pin: GPIO");
-    serial->print(ARDUINO_DISPLAY_RX_PIN);
-    serial->print(", Baud: ");
-    serial->println(ARDUINO_DISPLAY_BAUD);
+    Serial.println("Arduino Display Serial initialized on Serial2");
+    Serial.print("  TX Pin: GPIO");
+    Serial.print(ARDUINO_DISPLAY_TX_PIN);
+    Serial.print(", RX Pin: GPIO");
+    Serial.print(ARDUINO_DISPLAY_RX_PIN);
+    Serial.print(", Baud: ");
+    Serial.println(ARDUINO_DISPLAY_BAUD);
 #endif
 
-    // Skip web server initialization (requires WiFi)
-    serial->println("Web server disabled - no WiFi");
+    // Initialize HTTP server
+    if (!BpmSetupHelpers::initializeHTTPServer(apiServer, bpmDetector.get(), monitorManager.get())) {
+        Serial.println("WARNING: HTTP server initialization may have issues");
+    }
 
-    // #region agent log
-    unsigned long heapAfter = platform->getFreeHeap();
-    char dataBuf5[128];
-    snprintf(dataBuf5, sizeof(dataBuf5), "{\"freeHeap\":%lu,\"heapDelta\":%ld,\"serverPort\":%d,\"platform\":\"%s\"}",
-             heapAfter, (long)(heapAfter - heapBefore), SERVER_PORT, PlatformFactory::getPlatformName());
-    writeLog(timer, "main.cpp:setup:complete", "Setup completed successfully", "A", dataBuf5);
-    // #endregion
+    // Small delay to ensure server is ready
+    delay(500);
+    BpmSetupHelpers::updateRGBLED(0, 0, 255);  // Blue = Server ready
 
-    serial->println("ESP32 BPM Detector Ready!");
-    serial->print("Free heap: ");
-    serial->println(platform->getFreeHeap());
+    // Log setup completion
+    unsigned long heapAfter = ESP.getFreeHeap();
+    char dataBuf[128];
+    snprintf(dataBuf, sizeof(dataBuf), 
+             "{\"freeHeap\":%lu,\"heapDelta\":%ld,\"serverPort\":%d,\"platform\":\"ESP32-S3\"}",
+             heapAfter, (long)(heapAfter - heapBefore), SERVER_PORT);
+    writeLog(timer.get(), "main.cpp:setup:complete", "Setup completed successfully", "A", dataBuf);
 
-    // FlatBuffers functionality is active
-    serial->println("Setup complete - FlatBuffers serialization enabled");
-    serial->println("Core BPM detection functionality is active");
+    Serial.println("ESP32 BPM Detector Ready!");
+    Serial.print("Free heap: ");
+    Serial.println(ESP.getFreeHeap());
+    Serial.println("Setup complete - FlatBuffers serialization enabled");
+    Serial.println("Core BPM detection functionality is active");
 }
 
 void loop() {
     static unsigned long loopCount = 0;
     static unsigned long sampleCount = 0;
     static bool flatBuffersTestRun = false;
-    unsigned long currentTime = timer->millis();
+    // Use micros() for audio sampling timing (25kHz requires microsecond precision)
+    // millis() only gives ~1ms resolution, insufficient for 40µs sample intervals
+    unsigned long currentTimeMicros = timer ? timer->micros() : micros();
+    unsigned long currentTimeMillis = timer ? timer->millis() : millis();
 
     loopCount++;
 
     // Check for serial commands
-    if (serial->available() > 0) {
-        int cmd = serial->read();
+    if (Serial.available() > 0) {
+        int cmd = Serial.read();
         if (cmd == 't' || cmd == 'T') {
-            serial->println("\nManual FlatBuffers test trigger received...");
-            serial->flush();
-            timer->delay(10);
+            Serial.println("\nManual FlatBuffers test trigger received...");
+            Serial.flush();
+            if (timer) timer->delay(10);
             // Note: testFlatBuffers() function would need to be updated to use interfaces
             // For now, skip the test
-            serial->println("FlatBuffers test skipped in refactored version");
-            serial->println("Manual test completed.");
-            serial->flush();
+            Serial.println("FlatBuffers test skipped in refactored version");
+            Serial.println("Manual test completed.");
+            Serial.flush();
         }
         else if (cmd == 'm' || cmd == 'M') {
-            // Start BPM monitor
-            serial->println("\nStarting BPM monitor...");
+            // Spawn new BPM monitor
             if (monitorManager) {
-                using namespace BpmMonitor;
-                std::vector<MonitorParameter> params = {MonitorParameter::ALL};
-                uint32_t monitorId = monitorManager->startMonitor(params);
+                uint32_t monitorId = monitorManager->spawnMonitor("Serial Monitor");
                 if (monitorId > 0) {
-                    serial->print("Monitor started with ID: ");
-                    serial->println(monitorId);
+                    Serial.print("\nMonitor spawned with ID: ");
+                    Serial.println(monitorId);
                 } else {
-                    serial->println("Failed to start monitor");
+                    Serial.println("\nFailed to spawn monitor");
                 }
             } else {
-                serial->println("Monitor manager not initialized");
+                Serial.println("\nMonitor manager not initialized");
             }
         }
         else if (cmd == 's' || cmd == 'S') {
             // Get monitor status
-            serial->println("\nMonitor Status:");
             if (monitorManager) {
-                size_t activeCount = monitorManager->getActiveMonitorCount();
-                serial->print("Active monitors: ");
-                serial->println(activeCount);
+                Serial.println("\n=== Monitor Status ===");
+                Serial.print("Active monitors: ");
+                Serial.println(monitorManager->getMonitorCount());
+                auto monitorIds = monitorManager->getMonitorIds();
+                for (uint32_t id : monitorIds) {
+                    String name = monitorManager->getMonitorName(id);
+                    bool active = monitorManager->isMonitorActive(id);
+                    auto data = monitorManager->getMonitorData(id);
+                    Serial.print("  Monitor ");
+                    Serial.print(id);
+                    Serial.print(" (");
+                    Serial.print(name);
+                    Serial.print("): ");
+                    Serial.print(active ? "Active" : "Inactive");
+                    Serial.print(", BPM: ");
+                    Serial.print(data.bpm, 1);
+                    Serial.print(", Confidence: ");
+                    Serial.println(data.confidence, 2);
+                }
             } else {
-                serial->println("Monitor manager not initialized");
+                Serial.println("\nMonitor manager not initialized");
             }
         }
         else if (cmd == 'v' || cmd == 'V') {
-            // Get monitor values (monitor ID 1)
-            serial->println("\nMonitor Values (ID 1):");
+            // Get monitor values (monitor ID 1, or first available)
             if (monitorManager) {
-                using namespace BpmMonitor;
-                std::vector<BpmMonitorData> values = monitorManager->getMonitorValues(1);
-                if (!values.empty()) {
-                    for (const auto& data : values) {
-                        serial->print("BPM: ");
-                        serial->print(data.bpm);
-                        serial->print(", Confidence: ");
-                        serial->print(data.confidence);
-                        serial->print(", Signal: ");
-                        serial->print(data.signal_level);
-                        serial->print(", Status: ");
-                        serial->print(data.status);
-                        serial->print(", Timestamp: ");
-                        serial->println(static_cast<uint32_t>(data.timestamp));
-                    }
+                auto monitorIds = monitorManager->getMonitorIds();
+                if (!monitorIds.empty()) {
+                    uint32_t monitorId = monitorIds[0];
+                    auto data = monitorManager->getMonitorData(monitorId);
+                    Serial.println("\n=== Monitor Values ===");
+                    Serial.print("Monitor ID: ");
+                    Serial.println(monitorId);
+                    Serial.print("BPM: ");
+                    Serial.println(data.bpm, 1);
+                    Serial.print("Confidence: ");
+                    Serial.println(data.confidence, 3);
+                    Serial.print("Signal Level: ");
+                    Serial.println(data.signal_level, 3);
+                    Serial.print("Status: ");
+                    Serial.println(data.status);
                 } else {
-                    serial->println("No monitor data available or monitor not found");
+                    Serial.println("\nNo monitors available");
                 }
             } else {
-                serial->println("Monitor manager not initialized");
+                Serial.println("\nMonitor manager not initialized");
             }
         }
         else if (cmd == 'x' || cmd == 'X') {
-            // Stop all monitors
-            serial->println("\nStopping all monitors...");
+            // Remove all monitors (except default)
             if (monitorManager) {
-                size_t stopped = monitorManager->stopAllMonitors();
-                serial->print("Stopped ");
-                serial->print(stopped);
-                serial->println(" monitors");
+                auto monitorIds = monitorManager->getMonitorIds();
+                int removed = 0;
+                for (uint32_t id : monitorIds) {
+                    // Keep the first monitor (default)
+                    if (id != monitorIds[0]) {
+                        if (monitorManager->removeMonitor(id)) {
+                            removed++;
+                        }
+                    }
+                }
+                Serial.print("\nRemoved ");
+                Serial.print(removed);
+                Serial.println(" monitor(s)");
             } else {
-                serial->println("Monitor manager not initialized");
+                Serial.println("\nMonitor manager not initialized");
             }
         }
         else if (cmd == 'd' || cmd == 'D') {
-            // Audio diagnostic - show raw ADC values for stereo input (GPIO5, GPIO6)
+            // Audio diagnostic - show raw ADC values for mono input (GPIO5)
             char buf[128];
-            serial->println("\n=== Audio Diagnostic (Stereo) ===");
-            snprintf(buf, sizeof(buf), "Left Channel: GPIO%d, Right Channel: GPIO%d", 
-                     MICROPHONE_LEFT_PIN, MICROPHONE_RIGHT_PIN);
-            serial->println(buf);
-            
-            // Read multiple samples from both channels
-            int leftSamples[50], rightSamples[50];
-            int leftMin = 4095, leftMax = 0, rightMin = 4095, rightMax = 0;
-            long leftSum = 0, rightSum = 0;
-            
+            Serial.println("\n=== Audio Diagnostic (Mono) ===");
+            snprintf(buf, sizeof(buf), "Microphone Channel: GPIO%d", MICROPHONE_PIN);
+            Serial.println(buf);
+
+            // Read multiple samples from the channel
+            int samples[50];
+            int minVal = 4095, maxVal = 0;
+            long sum = 0;
+
             for (int i = 0; i < 50; i++) {
-                leftSamples[i] = analogRead(MICROPHONE_LEFT_PIN);
-                rightSamples[i] = analogRead(MICROPHONE_RIGHT_PIN);
-                if (leftSamples[i] < leftMin) leftMin = leftSamples[i];
-                if (leftSamples[i] > leftMax) leftMax = leftSamples[i];
-                if (rightSamples[i] < rightMin) rightMin = rightSamples[i];
-                if (rightSamples[i] > rightMax) rightMax = rightSamples[i];
-                leftSum += leftSamples[i];
-                rightSum += rightSamples[i];
-                timer->delay(1);
+                samples[i] = analogRead(MICROPHONE_PIN);
+                if (samples[i] < minVal) minVal = samples[i];
+                if (samples[i] > maxVal) maxVal = samples[i];
+                sum += samples[i];
+                if (timer) timer->delay(1);
             }
-            
-            serial->println("LEFT Channel (GPIO5):");
+
+            Serial.println("MIC Channel (GPIO5):");
             snprintf(buf, sizeof(buf), "  ADC: Min=%d, Max=%d, Avg=%d, Range=%d",
-                     leftMin, leftMax, (int)(leftSum / 50), leftMax - leftMin);
-            serial->println(buf);
+                      minVal, maxVal, (int)(sum / 50), maxVal - minVal);
+            Serial.println(buf);
             snprintf(buf, sizeof(buf), "  Voltage: %.3fV - %.3fV (Ref 1.1V)",
-                     leftMin * 1.1f / 4095.0f, leftMax * 1.1f / 4095.0f);
-            serial->println(buf);
-            
-            serial->println("RIGHT Channel (GPIO6):");
-            snprintf(buf, sizeof(buf), "  ADC: Min=%d, Max=%d, Avg=%d, Range=%d",
-                     rightMin, rightMax, (int)(rightSum / 50), rightMax - rightMin);
-            serial->println(buf);
-            snprintf(buf, sizeof(buf), "  Voltage: %.3fV - %.3fV (Ref 1.1V)",
-                     rightMin * 1.1f / 4095.0f, rightMax * 1.1f / 4095.0f);
-            serial->println(buf);
-            
+                      minVal * 1.1f / 4095.0f, maxVal * 1.1f / 4095.0f);
+            Serial.println(buf);
+
             // Show signal level from audio input
             if (audioInput) {
                 snprintf(buf, sizeof(buf), "Signal Level: %.4f, Normalized: %.4f",
-                         audioInput->getSignalLevel(), audioInput->getNormalizedLevel());
-                serial->println(buf);
+                          audioInput->getSignalLevel(), audioInput->getNormalizedLevel());
+                Serial.println(buf);
             }
-            
-            // Show first 10 stereo samples
-            serial->println("First 10 L/R samples:");
+
+            // Show first 10 samples
+            Serial.println("First 10 samples:");
             for (int i = 0; i < 10; i++) {
-                snprintf(buf, sizeof(buf), "%d/%d ", leftSamples[i], rightSamples[i]);
-                serial->print(buf);
+                snprintf(buf, sizeof(buf), "%d ", samples[i]);
+                Serial.print(buf);
             }
-            serial->println("");
-            serial->println("=== End Diagnostic ===");
+            Serial.println("");
+            Serial.println("=== End Diagnostic ===");
         }
         else if (cmd == 'h' || cmd == 'H') {
             // Help
-            serial->println("\nBPM Monitor Commands:");
-            serial->println("  t - Run FlatBuffers test");
-            serial->println("  m - Start BPM monitor");
-            serial->println("  s - Show monitor status");
-            serial->println("  v - Get monitor values");
-            serial->println("  x - Stop all monitors");
-            serial->println("  d - Audio diagnostic (raw ADC)");
-            serial->println("  h - Show this help");
+            Serial.println("\nBPM Monitor Commands:");
+            Serial.println("  t - Run FlatBuffers test");
+            Serial.println("  m - Start BPM monitor");
+            Serial.println("  s - Show monitor status");
+            Serial.println("  v - Get monitor values");
+            Serial.println("  x - Stop all monitors");
+            Serial.println("  d - Audio diagnostic (raw ADC)");
+            Serial.println("  h - Show this help");
         }
     }
 
     // Run FlatBuffers test once after startup (2-3 seconds after boot)
-    if (!flatBuffersTestRun && timer->millis() > 2000 && loopCount > 10) {
-        serial->println("Running FlatBuffers test in main loop...");
-        serial->flush();
-        timer->delay(10); // Small delay to ensure serial output
-        // Note: testFlatBuffers() function would need to be updated to use interfaces
-        // For now, skip the test
-        serial->println("FlatBuffers test skipped in refactored version");
-        serial->println("FlatBuffers test completed in main loop.");
-        serial->flush();
+    if (!flatBuffersTestRun && currentTimeMillis > 2000 && loopCount > 10) {
+        Serial.println("Running FlatBuffers test in main loop...");
+        Serial.flush();
+        if (timer) timer->delay(10); // Small delay to ensure serial output
+        bool testResult = testFlatBuffers();
+        if (testResult) {
+            Serial.println("FlatBuffers test completed successfully.");
+        } else {
+            Serial.println("FlatBuffers test completed with failures.");
+        }
+        Serial.flush();
         flatBuffersTestRun = true;
     }
 
-    // Sample audio at regular intervals
-    if ((currentTime - lastDetectionTime) >= (1000000 / SAMPLE_RATE)) {  // Sample at SAMPLE_RATE Hz
+    // Sample audio at regular intervals (using microseconds for 25kHz precision)
+    // At 25kHz, sample interval = 1000000µs / 25000 = 40µs
+    static unsigned long lastSampleTimeMicros = 0;
+    if ((currentTimeMicros - lastSampleTimeMicros) >= (1000000UL / SAMPLE_RATE)) {
         // #region agent log
         char dataBuf1[128];
         snprintf(dataBuf1, sizeof(dataBuf1), "{\"sampleCount\":%lu,\"timeSinceLast\":%lu}",
-                 sampleCount, currentTime - lastDetectionTime);
-        writeLog(timer, "main.cpp:loop:sample", "Taking audio sample", "B", dataBuf1);
+                 sampleCount, currentTimeMicros - lastSampleTimeMicros);
+        writeLog(timer.get(), "main.cpp:loop:sample", "Taking audio sample", "B", dataBuf1);
         // #endregion
 
         if (bpmDetector) {
@@ -558,32 +586,22 @@ void loop() {
         }
 
         sampleCount++;
-        lastDetectionTime = currentTime;
+        lastSampleTimeMicros = currentTimeMicros;
     }
 
-    // BPM detection and display update logic
+    // Update all monitors (monitor manager handles its own BPM detection)
+    if (monitorManager) {
+        monitorManager->updateAllMonitors();
+    }
+
+    // BPM detection and display update logic (main detector for backward compatibility)
     if (bpmDetector && bpmDetector->isBufferReady()) {
-        // #region agent log
-        char dataBuf2[128];
-        snprintf(dataBuf2, sizeof(dataBuf2), "{\"sampleCount\":%lu,\"bufferReady\":true}", sampleCount);
-        writeLog(timer, "main.cpp:loop:bufferReady", "Audio buffer ready for BPM detection", "B", dataBuf2);
-        // #endregion
-
         BPMDetector::BPMData bpmData = bpmDetector->detect();
-
-        // #region agent log
-        writeBPMLog(timer, "main.cpp:loop:bpmDetected", "BPM detection completed", "C", bpmData);
-        // #endregion
 
         // Only update if confidence is above threshold and BPM is reasonable
         if (bpmData.confidence >= CONFIDENCE_THRESHOLD && bpmData.bpm >= MIN_BPM && bpmData.bpm <= MAX_BPM) {
             currentBPM = bpmData.bpm;
             currentConfidence = bpmData.confidence;
-
-            // Update display if available
-            if (displayHandler) {
-                displayHandler->showBPM(currentBPM, currentConfidence);
-            }
 
 #if ARDUINO_DISPLAY_ENABLED
             // Send BPM to Arduino display via Serial2
@@ -591,57 +609,83 @@ void loop() {
                 arduinoDisplaySender->sendBPM(currentBPM, currentConfidence);
             }
 #endif
-
-            // Log successful BPM update
-            // #region agent log
-            char dataBuf4[128];
-            snprintf(dataBuf4, sizeof(dataBuf4), "{\"bpm\":%d,\"confidence\":%.3f,\"quality\":%.3f,\"displayUpdated\":true}",
-                     currentBPM, currentConfidence, bpmData.quality);
-            writeLog(timer, "main.cpp:loop:bpmUpdate", "BPM display updated", "A", dataBuf4);
-            // #endregion
-
-            // FlatBuffers BPM update serialization
-            // TODO: Re-enable when bpmDetectorAdapter is properly implemented
-            // if (bpmDetectorAdapter) {
-            //     std::vector<unsigned char> bpmUpdateBuffer = bpmDetectorAdapter->createBPMUpdateFlatBuffer(bpmData);
-            //     serial->print("BPM update FlatBuffer size: ");
-            //     serial->println((int)bpmUpdateBuffer.size());
-            // }
-        } else {
-            // Low confidence - log but don't update display
-            // #region agent log
-            char dataBuf5[128];
-            snprintf(dataBuf5, sizeof(dataBuf5), "{\"bpm\":%d,\"confidence\":%.3f,\"quality\":%.3f,\"reason\":\"low_confidence\"}",
-                     bpmData.bpm, bpmData.confidence, bpmData.quality);
-            writeLog(timer, "main.cpp:loop:lowConfidence", "BPM detection skipped due to low confidence", "C", dataBuf5);
-            // #endregion
         }
     }
 
-    // Periodic status updates
-    static unsigned long lastStatusUpdate = 0;
-    if (currentTime - lastStatusUpdate > API_POLL_INTERVAL) {
-        // #region agent log
-        char dataBuf6[128];
-        snprintf(dataBuf6, sizeof(dataBuf6), "{\"currentBPM\":%d,\"currentConfidence\":%.3f,\"freeHeap\":%lu,\"uptime\":%lu}",
-                 currentBPM, currentConfidence, platform->getFreeHeap(), timer->millis() / 1000);
-        writeLog(timer, "main.cpp:loop:statusUpdate", "Periodic status update", "C", dataBuf6);
-        // #endregion
-
-        // FlatBuffers status update serialization
-        // TODO: Re-enable when bpmDetectorAdapter is properly implemented
-        // if (bpmDetectorAdapter) {
-        //     std::vector<unsigned char> statusBuffer = bpmDetectorAdapter->createStatusUpdateFlatBuffer();
-        //     serial->print("Status update FlatBuffer size: ");
-        //     serial->println((int)statusBuffer.size());
-        // }
-
-        lastStatusUpdate = currentTime;
+    // Handle API server requests (WebServer requires manual handling)
+    if (apiServer) {
+        apiServer->handleClient();
     }
 
-    // Web server disabled
+    // Periodic status updates (uses milliseconds - lower frequency)
+    static unsigned long lastStatusUpdateMillis = 0;
+    if (currentTimeMillis - lastStatusUpdateMillis > API_POLL_INTERVAL) {
+        lastStatusUpdateMillis = currentTimeMillis;
+    }
 
-    // Small delay to prevent watchdog timeout
-    timer->delay(1);
+    // Handle client connection detection in AP mode
+    static bool wasClientConnected = false;
+    int numClients = WiFi.softAPgetStationNum();
+    bool isClientConnected = (numClients > 0);
+
+    if (isClientConnected != wasClientConnected) {
+        if (isClientConnected) {
+            Serial.print("Client connected! Total clients: ");
+            Serial.println(numClients);
+
+            // RGB LED: Purple = client connected
+            #ifdef RGB_BUILTIN
+            neopixelWrite(RGB_BUILTIN, 128, 0, 128);
+            #endif
+
+            if (ledController) {
+                ledController->showStatus(LedStatus::LED_STATUS_CLIENT_CONNECTED);
+            }
+        } else {
+            Serial.println("All clients disconnected");
+
+            // RGB LED: Blue = server ready (no clients)
+            #ifdef RGB_BUILTIN
+            neopixelWrite(RGB_BUILTIN, 0, 0, 255);
+            #endif
+
+            if (ledController) {
+                ledController->showStatus(LedStatus::LED_STATUS_WIFI_CONNECTED);
+            }
+        }
+        wasClientConnected = isClientConnected;
+    }
+
+    // Update LED patterns
+    if (ledController) {
+        ledController->update();
+    }
+
+    // BPM flash update - trigger LED flash when BPM is detected with good confidence
+    if (ledController && currentBPM > 0 && currentConfidence >= CONFIDENCE_THRESHOLD) {
+        ledController->showBPMFlash((int)currentBPM, currentConfidence);
+    }
+
+    // Yield to prevent watchdog timeout without blocking
+    // Note: True 25kHz sampling requires a dedicated FreeRTOS task or timer interrupt
+    // The main loop can achieve ~10kHz on ESP32-S3 at 240MHz
+    yield();
+}
+
+// Cleanup on shutdown (smart pointers handle cleanup automatically)
+// Note: No manual cleanup needed - unique_ptr handles RAII automatically
+// This function kept for potential future use if needed
+void cleanup() {
+    // Smart pointers automatically clean up when they go out of scope
+    // Explicit reset if needed:
+    monitorManager.reset();
+    bpmDetector.reset();
+    audioInput.reset();
+    ledController.reset();
+    apiServer.reset();
+    timer.reset();
+#if ARDUINO_DISPLAY_ENABLED
+    arduinoDisplaySender.reset();
+#endif
 }
 

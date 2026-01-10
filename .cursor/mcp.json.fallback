@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "mcp-prompts": {
+      "command": "node",
+      "args": [
+        "/home/sparrow/projects/ai-mcp-monorepo/packages/mcp-prompts/dist/mcp-server-standalone.js"
+      ],
+      "env": {
+        "MODE": "mcp",
+        "STORAGE_TYPE": "file",
+        "PROMPTS_DIR": "/home/sparrow/projects/ai-mcp-monorepo/packages/mcp-prompts/data/prompts",
+        "LOG_LEVEL": "info"
+      }
+    }
+  }
+}

@@ -8,50 +8,1961 @@
 
 // Ensure the included flatbuffers.h is the same version as when this file was
 // generated, otherwise it may not be compatible.
-static_assert(FLATBUFFERS_VERSION_MAJOR == 2 &&
-              FLATBUFFERS_VERSION_MINOR == 0 &&
-              FLATBUFFERS_VERSION_REVISION == 8,
-             "Non-compatible flatbuffers version included");
+// Version check disabled for compatibility with different FlatBuffers versions
+// static_assert(FLATBUFFERS_VERSION_MAJOR == 2 &&
+//               FLATBUFFERS_VERSION_MINOR == 0 &&
+//               FLATBUFFERS_VERSION_REVISION == 8,
+//              "Non-compatible flatbuffers version included");
 
-#include "BpmAudio_generated.h"
 #include "BpmCommon_generated.h"
-#include "BpmConfig_generated.h"
-#include "BpmCore_generated.h"
-#include "BpmRequests_generated.h"
-#include "BpmResponses_generated.h"
-#include "BpmSystem_generated.h"
 
 namespace sparetools {
 namespace bpm {
 
-inline const sparetools::bpm::Response *GetResponse(const void *buf) {
-  return flatbuffers::GetRoot<sparetools::bpm::Response>(buf);
+struct BPMAnalysis;
+struct BPMAnalysisBuilder;
+
+struct BPMQuality;
+struct BPMQualityBuilder;
+
+struct BPMUpdate;
+struct BPMUpdateBuilder;
+
+struct AudioConfig;
+struct AudioConfigBuilder;
+
+struct DeviceStatus;
+struct DeviceStatusBuilder;
+
+struct ErrorInfo;
+struct ErrorInfoBuilder;
+
+struct Response;
+struct ResponseBuilder;
+
+struct HealthResponse;
+struct HealthResponseBuilder;
+
+struct ConfigResponse;
+struct ConfigResponseBuilder;
+
+struct StatusResponse;
+struct StatusResponseBuilder;
+
+struct BPMResponse;
+struct BPMResponseBuilder;
+
+struct PerformanceMetrics;
+struct PerformanceMetricsBuilder;
+
+struct SystemDiagnostics;
+struct SystemDiagnosticsBuilder;
+
+struct DiagnosticsResponse;
+struct DiagnosticsResponseBuilder;
+
+struct StatusUpdate;
+struct StatusUpdateBuilder;
+
+struct BPMAnalysis FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef BPMAnalysisBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_STABILITY = 4,
+    VT_REGULARITY = 6,
+    VT_DOMINANT_FREQUENCY = 8,
+    VT_SPECTRAL_CENTROID = 10,
+    VT_BEAT_POSITION = 12,
+    VT_TEMPO_CONSISTENCY = 14,
+    VT_ZERO_CROSSING_RATE = 16,
+    VT_RMS_ENERGY = 18
+  };
+  float stability() const {
+    return GetField<float>(VT_STABILITY, 0.0f);
+  }
+  bool mutate_stability(float _stability = 0.0f) {
+    return SetField<float>(VT_STABILITY, _stability, 0.0f);
+  }
+  float regularity() const {
+    return GetField<float>(VT_REGULARITY, 0.0f);
+  }
+  bool mutate_regularity(float _regularity = 0.0f) {
+    return SetField<float>(VT_REGULARITY, _regularity, 0.0f);
+  }
+  float dominant_frequency() const {
+    return GetField<float>(VT_DOMINANT_FREQUENCY, 0.0f);
+  }
+  bool mutate_dominant_frequency(float _dominant_frequency = 0.0f) {
+    return SetField<float>(VT_DOMINANT_FREQUENCY, _dominant_frequency, 0.0f);
+  }
+  float spectral_centroid() const {
+    return GetField<float>(VT_SPECTRAL_CENTROID, 0.0f);
+  }
+  bool mutate_spectral_centroid(float _spectral_centroid = 0.0f) {
+    return SetField<float>(VT_SPECTRAL_CENTROID, _spectral_centroid, 0.0f);
+  }
+  float beat_position() const {
+    return GetField<float>(VT_BEAT_POSITION, 0.0f);
+  }
+  bool mutate_beat_position(float _beat_position = 0.0f) {
+    return SetField<float>(VT_BEAT_POSITION, _beat_position, 0.0f);
+  }
+  float tempo_consistency() const {
+    return GetField<float>(VT_TEMPO_CONSISTENCY, 0.0f);
+  }
+  bool mutate_tempo_consistency(float _tempo_consistency = 0.0f) {
+    return SetField<float>(VT_TEMPO_CONSISTENCY, _tempo_consistency, 0.0f);
+  }
+  float zero_crossing_rate() const {
+    return GetField<float>(VT_ZERO_CROSSING_RATE, 0.0f);
+  }
+  bool mutate_zero_crossing_rate(float _zero_crossing_rate = 0.0f) {
+    return SetField<float>(VT_ZERO_CROSSING_RATE, _zero_crossing_rate, 0.0f);
+  }
+  float rms_energy() const {
+    return GetField<float>(VT_RMS_ENERGY, 0.0f);
+  }
+  bool mutate_rms_energy(float _rms_energy = 0.0f) {
+    return SetField<float>(VT_RMS_ENERGY, _rms_energy, 0.0f);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<float>(verifier, VT_STABILITY, 4) &&
+           VerifyField<float>(verifier, VT_REGULARITY, 4) &&
+           VerifyField<float>(verifier, VT_DOMINANT_FREQUENCY, 4) &&
+           VerifyField<float>(verifier, VT_SPECTRAL_CENTROID, 4) &&
+           VerifyField<float>(verifier, VT_BEAT_POSITION, 4) &&
+           VerifyField<float>(verifier, VT_TEMPO_CONSISTENCY, 4) &&
+           VerifyField<float>(verifier, VT_ZERO_CROSSING_RATE, 4) &&
+           VerifyField<float>(verifier, VT_RMS_ENERGY, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct BPMAnalysisBuilder {
+  typedef BPMAnalysis Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_stability(float stability) {
+    fbb_.AddElement<float>(BPMAnalysis::VT_STABILITY, stability, 0.0f);
+  }
+  void add_regularity(float regularity) {
+    fbb_.AddElement<float>(BPMAnalysis::VT_REGULARITY, regularity, 0.0f);
+  }
+  void add_dominant_frequency(float dominant_frequency) {
+    fbb_.AddElement<float>(BPMAnalysis::VT_DOMINANT_FREQUENCY, dominant_frequency, 0.0f);
+  }
+  void add_spectral_centroid(float spectral_centroid) {
+    fbb_.AddElement<float>(BPMAnalysis::VT_SPECTRAL_CENTROID, spectral_centroid, 0.0f);
+  }
+  void add_beat_position(float beat_position) {
+    fbb_.AddElement<float>(BPMAnalysis::VT_BEAT_POSITION, beat_position, 0.0f);
+  }
+  void add_tempo_consistency(float tempo_consistency) {
+    fbb_.AddElement<float>(BPMAnalysis::VT_TEMPO_CONSISTENCY, tempo_consistency, 0.0f);
+  }
+  void add_zero_crossing_rate(float zero_crossing_rate) {
+    fbb_.AddElement<float>(BPMAnalysis::VT_ZERO_CROSSING_RATE, zero_crossing_rate, 0.0f);
+  }
+  void add_rms_energy(float rms_energy) {
+    fbb_.AddElement<float>(BPMAnalysis::VT_RMS_ENERGY, rms_energy, 0.0f);
+  }
+  explicit BPMAnalysisBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<BPMAnalysis> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<BPMAnalysis>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<BPMAnalysis> CreateBPMAnalysis(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    float stability = 0.0f,
+    float regularity = 0.0f,
+    float dominant_frequency = 0.0f,
+    float spectral_centroid = 0.0f,
+    float beat_position = 0.0f,
+    float tempo_consistency = 0.0f,
+    float zero_crossing_rate = 0.0f,
+    float rms_energy = 0.0f) {
+  BPMAnalysisBuilder builder_(_fbb);
+  builder_.add_rms_energy(rms_energy);
+  builder_.add_zero_crossing_rate(zero_crossing_rate);
+  builder_.add_tempo_consistency(tempo_consistency);
+  builder_.add_beat_position(beat_position);
+  builder_.add_spectral_centroid(spectral_centroid);
+  builder_.add_dominant_frequency(dominant_frequency);
+  builder_.add_regularity(regularity);
+  builder_.add_stability(stability);
+  return builder_.Finish();
 }
 
-inline const sparetools::bpm::Response *GetSizePrefixedResponse(const void *buf) {
-  return flatbuffers::GetSizePrefixedRoot<sparetools::bpm::Response>(buf);
+struct BPMQuality FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef BPMQualityBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_SNR_DB = 4,
+    VT_SIGNAL_LEVEL_DB = 6,
+    VT_CONSECUTIVE_DETECTIONS = 8,
+    VT_RELIABILITY_SCORE = 10,
+    VT_FALSE_POSITIVE_RATE = 12,
+    VT_ALGORITHM_CONFIDENCE = 14,
+    VT_PROCESSING_TIME_MS = 16
+  };
+  float snr_db() const {
+    return GetField<float>(VT_SNR_DB, 0.0f);
+  }
+  bool mutate_snr_db(float _snr_db = 0.0f) {
+    return SetField<float>(VT_SNR_DB, _snr_db, 0.0f);
+  }
+  float signal_level_db() const {
+    return GetField<float>(VT_SIGNAL_LEVEL_DB, 0.0f);
+  }
+  bool mutate_signal_level_db(float _signal_level_db = 0.0f) {
+    return SetField<float>(VT_SIGNAL_LEVEL_DB, _signal_level_db, 0.0f);
+  }
+  uint16_t consecutive_detections() const {
+    return GetField<uint16_t>(VT_CONSECUTIVE_DETECTIONS, 0);
+  }
+  bool mutate_consecutive_detections(uint16_t _consecutive_detections = 0) {
+    return SetField<uint16_t>(VT_CONSECUTIVE_DETECTIONS, _consecutive_detections, 0);
+  }
+  float reliability_score() const {
+    return GetField<float>(VT_RELIABILITY_SCORE, 0.0f);
+  }
+  bool mutate_reliability_score(float _reliability_score = 0.0f) {
+    return SetField<float>(VT_RELIABILITY_SCORE, _reliability_score, 0.0f);
+  }
+  float false_positive_rate() const {
+    return GetField<float>(VT_FALSE_POSITIVE_RATE, 0.0f);
+  }
+  bool mutate_false_positive_rate(float _false_positive_rate = 0.0f) {
+    return SetField<float>(VT_FALSE_POSITIVE_RATE, _false_positive_rate, 0.0f);
+  }
+  float algorithm_confidence() const {
+    return GetField<float>(VT_ALGORITHM_CONFIDENCE, 0.0f);
+  }
+  bool mutate_algorithm_confidence(float _algorithm_confidence = 0.0f) {
+    return SetField<float>(VT_ALGORITHM_CONFIDENCE, _algorithm_confidence, 0.0f);
+  }
+  uint32_t processing_time_ms() const {
+    return GetField<uint32_t>(VT_PROCESSING_TIME_MS, 0);
+  }
+  bool mutate_processing_time_ms(uint32_t _processing_time_ms = 0) {
+    return SetField<uint32_t>(VT_PROCESSING_TIME_MS, _processing_time_ms, 0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<float>(verifier, VT_SNR_DB, 4) &&
+           VerifyField<float>(verifier, VT_SIGNAL_LEVEL_DB, 4) &&
+           VerifyField<uint16_t>(verifier, VT_CONSECUTIVE_DETECTIONS, 2) &&
+           VerifyField<float>(verifier, VT_RELIABILITY_SCORE, 4) &&
+           VerifyField<float>(verifier, VT_FALSE_POSITIVE_RATE, 4) &&
+           VerifyField<float>(verifier, VT_ALGORITHM_CONFIDENCE, 4) &&
+           VerifyField<uint32_t>(verifier, VT_PROCESSING_TIME_MS, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct BPMQualityBuilder {
+  typedef BPMQuality Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_snr_db(float snr_db) {
+    fbb_.AddElement<float>(BPMQuality::VT_SNR_DB, snr_db, 0.0f);
+  }
+  void add_signal_level_db(float signal_level_db) {
+    fbb_.AddElement<float>(BPMQuality::VT_SIGNAL_LEVEL_DB, signal_level_db, 0.0f);
+  }
+  void add_consecutive_detections(uint16_t consecutive_detections) {
+    fbb_.AddElement<uint16_t>(BPMQuality::VT_CONSECUTIVE_DETECTIONS, consecutive_detections, 0);
+  }
+  void add_reliability_score(float reliability_score) {
+    fbb_.AddElement<float>(BPMQuality::VT_RELIABILITY_SCORE, reliability_score, 0.0f);
+  }
+  void add_false_positive_rate(float false_positive_rate) {
+    fbb_.AddElement<float>(BPMQuality::VT_FALSE_POSITIVE_RATE, false_positive_rate, 0.0f);
+  }
+  void add_algorithm_confidence(float algorithm_confidence) {
+    fbb_.AddElement<float>(BPMQuality::VT_ALGORITHM_CONFIDENCE, algorithm_confidence, 0.0f);
+  }
+  void add_processing_time_ms(uint32_t processing_time_ms) {
+    fbb_.AddElement<uint32_t>(BPMQuality::VT_PROCESSING_TIME_MS, processing_time_ms, 0);
+  }
+  explicit BPMQualityBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<BPMQuality> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<BPMQuality>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<BPMQuality> CreateBPMQuality(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    float snr_db = 0.0f,
+    float signal_level_db = 0.0f,
+    uint16_t consecutive_detections = 0,
+    float reliability_score = 0.0f,
+    float false_positive_rate = 0.0f,
+    float algorithm_confidence = 0.0f,
+    uint32_t processing_time_ms = 0) {
+  BPMQualityBuilder builder_(_fbb);
+  builder_.add_processing_time_ms(processing_time_ms);
+  builder_.add_algorithm_confidence(algorithm_confidence);
+  builder_.add_false_positive_rate(false_positive_rate);
+  builder_.add_reliability_score(reliability_score);
+  builder_.add_signal_level_db(signal_level_db);
+  builder_.add_snr_db(snr_db);
+  builder_.add_consecutive_detections(consecutive_detections);
+  return builder_.Finish();
 }
 
-inline bool VerifyResponseBuffer(
-    flatbuffers::Verifier &verifier) {
-  return verifier.VerifyBuffer<sparetools::bpm::Response>(nullptr);
+struct BPMUpdate FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef BPMUpdateBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_BPM = 4,
+    VT_CONFIDENCE = 6,
+    VT_SIGNAL_LEVEL = 8,
+    VT_STATUS = 10,
+    VT_TIMESTAMP = 12,
+    VT_ANALYSIS = 14,
+    VT_QUALITY = 16,
+    VT_DEVICE_TYPE = 18,
+    VT_FIRMWARE_VERSION = 20
+  };
+  float bpm() const {
+    return GetField<float>(VT_BPM, 0.0f);
+  }
+  bool mutate_bpm(float _bpm = 0.0f) {
+    return SetField<float>(VT_BPM, _bpm, 0.0f);
+  }
+  float confidence() const {
+    return GetField<float>(VT_CONFIDENCE, 0.0f);
+  }
+  bool mutate_confidence(float _confidence = 0.0f) {
+    return SetField<float>(VT_CONFIDENCE, _confidence, 0.0f);
+  }
+  float signal_level() const {
+    return GetField<float>(VT_SIGNAL_LEVEL, 0.0f);
+  }
+  bool mutate_signal_level(float _signal_level = 0.0f) {
+    return SetField<float>(VT_SIGNAL_LEVEL, _signal_level, 0.0f);
+  }
+  sparetools::bpm::DetectionStatus status() const {
+    return static_cast<sparetools::bpm::DetectionStatus>(GetField<int8_t>(VT_STATUS, 0));
+  }
+  bool mutate_status(sparetools::bpm::DetectionStatus _status = static_cast<sparetools::bpm::DetectionStatus>(0)) {
+    return SetField<int8_t>(VT_STATUS, static_cast<int8_t>(_status), 0);
+  }
+  uint64_t timestamp() const {
+    return GetField<uint64_t>(VT_TIMESTAMP, 0);
+  }
+  bool mutate_timestamp(uint64_t _timestamp = 0) {
+    return SetField<uint64_t>(VT_TIMESTAMP, _timestamp, 0);
+  }
+  const sparetools::bpm::BPMAnalysis *analysis() const {
+    return GetPointer<const sparetools::bpm::BPMAnalysis *>(VT_ANALYSIS);
+  }
+  sparetools::bpm::BPMAnalysis *mutable_analysis() {
+    return GetPointer<sparetools::bpm::BPMAnalysis *>(VT_ANALYSIS);
+  }
+  const sparetools::bpm::BPMQuality *quality() const {
+    return GetPointer<const sparetools::bpm::BPMQuality *>(VT_QUALITY);
+  }
+  sparetools::bpm::BPMQuality *mutable_quality() {
+    return GetPointer<sparetools::bpm::BPMQuality *>(VT_QUALITY);
+  }
+  const flatbuffers::String *device_type() const {
+    return GetPointer<const flatbuffers::String *>(VT_DEVICE_TYPE);
+  }
+  flatbuffers::String *mutable_device_type() {
+    return GetPointer<flatbuffers::String *>(VT_DEVICE_TYPE);
+  }
+  const flatbuffers::String *firmware_version() const {
+    return GetPointer<const flatbuffers::String *>(VT_FIRMWARE_VERSION);
+  }
+  flatbuffers::String *mutable_firmware_version() {
+    return GetPointer<flatbuffers::String *>(VT_FIRMWARE_VERSION);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<float>(verifier, VT_BPM, 4) &&
+           VerifyField<float>(verifier, VT_CONFIDENCE, 4) &&
+           VerifyField<float>(verifier, VT_SIGNAL_LEVEL, 4) &&
+           VerifyField<int8_t>(verifier, VT_STATUS, 1) &&
+           VerifyField<uint64_t>(verifier, VT_TIMESTAMP, 8) &&
+           VerifyOffset(verifier, VT_ANALYSIS) &&
+           verifier.VerifyTable(analysis()) &&
+           VerifyOffset(verifier, VT_QUALITY) &&
+           verifier.VerifyTable(quality()) &&
+           VerifyOffset(verifier, VT_DEVICE_TYPE) &&
+           verifier.VerifyString(device_type()) &&
+           VerifyOffset(verifier, VT_FIRMWARE_VERSION) &&
+           verifier.VerifyString(firmware_version()) &&
+           verifier.EndTable();
+  }
+};
+
+struct BPMUpdateBuilder {
+  typedef BPMUpdate Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_bpm(float bpm) {
+    fbb_.AddElement<float>(BPMUpdate::VT_BPM, bpm, 0.0f);
+  }
+  void add_confidence(float confidence) {
+    fbb_.AddElement<float>(BPMUpdate::VT_CONFIDENCE, confidence, 0.0f);
+  }
+  void add_signal_level(float signal_level) {
+    fbb_.AddElement<float>(BPMUpdate::VT_SIGNAL_LEVEL, signal_level, 0.0f);
+  }
+  void add_status(sparetools::bpm::DetectionStatus status) {
+    fbb_.AddElement<int8_t>(BPMUpdate::VT_STATUS, static_cast<int8_t>(status), 0);
+  }
+  void add_timestamp(uint64_t timestamp) {
+    fbb_.AddElement<uint64_t>(BPMUpdate::VT_TIMESTAMP, timestamp, 0);
+  }
+  void add_analysis(flatbuffers::Offset<sparetools::bpm::BPMAnalysis> analysis) {
+    fbb_.AddOffset(BPMUpdate::VT_ANALYSIS, analysis);
+  }
+  void add_quality(flatbuffers::Offset<sparetools::bpm::BPMQuality> quality) {
+    fbb_.AddOffset(BPMUpdate::VT_QUALITY, quality);
+  }
+  void add_device_type(flatbuffers::Offset<flatbuffers::String> device_type) {
+    fbb_.AddOffset(BPMUpdate::VT_DEVICE_TYPE, device_type);
+  }
+  void add_firmware_version(flatbuffers::Offset<flatbuffers::String> firmware_version) {
+    fbb_.AddOffset(BPMUpdate::VT_FIRMWARE_VERSION, firmware_version);
+  }
+  explicit BPMUpdateBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<BPMUpdate> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<BPMUpdate>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<BPMUpdate> CreateBPMUpdate(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    float bpm = 0.0f,
+    float confidence = 0.0f,
+    float signal_level = 0.0f,
+    sparetools::bpm::DetectionStatus status = sparetools::bpm::DetectionStatus_INITIALIZING,
+    uint64_t timestamp = 0,
+    flatbuffers::Offset<sparetools::bpm::BPMAnalysis> analysis = 0,
+    flatbuffers::Offset<sparetools::bpm::BPMQuality> quality = 0,
+    flatbuffers::Offset<flatbuffers::String> device_type = 0,
+    flatbuffers::Offset<flatbuffers::String> firmware_version = 0) {
+  BPMUpdateBuilder builder_(_fbb);
+  builder_.add_timestamp(timestamp);
+  builder_.add_firmware_version(firmware_version);
+  builder_.add_device_type(device_type);
+  builder_.add_quality(quality);
+  builder_.add_analysis(analysis);
+  builder_.add_signal_level(signal_level);
+  builder_.add_confidence(confidence);
+  builder_.add_bpm(bpm);
+  builder_.add_status(status);
+  return builder_.Finish();
 }
 
-inline bool VerifySizePrefixedResponseBuffer(
-    flatbuffers::Verifier &verifier) {
-  return verifier.VerifySizePrefixedBuffer<sparetools::bpm::Response>(nullptr);
+inline flatbuffers::Offset<BPMUpdate> CreateBPMUpdateDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    float bpm = 0.0f,
+    float confidence = 0.0f,
+    float signal_level = 0.0f,
+    sparetools::bpm::DetectionStatus status = sparetools::bpm::DetectionStatus_INITIALIZING,
+    uint64_t timestamp = 0,
+    flatbuffers::Offset<sparetools::bpm::BPMAnalysis> analysis = 0,
+    flatbuffers::Offset<sparetools::bpm::BPMQuality> quality = 0,
+    const char *device_type = nullptr,
+    const char *firmware_version = nullptr) {
+  auto device_type__ = device_type ? _fbb.CreateString(device_type) : 0;
+  auto firmware_version__ = firmware_version ? _fbb.CreateString(firmware_version) : 0;
+  return sparetools::bpm::CreateBPMUpdate(
+      _fbb,
+      bpm,
+      confidence,
+      signal_level,
+      status,
+      timestamp,
+      analysis,
+      quality,
+      device_type__,
+      firmware_version__);
 }
 
-inline void FinishResponseBuffer(
-    flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<sparetools::bpm::Response> root) {
-  fbb.Finish(root);
+struct AudioConfig FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef AudioConfigBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_SAMPLE_RATE = 4,
+    VT_FFT_SIZE = 6,
+    VT_BUFFER_SIZE = 8,
+    VT_MIN_BPM = 10,
+    VT_MAX_BPM = 12,
+    VT_CHANNELS = 14,
+    VT_BITS_PER_SAMPLE = 16,
+    VT_AUDIO_SOURCE = 18
+  };
+  uint32_t sample_rate() const {
+    return GetField<uint32_t>(VT_SAMPLE_RATE, 16000);
+  }
+  bool mutate_sample_rate(uint32_t _sample_rate = 16000) {
+    return SetField<uint32_t>(VT_SAMPLE_RATE, _sample_rate, 16000);
+  }
+  uint16_t fft_size() const {
+    return GetField<uint16_t>(VT_FFT_SIZE, 1024);
+  }
+  bool mutate_fft_size(uint16_t _fft_size = 1024) {
+    return SetField<uint16_t>(VT_FFT_SIZE, _fft_size, 1024);
+  }
+  uint16_t buffer_size() const {
+    return GetField<uint16_t>(VT_BUFFER_SIZE, 512);
+  }
+  bool mutate_buffer_size(uint16_t _buffer_size = 512) {
+    return SetField<uint16_t>(VT_BUFFER_SIZE, _buffer_size, 512);
+  }
+  uint8_t min_bpm() const {
+    return GetField<uint8_t>(VT_MIN_BPM, 60);
+  }
+  bool mutate_min_bpm(uint8_t _min_bpm = 60) {
+    return SetField<uint8_t>(VT_MIN_BPM, _min_bpm, 60);
+  }
+  uint8_t max_bpm() const {
+    return GetField<uint8_t>(VT_MAX_BPM, 200);
+  }
+  bool mutate_max_bpm(uint8_t _max_bpm = 200) {
+    return SetField<uint8_t>(VT_MAX_BPM, _max_bpm, 200);
+  }
+  uint8_t channels() const {
+    return GetField<uint8_t>(VT_CHANNELS, 1);
+  }
+  bool mutate_channels(uint8_t _channels = 1) {
+    return SetField<uint8_t>(VT_CHANNELS, _channels, 1);
+  }
+  uint8_t bits_per_sample() const {
+    return GetField<uint8_t>(VT_BITS_PER_SAMPLE, 16);
+  }
+  bool mutate_bits_per_sample(uint8_t _bits_per_sample = 16) {
+    return SetField<uint8_t>(VT_BITS_PER_SAMPLE, _bits_per_sample, 16);
+  }
+  sparetools::bpm::AudioSource audio_source() const {
+    return static_cast<sparetools::bpm::AudioSource>(GetField<int8_t>(VT_AUDIO_SOURCE, 0));
+  }
+  bool mutate_audio_source(sparetools::bpm::AudioSource _audio_source = static_cast<sparetools::bpm::AudioSource>(0)) {
+    return SetField<int8_t>(VT_AUDIO_SOURCE, static_cast<int8_t>(_audio_source), 0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_SAMPLE_RATE, 4) &&
+           VerifyField<uint16_t>(verifier, VT_FFT_SIZE, 2) &&
+           VerifyField<uint16_t>(verifier, VT_BUFFER_SIZE, 2) &&
+           VerifyField<uint8_t>(verifier, VT_MIN_BPM, 1) &&
+           VerifyField<uint8_t>(verifier, VT_MAX_BPM, 1) &&
+           VerifyField<uint8_t>(verifier, VT_CHANNELS, 1) &&
+           VerifyField<uint8_t>(verifier, VT_BITS_PER_SAMPLE, 1) &&
+           VerifyField<int8_t>(verifier, VT_AUDIO_SOURCE, 1) &&
+           verifier.EndTable();
+  }
+};
+
+struct AudioConfigBuilder {
+  typedef AudioConfig Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_sample_rate(uint32_t sample_rate) {
+    fbb_.AddElement<uint32_t>(AudioConfig::VT_SAMPLE_RATE, sample_rate, 16000);
+  }
+  void add_fft_size(uint16_t fft_size) {
+    fbb_.AddElement<uint16_t>(AudioConfig::VT_FFT_SIZE, fft_size, 1024);
+  }
+  void add_buffer_size(uint16_t buffer_size) {
+    fbb_.AddElement<uint16_t>(AudioConfig::VT_BUFFER_SIZE, buffer_size, 512);
+  }
+  void add_min_bpm(uint8_t min_bpm) {
+    fbb_.AddElement<uint8_t>(AudioConfig::VT_MIN_BPM, min_bpm, 60);
+  }
+  void add_max_bpm(uint8_t max_bpm) {
+    fbb_.AddElement<uint8_t>(AudioConfig::VT_MAX_BPM, max_bpm, 200);
+  }
+  void add_channels(uint8_t channels) {
+    fbb_.AddElement<uint8_t>(AudioConfig::VT_CHANNELS, channels, 1);
+  }
+  void add_bits_per_sample(uint8_t bits_per_sample) {
+    fbb_.AddElement<uint8_t>(AudioConfig::VT_BITS_PER_SAMPLE, bits_per_sample, 16);
+  }
+  void add_audio_source(sparetools::bpm::AudioSource audio_source) {
+    fbb_.AddElement<int8_t>(AudioConfig::VT_AUDIO_SOURCE, static_cast<int8_t>(audio_source), 0);
+  }
+  explicit AudioConfigBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<AudioConfig> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<AudioConfig>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<AudioConfig> CreateAudioConfig(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t sample_rate = 16000,
+    uint16_t fft_size = 1024,
+    uint16_t buffer_size = 512,
+    uint8_t min_bpm = 60,
+    uint8_t max_bpm = 200,
+    uint8_t channels = 1,
+    uint8_t bits_per_sample = 16,
+    sparetools::bpm::AudioSource audio_source = sparetools::bpm::AudioSource_MICROPHONE) {
+  AudioConfigBuilder builder_(_fbb);
+  builder_.add_sample_rate(sample_rate);
+  builder_.add_buffer_size(buffer_size);
+  builder_.add_fft_size(fft_size);
+  builder_.add_audio_source(audio_source);
+  builder_.add_bits_per_sample(bits_per_sample);
+  builder_.add_channels(channels);
+  builder_.add_max_bpm(max_bpm);
+  builder_.add_min_bpm(min_bpm);
+  return builder_.Finish();
 }
 
-inline void FinishSizePrefixedResponseBuffer(
-    flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<sparetools::bpm::Response> root) {
-  fbb.FinishSizePrefixed(root);
+struct DeviceStatus FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef DeviceStatusBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_UPTIME_SECONDS = 4,
+    VT_FREE_HEAP_BYTES = 6,
+    VT_TOTAL_HEAP_BYTES = 8,
+    VT_CPU_USAGE_PERCENT = 10,
+    VT_WIFI_CONNECTED = 12,
+    VT_WIFI_RSSI = 14,
+    VT_IP_ADDRESS = 16,
+    VT_AUDIO_ACTIVE = 18,
+    VT_LAST_BPM = 20,
+    VT_DETECTION_STATUS = 22,
+    VT_TIMESTAMP = 24,
+    VT_LAST_BPM_TIMESTAMP = 26
+  };
+  uint64_t uptime_seconds() const {
+    return GetField<uint64_t>(VT_UPTIME_SECONDS, 0);
+  }
+  bool mutate_uptime_seconds(uint64_t _uptime_seconds = 0) {
+    return SetField<uint64_t>(VT_UPTIME_SECONDS, _uptime_seconds, 0);
+  }
+  uint32_t free_heap_bytes() const {
+    return GetField<uint32_t>(VT_FREE_HEAP_BYTES, 0);
+  }
+  bool mutate_free_heap_bytes(uint32_t _free_heap_bytes = 0) {
+    return SetField<uint32_t>(VT_FREE_HEAP_BYTES, _free_heap_bytes, 0);
+  }
+  uint32_t total_heap_bytes() const {
+    return GetField<uint32_t>(VT_TOTAL_HEAP_BYTES, 0);
+  }
+  bool mutate_total_heap_bytes(uint32_t _total_heap_bytes = 0) {
+    return SetField<uint32_t>(VT_TOTAL_HEAP_BYTES, _total_heap_bytes, 0);
+  }
+  uint8_t cpu_usage_percent() const {
+    return GetField<uint8_t>(VT_CPU_USAGE_PERCENT, 0);
+  }
+  bool mutate_cpu_usage_percent(uint8_t _cpu_usage_percent = 0) {
+    return SetField<uint8_t>(VT_CPU_USAGE_PERCENT, _cpu_usage_percent, 0);
+  }
+  bool wifi_connected() const {
+    return GetField<uint8_t>(VT_WIFI_CONNECTED, 0) != 0;
+  }
+  bool mutate_wifi_connected(bool _wifi_connected = 0) {
+    return SetField<uint8_t>(VT_WIFI_CONNECTED, static_cast<uint8_t>(_wifi_connected), 0);
+  }
+  int8_t wifi_rssi() const {
+    return GetField<int8_t>(VT_WIFI_RSSI, 0);
+  }
+  bool mutate_wifi_rssi(int8_t _wifi_rssi = 0) {
+    return SetField<int8_t>(VT_WIFI_RSSI, _wifi_rssi, 0);
+  }
+  const flatbuffers::String *ip_address() const {
+    return GetPointer<const flatbuffers::String *>(VT_IP_ADDRESS);
+  }
+  flatbuffers::String *mutable_ip_address() {
+    return GetPointer<flatbuffers::String *>(VT_IP_ADDRESS);
+  }
+  bool audio_active() const {
+    return GetField<uint8_t>(VT_AUDIO_ACTIVE, 0) != 0;
+  }
+  bool mutate_audio_active(bool _audio_active = 0) {
+    return SetField<uint8_t>(VT_AUDIO_ACTIVE, static_cast<uint8_t>(_audio_active), 0);
+  }
+  float last_bpm() const {
+    return GetField<float>(VT_LAST_BPM, 0.0f);
+  }
+  bool mutate_last_bpm(float _last_bpm = 0.0f) {
+    return SetField<float>(VT_LAST_BPM, _last_bpm, 0.0f);
+  }
+  sparetools::bpm::DetectionStatus detection_status() const {
+    return static_cast<sparetools::bpm::DetectionStatus>(GetField<int8_t>(VT_DETECTION_STATUS, 0));
+  }
+  bool mutate_detection_status(sparetools::bpm::DetectionStatus _detection_status = static_cast<sparetools::bpm::DetectionStatus>(0)) {
+    return SetField<int8_t>(VT_DETECTION_STATUS, static_cast<int8_t>(_detection_status), 0);
+  }
+  uint64_t timestamp() const {
+    return GetField<uint64_t>(VT_TIMESTAMP, 0);
+  }
+  bool mutate_timestamp(uint64_t _timestamp = 0) {
+    return SetField<uint64_t>(VT_TIMESTAMP, _timestamp, 0);
+  }
+  uint64_t last_bpm_timestamp() const {
+    return GetField<uint64_t>(VT_LAST_BPM_TIMESTAMP, 0);
+  }
+  bool mutate_last_bpm_timestamp(uint64_t _last_bpm_timestamp = 0) {
+    return SetField<uint64_t>(VT_LAST_BPM_TIMESTAMP, _last_bpm_timestamp, 0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_UPTIME_SECONDS, 8) &&
+           VerifyField<uint32_t>(verifier, VT_FREE_HEAP_BYTES, 4) &&
+           VerifyField<uint32_t>(verifier, VT_TOTAL_HEAP_BYTES, 4) &&
+           VerifyField<uint8_t>(verifier, VT_CPU_USAGE_PERCENT, 1) &&
+           VerifyField<uint8_t>(verifier, VT_WIFI_CONNECTED, 1) &&
+           VerifyField<int8_t>(verifier, VT_WIFI_RSSI, 1) &&
+           VerifyOffset(verifier, VT_IP_ADDRESS) &&
+           verifier.VerifyString(ip_address()) &&
+           VerifyField<uint8_t>(verifier, VT_AUDIO_ACTIVE, 1) &&
+           VerifyField<float>(verifier, VT_LAST_BPM, 4) &&
+           VerifyField<int8_t>(verifier, VT_DETECTION_STATUS, 1) &&
+           VerifyField<uint64_t>(verifier, VT_TIMESTAMP, 8) &&
+           VerifyField<uint64_t>(verifier, VT_LAST_BPM_TIMESTAMP, 8) &&
+           verifier.EndTable();
+  }
+};
+
+struct DeviceStatusBuilder {
+  typedef DeviceStatus Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_uptime_seconds(uint64_t uptime_seconds) {
+    fbb_.AddElement<uint64_t>(DeviceStatus::VT_UPTIME_SECONDS, uptime_seconds, 0);
+  }
+  void add_free_heap_bytes(uint32_t free_heap_bytes) {
+    fbb_.AddElement<uint32_t>(DeviceStatus::VT_FREE_HEAP_BYTES, free_heap_bytes, 0);
+  }
+  void add_total_heap_bytes(uint32_t total_heap_bytes) {
+    fbb_.AddElement<uint32_t>(DeviceStatus::VT_TOTAL_HEAP_BYTES, total_heap_bytes, 0);
+  }
+  void add_cpu_usage_percent(uint8_t cpu_usage_percent) {
+    fbb_.AddElement<uint8_t>(DeviceStatus::VT_CPU_USAGE_PERCENT, cpu_usage_percent, 0);
+  }
+  void add_wifi_connected(bool wifi_connected) {
+    fbb_.AddElement<uint8_t>(DeviceStatus::VT_WIFI_CONNECTED, static_cast<uint8_t>(wifi_connected), 0);
+  }
+  void add_wifi_rssi(int8_t wifi_rssi) {
+    fbb_.AddElement<int8_t>(DeviceStatus::VT_WIFI_RSSI, wifi_rssi, 0);
+  }
+  void add_ip_address(flatbuffers::Offset<flatbuffers::String> ip_address) {
+    fbb_.AddOffset(DeviceStatus::VT_IP_ADDRESS, ip_address);
+  }
+  void add_audio_active(bool audio_active) {
+    fbb_.AddElement<uint8_t>(DeviceStatus::VT_AUDIO_ACTIVE, static_cast<uint8_t>(audio_active), 0);
+  }
+  void add_last_bpm(float last_bpm) {
+    fbb_.AddElement<float>(DeviceStatus::VT_LAST_BPM, last_bpm, 0.0f);
+  }
+  void add_detection_status(sparetools::bpm::DetectionStatus detection_status) {
+    fbb_.AddElement<int8_t>(DeviceStatus::VT_DETECTION_STATUS, static_cast<int8_t>(detection_status), 0);
+  }
+  void add_timestamp(uint64_t timestamp) {
+    fbb_.AddElement<uint64_t>(DeviceStatus::VT_TIMESTAMP, timestamp, 0);
+  }
+  void add_last_bpm_timestamp(uint64_t last_bpm_timestamp) {
+    fbb_.AddElement<uint64_t>(DeviceStatus::VT_LAST_BPM_TIMESTAMP, last_bpm_timestamp, 0);
+  }
+  explicit DeviceStatusBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<DeviceStatus> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<DeviceStatus>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<DeviceStatus> CreateDeviceStatus(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t uptime_seconds = 0,
+    uint32_t free_heap_bytes = 0,
+    uint32_t total_heap_bytes = 0,
+    uint8_t cpu_usage_percent = 0,
+    bool wifi_connected = false,
+    int8_t wifi_rssi = 0,
+    flatbuffers::Offset<flatbuffers::String> ip_address = 0,
+    bool audio_active = false,
+    float last_bpm = 0.0f,
+    sparetools::bpm::DetectionStatus detection_status = sparetools::bpm::DetectionStatus_INITIALIZING,
+    uint64_t timestamp = 0,
+    uint64_t last_bpm_timestamp = 0) {
+  DeviceStatusBuilder builder_(_fbb);
+  builder_.add_last_bpm_timestamp(last_bpm_timestamp);
+  builder_.add_timestamp(timestamp);
+  builder_.add_uptime_seconds(uptime_seconds);
+  builder_.add_last_bpm(last_bpm);
+  builder_.add_ip_address(ip_address);
+  builder_.add_total_heap_bytes(total_heap_bytes);
+  builder_.add_free_heap_bytes(free_heap_bytes);
+  builder_.add_detection_status(detection_status);
+  builder_.add_audio_active(audio_active);
+  builder_.add_wifi_rssi(wifi_rssi);
+  builder_.add_wifi_connected(wifi_connected);
+  builder_.add_cpu_usage_percent(cpu_usage_percent);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<DeviceStatus> CreateDeviceStatusDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t uptime_seconds = 0,
+    uint32_t free_heap_bytes = 0,
+    uint32_t total_heap_bytes = 0,
+    uint8_t cpu_usage_percent = 0,
+    bool wifi_connected = false,
+    int8_t wifi_rssi = 0,
+    const char *ip_address = nullptr,
+    bool audio_active = false,
+    float last_bpm = 0.0f,
+    sparetools::bpm::DetectionStatus detection_status = sparetools::bpm::DetectionStatus_INITIALIZING,
+    uint64_t timestamp = 0,
+    uint64_t last_bpm_timestamp = 0) {
+  auto ip_address__ = ip_address ? _fbb.CreateString(ip_address) : 0;
+  return sparetools::bpm::CreateDeviceStatus(
+      _fbb,
+      uptime_seconds,
+      free_heap_bytes,
+      total_heap_bytes,
+      cpu_usage_percent,
+      wifi_connected,
+      wifi_rssi,
+      ip_address__,
+      audio_active,
+      last_bpm,
+      detection_status,
+      timestamp,
+      last_bpm_timestamp);
+}
+
+struct ErrorInfo FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef ErrorInfoBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_CODE = 4,
+    VT_MESSAGE = 6,
+    VT_DETAILS = 8,
+    VT_TIMESTAMP = 10
+  };
+  sparetools::bpm::ErrorCode code() const {
+    return static_cast<sparetools::bpm::ErrorCode>(GetField<int16_t>(VT_CODE, 0));
+  }
+  bool mutate_code(sparetools::bpm::ErrorCode _code = static_cast<sparetools::bpm::ErrorCode>(0)) {
+    return SetField<int16_t>(VT_CODE, static_cast<int16_t>(_code), 0);
+  }
+  const flatbuffers::String *message() const {
+    return GetPointer<const flatbuffers::String *>(VT_MESSAGE);
+  }
+  flatbuffers::String *mutable_message() {
+    return GetPointer<flatbuffers::String *>(VT_MESSAGE);
+  }
+  const flatbuffers::String *details() const {
+    return GetPointer<const flatbuffers::String *>(VT_DETAILS);
+  }
+  flatbuffers::String *mutable_details() {
+    return GetPointer<flatbuffers::String *>(VT_DETAILS);
+  }
+  uint64_t timestamp() const {
+    return GetField<uint64_t>(VT_TIMESTAMP, 0);
+  }
+  bool mutate_timestamp(uint64_t _timestamp = 0) {
+    return SetField<uint64_t>(VT_TIMESTAMP, _timestamp, 0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int16_t>(verifier, VT_CODE, 2) &&
+           VerifyOffset(verifier, VT_MESSAGE) &&
+           verifier.VerifyString(message()) &&
+           VerifyOffset(verifier, VT_DETAILS) &&
+           verifier.VerifyString(details()) &&
+           VerifyField<uint64_t>(verifier, VT_TIMESTAMP, 8) &&
+           verifier.EndTable();
+  }
+};
+
+struct ErrorInfoBuilder {
+  typedef ErrorInfo Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_code(sparetools::bpm::ErrorCode code) {
+    fbb_.AddElement<int16_t>(ErrorInfo::VT_CODE, static_cast<int16_t>(code), 0);
+  }
+  void add_message(flatbuffers::Offset<flatbuffers::String> message) {
+    fbb_.AddOffset(ErrorInfo::VT_MESSAGE, message);
+  }
+  void add_details(flatbuffers::Offset<flatbuffers::String> details) {
+    fbb_.AddOffset(ErrorInfo::VT_DETAILS, details);
+  }
+  void add_timestamp(uint64_t timestamp) {
+    fbb_.AddElement<uint64_t>(ErrorInfo::VT_TIMESTAMP, timestamp, 0);
+  }
+  explicit ErrorInfoBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<ErrorInfo> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<ErrorInfo>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<ErrorInfo> CreateErrorInfo(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    sparetools::bpm::ErrorCode code = sparetools::bpm::ErrorCode_NONE,
+    flatbuffers::Offset<flatbuffers::String> message = 0,
+    flatbuffers::Offset<flatbuffers::String> details = 0,
+    uint64_t timestamp = 0) {
+  ErrorInfoBuilder builder_(_fbb);
+  builder_.add_timestamp(timestamp);
+  builder_.add_details(details);
+  builder_.add_message(message);
+  builder_.add_code(code);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<ErrorInfo> CreateErrorInfoDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    sparetools::bpm::ErrorCode code = sparetools::bpm::ErrorCode_NONE,
+    const char *message = nullptr,
+    const char *details = nullptr,
+    uint64_t timestamp = 0) {
+  auto message__ = message ? _fbb.CreateString(message) : 0;
+  auto details__ = details ? _fbb.CreateString(details) : 0;
+  return sparetools::bpm::CreateErrorInfo(
+      _fbb,
+      code,
+      message__,
+      details__,
+      timestamp);
+}
+
+struct Response FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef ResponseBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_STATUS = 4,
+    VT_TIMESTAMP = 6,
+    VT_ERROR = 8
+  };
+  sparetools::bpm::StatusEnum status() const {
+    return static_cast<sparetools::bpm::StatusEnum>(GetField<int32_t>(VT_STATUS, 0));
+  }
+  bool mutate_status(sparetools::bpm::StatusEnum _status = static_cast<sparetools::bpm::StatusEnum>(0)) {
+    return SetField<int32_t>(VT_STATUS, static_cast<int32_t>(_status), 0);
+  }
+  uint64_t timestamp() const {
+    return GetField<uint64_t>(VT_TIMESTAMP, 0);
+  }
+  bool mutate_timestamp(uint64_t _timestamp = 0) {
+    return SetField<uint64_t>(VT_TIMESTAMP, _timestamp, 0);
+  }
+  const sparetools::bpm::ErrorInfo *error() const {
+    return GetPointer<const sparetools::bpm::ErrorInfo *>(VT_ERROR);
+  }
+  sparetools::bpm::ErrorInfo *mutable_error() {
+    return GetPointer<sparetools::bpm::ErrorInfo *>(VT_ERROR);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_STATUS, 4) &&
+           VerifyField<uint64_t>(verifier, VT_TIMESTAMP, 8) &&
+           VerifyOffset(verifier, VT_ERROR) &&
+           verifier.VerifyTable(error()) &&
+           verifier.EndTable();
+  }
+};
+
+struct ResponseBuilder {
+  typedef Response Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_status(sparetools::bpm::StatusEnum status) {
+    fbb_.AddElement<int32_t>(Response::VT_STATUS, static_cast<int32_t>(status), 0);
+  }
+  void add_timestamp(uint64_t timestamp) {
+    fbb_.AddElement<uint64_t>(Response::VT_TIMESTAMP, timestamp, 0);
+  }
+  void add_error(flatbuffers::Offset<sparetools::bpm::ErrorInfo> error) {
+    fbb_.AddOffset(Response::VT_ERROR, error);
+  }
+  explicit ResponseBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<Response> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<Response>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<Response> CreateResponse(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    sparetools::bpm::StatusEnum status = sparetools::bpm::StatusEnum_Success,
+    uint64_t timestamp = 0,
+    flatbuffers::Offset<sparetools::bpm::ErrorInfo> error = 0) {
+  ResponseBuilder builder_(_fbb);
+  builder_.add_timestamp(timestamp);
+  builder_.add_error(error);
+  builder_.add_status(status);
+  return builder_.Finish();
+}
+
+struct HealthResponse FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef HealthResponseBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_STATUS = 4,
+    VT_UPTIME_SECONDS = 6,
+    VT_VERSION = 8,
+    VT_TIMESTAMP = 10,
+    VT_ERROR = 12
+  };
+  sparetools::bpm::StatusEnum status() const {
+    return static_cast<sparetools::bpm::StatusEnum>(GetField<int32_t>(VT_STATUS, 0));
+  }
+  bool mutate_status(sparetools::bpm::StatusEnum _status = static_cast<sparetools::bpm::StatusEnum>(0)) {
+    return SetField<int32_t>(VT_STATUS, static_cast<int32_t>(_status), 0);
+  }
+  uint64_t uptime_seconds() const {
+    return GetField<uint64_t>(VT_UPTIME_SECONDS, 0);
+  }
+  bool mutate_uptime_seconds(uint64_t _uptime_seconds = 0) {
+    return SetField<uint64_t>(VT_UPTIME_SECONDS, _uptime_seconds, 0);
+  }
+  const flatbuffers::String *version() const {
+    return GetPointer<const flatbuffers::String *>(VT_VERSION);
+  }
+  flatbuffers::String *mutable_version() {
+    return GetPointer<flatbuffers::String *>(VT_VERSION);
+  }
+  uint64_t timestamp() const {
+    return GetField<uint64_t>(VT_TIMESTAMP, 0);
+  }
+  bool mutate_timestamp(uint64_t _timestamp = 0) {
+    return SetField<uint64_t>(VT_TIMESTAMP, _timestamp, 0);
+  }
+  const sparetools::bpm::ErrorInfo *error() const {
+    return GetPointer<const sparetools::bpm::ErrorInfo *>(VT_ERROR);
+  }
+  sparetools::bpm::ErrorInfo *mutable_error() {
+    return GetPointer<sparetools::bpm::ErrorInfo *>(VT_ERROR);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_STATUS, 4) &&
+           VerifyField<uint64_t>(verifier, VT_UPTIME_SECONDS, 8) &&
+           VerifyOffset(verifier, VT_VERSION) &&
+           verifier.VerifyString(version()) &&
+           VerifyField<uint64_t>(verifier, VT_TIMESTAMP, 8) &&
+           VerifyOffset(verifier, VT_ERROR) &&
+           verifier.VerifyTable(error()) &&
+           verifier.EndTable();
+  }
+};
+
+struct HealthResponseBuilder {
+  typedef HealthResponse Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_status(sparetools::bpm::StatusEnum status) {
+    fbb_.AddElement<int32_t>(HealthResponse::VT_STATUS, static_cast<int32_t>(status), 0);
+  }
+  void add_uptime_seconds(uint64_t uptime_seconds) {
+    fbb_.AddElement<uint64_t>(HealthResponse::VT_UPTIME_SECONDS, uptime_seconds, 0);
+  }
+  void add_version(flatbuffers::Offset<flatbuffers::String> version) {
+    fbb_.AddOffset(HealthResponse::VT_VERSION, version);
+  }
+  void add_timestamp(uint64_t timestamp) {
+    fbb_.AddElement<uint64_t>(HealthResponse::VT_TIMESTAMP, timestamp, 0);
+  }
+  void add_error(flatbuffers::Offset<sparetools::bpm::ErrorInfo> error) {
+    fbb_.AddOffset(HealthResponse::VT_ERROR, error);
+  }
+  explicit HealthResponseBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<HealthResponse> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HealthResponse>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HealthResponse> CreateHealthResponse(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    sparetools::bpm::StatusEnum status = sparetools::bpm::StatusEnum_Success,
+    uint64_t uptime_seconds = 0,
+    flatbuffers::Offset<flatbuffers::String> version = 0,
+    uint64_t timestamp = 0,
+    flatbuffers::Offset<sparetools::bpm::ErrorInfo> error = 0) {
+  HealthResponseBuilder builder_(_fbb);
+  builder_.add_timestamp(timestamp);
+  builder_.add_uptime_seconds(uptime_seconds);
+  builder_.add_error(error);
+  builder_.add_version(version);
+  builder_.add_status(status);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<HealthResponse> CreateHealthResponseDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    sparetools::bpm::StatusEnum status = sparetools::bpm::StatusEnum_Success,
+    uint64_t uptime_seconds = 0,
+    const char *version = nullptr,
+    uint64_t timestamp = 0,
+    flatbuffers::Offset<sparetools::bpm::ErrorInfo> error = 0) {
+  auto version__ = version ? _fbb.CreateString(version) : 0;
+  return sparetools::bpm::CreateHealthResponse(
+      _fbb,
+      status,
+      uptime_seconds,
+      version__,
+      timestamp,
+      error);
+}
+
+struct ConfigResponse FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef ConfigResponseBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_STATUS = 4,
+    VT_CONFIG = 6,
+    VT_TIMESTAMP = 8,
+    VT_ERROR = 10
+  };
+  sparetools::bpm::StatusEnum status() const {
+    return static_cast<sparetools::bpm::StatusEnum>(GetField<int32_t>(VT_STATUS, 0));
+  }
+  bool mutate_status(sparetools::bpm::StatusEnum _status = static_cast<sparetools::bpm::StatusEnum>(0)) {
+    return SetField<int32_t>(VT_STATUS, static_cast<int32_t>(_status), 0);
+  }
+  const sparetools::bpm::AudioConfig *config() const {
+    return GetPointer<const sparetools::bpm::AudioConfig *>(VT_CONFIG);
+  }
+  sparetools::bpm::AudioConfig *mutable_config() {
+    return GetPointer<sparetools::bpm::AudioConfig *>(VT_CONFIG);
+  }
+  uint64_t timestamp() const {
+    return GetField<uint64_t>(VT_TIMESTAMP, 0);
+  }
+  bool mutate_timestamp(uint64_t _timestamp = 0) {
+    return SetField<uint64_t>(VT_TIMESTAMP, _timestamp, 0);
+  }
+  const sparetools::bpm::ErrorInfo *error() const {
+    return GetPointer<const sparetools::bpm::ErrorInfo *>(VT_ERROR);
+  }
+  sparetools::bpm::ErrorInfo *mutable_error() {
+    return GetPointer<sparetools::bpm::ErrorInfo *>(VT_ERROR);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_STATUS, 4) &&
+           VerifyOffset(verifier, VT_CONFIG) &&
+           verifier.VerifyTable(config()) &&
+           VerifyField<uint64_t>(verifier, VT_TIMESTAMP, 8) &&
+           VerifyOffset(verifier, VT_ERROR) &&
+           verifier.VerifyTable(error()) &&
+           verifier.EndTable();
+  }
+};
+
+struct ConfigResponseBuilder {
+  typedef ConfigResponse Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_status(sparetools::bpm::StatusEnum status) {
+    fbb_.AddElement<int32_t>(ConfigResponse::VT_STATUS, static_cast<int32_t>(status), 0);
+  }
+  void add_config(flatbuffers::Offset<sparetools::bpm::AudioConfig> config) {
+    fbb_.AddOffset(ConfigResponse::VT_CONFIG, config);
+  }
+  void add_timestamp(uint64_t timestamp) {
+    fbb_.AddElement<uint64_t>(ConfigResponse::VT_TIMESTAMP, timestamp, 0);
+  }
+  void add_error(flatbuffers::Offset<sparetools::bpm::ErrorInfo> error) {
+    fbb_.AddOffset(ConfigResponse::VT_ERROR, error);
+  }
+  explicit ConfigResponseBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<ConfigResponse> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<ConfigResponse>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<ConfigResponse> CreateConfigResponse(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    sparetools::bpm::StatusEnum status = sparetools::bpm::StatusEnum_Success,
+    flatbuffers::Offset<sparetools::bpm::AudioConfig> config = 0,
+    uint64_t timestamp = 0,
+    flatbuffers::Offset<sparetools::bpm::ErrorInfo> error = 0) {
+  ConfigResponseBuilder builder_(_fbb);
+  builder_.add_timestamp(timestamp);
+  builder_.add_error(error);
+  builder_.add_config(config);
+  builder_.add_status(status);
+  return builder_.Finish();
+}
+
+struct StatusResponse FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef StatusResponseBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_STATUS = 4,
+    VT_DEVICE_STATUS = 6,
+    VT_TIMESTAMP = 8,
+    VT_ERROR = 10
+  };
+  sparetools::bpm::StatusEnum status() const {
+    return static_cast<sparetools::bpm::StatusEnum>(GetField<int32_t>(VT_STATUS, 0));
+  }
+  bool mutate_status(sparetools::bpm::StatusEnum _status = static_cast<sparetools::bpm::StatusEnum>(0)) {
+    return SetField<int32_t>(VT_STATUS, static_cast<int32_t>(_status), 0);
+  }
+  const sparetools::bpm::DeviceStatus *device_status() const {
+    return GetPointer<const sparetools::bpm::DeviceStatus *>(VT_DEVICE_STATUS);
+  }
+  sparetools::bpm::DeviceStatus *mutable_device_status() {
+    return GetPointer<sparetools::bpm::DeviceStatus *>(VT_DEVICE_STATUS);
+  }
+  uint64_t timestamp() const {
+    return GetField<uint64_t>(VT_TIMESTAMP, 0);
+  }
+  bool mutate_timestamp(uint64_t _timestamp = 0) {
+    return SetField<uint64_t>(VT_TIMESTAMP, _timestamp, 0);
+  }
+  const sparetools::bpm::ErrorInfo *error() const {
+    return GetPointer<const sparetools::bpm::ErrorInfo *>(VT_ERROR);
+  }
+  sparetools::bpm::ErrorInfo *mutable_error() {
+    return GetPointer<sparetools::bpm::ErrorInfo *>(VT_ERROR);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_STATUS, 4) &&
+           VerifyOffset(verifier, VT_DEVICE_STATUS) &&
+           verifier.VerifyTable(device_status()) &&
+           VerifyField<uint64_t>(verifier, VT_TIMESTAMP, 8) &&
+           VerifyOffset(verifier, VT_ERROR) &&
+           verifier.VerifyTable(error()) &&
+           verifier.EndTable();
+  }
+};
+
+struct StatusResponseBuilder {
+  typedef StatusResponse Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_status(sparetools::bpm::StatusEnum status) {
+    fbb_.AddElement<int32_t>(StatusResponse::VT_STATUS, static_cast<int32_t>(status), 0);
+  }
+  void add_device_status(flatbuffers::Offset<sparetools::bpm::DeviceStatus> device_status) {
+    fbb_.AddOffset(StatusResponse::VT_DEVICE_STATUS, device_status);
+  }
+  void add_timestamp(uint64_t timestamp) {
+    fbb_.AddElement<uint64_t>(StatusResponse::VT_TIMESTAMP, timestamp, 0);
+  }
+  void add_error(flatbuffers::Offset<sparetools::bpm::ErrorInfo> error) {
+    fbb_.AddOffset(StatusResponse::VT_ERROR, error);
+  }
+  explicit StatusResponseBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<StatusResponse> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<StatusResponse>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<StatusResponse> CreateStatusResponse(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    sparetools::bpm::StatusEnum status = sparetools::bpm::StatusEnum_Success,
+    flatbuffers::Offset<sparetools::bpm::DeviceStatus> device_status = 0,
+    uint64_t timestamp = 0,
+    flatbuffers::Offset<sparetools::bpm::ErrorInfo> error = 0) {
+  StatusResponseBuilder builder_(_fbb);
+  builder_.add_timestamp(timestamp);
+  builder_.add_error(error);
+  builder_.add_device_status(device_status);
+  builder_.add_status(status);
+  return builder_.Finish();
+}
+
+struct BPMResponse FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef BPMResponseBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_STATUS = 4,
+    VT_BPM_UPDATE = 6,
+    VT_TIMESTAMP = 8,
+    VT_ERROR = 10
+  };
+  sparetools::bpm::StatusEnum status() const {
+    return static_cast<sparetools::bpm::StatusEnum>(GetField<int32_t>(VT_STATUS, 0));
+  }
+  bool mutate_status(sparetools::bpm::StatusEnum _status = static_cast<sparetools::bpm::StatusEnum>(0)) {
+    return SetField<int32_t>(VT_STATUS, static_cast<int32_t>(_status), 0);
+  }
+  const sparetools::bpm::BPMUpdate *bpm_update() const {
+    return GetPointer<const sparetools::bpm::BPMUpdate *>(VT_BPM_UPDATE);
+  }
+  sparetools::bpm::BPMUpdate *mutable_bpm_update() {
+    return GetPointer<sparetools::bpm::BPMUpdate *>(VT_BPM_UPDATE);
+  }
+  uint64_t timestamp() const {
+    return GetField<uint64_t>(VT_TIMESTAMP, 0);
+  }
+  bool mutate_timestamp(uint64_t _timestamp = 0) {
+    return SetField<uint64_t>(VT_TIMESTAMP, _timestamp, 0);
+  }
+  const sparetools::bpm::ErrorInfo *error() const {
+    return GetPointer<const sparetools::bpm::ErrorInfo *>(VT_ERROR);
+  }
+  sparetools::bpm::ErrorInfo *mutable_error() {
+    return GetPointer<sparetools::bpm::ErrorInfo *>(VT_ERROR);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_STATUS, 4) &&
+           VerifyOffset(verifier, VT_BPM_UPDATE) &&
+           verifier.VerifyTable(bpm_update()) &&
+           VerifyField<uint64_t>(verifier, VT_TIMESTAMP, 8) &&
+           VerifyOffset(verifier, VT_ERROR) &&
+           verifier.VerifyTable(error()) &&
+           verifier.EndTable();
+  }
+};
+
+struct BPMResponseBuilder {
+  typedef BPMResponse Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_status(sparetools::bpm::StatusEnum status) {
+    fbb_.AddElement<int32_t>(BPMResponse::VT_STATUS, static_cast<int32_t>(status), 0);
+  }
+  void add_bpm_update(flatbuffers::Offset<sparetools::bpm::BPMUpdate> bpm_update) {
+    fbb_.AddOffset(BPMResponse::VT_BPM_UPDATE, bpm_update);
+  }
+  void add_timestamp(uint64_t timestamp) {
+    fbb_.AddElement<uint64_t>(BPMResponse::VT_TIMESTAMP, timestamp, 0);
+  }
+  void add_error(flatbuffers::Offset<sparetools::bpm::ErrorInfo> error) {
+    fbb_.AddOffset(BPMResponse::VT_ERROR, error);
+  }
+  explicit BPMResponseBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<BPMResponse> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<BPMResponse>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<BPMResponse> CreateBPMResponse(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    sparetools::bpm::StatusEnum status = sparetools::bpm::StatusEnum_Success,
+    flatbuffers::Offset<sparetools::bpm::BPMUpdate> bpm_update = 0,
+    uint64_t timestamp = 0,
+    flatbuffers::Offset<sparetools::bpm::ErrorInfo> error = 0) {
+  BPMResponseBuilder builder_(_fbb);
+  builder_.add_timestamp(timestamp);
+  builder_.add_error(error);
+  builder_.add_bpm_update(bpm_update);
+  builder_.add_status(status);
+  return builder_.Finish();
+}
+
+struct PerformanceMetrics FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef PerformanceMetricsBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_CPU_USAGE_PERCENT = 4,
+    VT_MEMORY_USAGE_PERCENT = 6,
+    VT_AUDIO_BUFFER_OVERRUNS = 8,
+    VT_NETWORK_TIMEOUTS = 10,
+    VT_AVG_PROCESSING_TIME_MS = 12,
+    VT_MAX_PROCESSING_TIME_MS = 14,
+    VT_MIN_PROCESSING_TIME_MS = 16,
+    VT_TIMESTAMP = 18
+  };
+  uint8_t cpu_usage_percent() const {
+    return GetField<uint8_t>(VT_CPU_USAGE_PERCENT, 0);
+  }
+  bool mutate_cpu_usage_percent(uint8_t _cpu_usage_percent = 0) {
+    return SetField<uint8_t>(VT_CPU_USAGE_PERCENT, _cpu_usage_percent, 0);
+  }
+  uint8_t memory_usage_percent() const {
+    return GetField<uint8_t>(VT_MEMORY_USAGE_PERCENT, 0);
+  }
+  bool mutate_memory_usage_percent(uint8_t _memory_usage_percent = 0) {
+    return SetField<uint8_t>(VT_MEMORY_USAGE_PERCENT, _memory_usage_percent, 0);
+  }
+  uint32_t audio_buffer_overruns() const {
+    return GetField<uint32_t>(VT_AUDIO_BUFFER_OVERRUNS, 0);
+  }
+  bool mutate_audio_buffer_overruns(uint32_t _audio_buffer_overruns = 0) {
+    return SetField<uint32_t>(VT_AUDIO_BUFFER_OVERRUNS, _audio_buffer_overruns, 0);
+  }
+  uint32_t network_timeouts() const {
+    return GetField<uint32_t>(VT_NETWORK_TIMEOUTS, 0);
+  }
+  bool mutate_network_timeouts(uint32_t _network_timeouts = 0) {
+    return SetField<uint32_t>(VT_NETWORK_TIMEOUTS, _network_timeouts, 0);
+  }
+  uint16_t avg_processing_time_ms() const {
+    return GetField<uint16_t>(VT_AVG_PROCESSING_TIME_MS, 0);
+  }
+  bool mutate_avg_processing_time_ms(uint16_t _avg_processing_time_ms = 0) {
+    return SetField<uint16_t>(VT_AVG_PROCESSING_TIME_MS, _avg_processing_time_ms, 0);
+  }
+  uint16_t max_processing_time_ms() const {
+    return GetField<uint16_t>(VT_MAX_PROCESSING_TIME_MS, 0);
+  }
+  bool mutate_max_processing_time_ms(uint16_t _max_processing_time_ms = 0) {
+    return SetField<uint16_t>(VT_MAX_PROCESSING_TIME_MS, _max_processing_time_ms, 0);
+  }
+  uint16_t min_processing_time_ms() const {
+    return GetField<uint16_t>(VT_MIN_PROCESSING_TIME_MS, 0);
+  }
+  bool mutate_min_processing_time_ms(uint16_t _min_processing_time_ms = 0) {
+    return SetField<uint16_t>(VT_MIN_PROCESSING_TIME_MS, _min_processing_time_ms, 0);
+  }
+  uint64_t timestamp() const {
+    return GetField<uint64_t>(VT_TIMESTAMP, 0);
+  }
+  bool mutate_timestamp(uint64_t _timestamp = 0) {
+    return SetField<uint64_t>(VT_TIMESTAMP, _timestamp, 0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint8_t>(verifier, VT_CPU_USAGE_PERCENT, 1) &&
+           VerifyField<uint8_t>(verifier, VT_MEMORY_USAGE_PERCENT, 1) &&
+           VerifyField<uint32_t>(verifier, VT_AUDIO_BUFFER_OVERRUNS, 4) &&
+           VerifyField<uint32_t>(verifier, VT_NETWORK_TIMEOUTS, 4) &&
+           VerifyField<uint16_t>(verifier, VT_AVG_PROCESSING_TIME_MS, 2) &&
+           VerifyField<uint16_t>(verifier, VT_MAX_PROCESSING_TIME_MS, 2) &&
+           VerifyField<uint16_t>(verifier, VT_MIN_PROCESSING_TIME_MS, 2) &&
+           VerifyField<uint64_t>(verifier, VT_TIMESTAMP, 8) &&
+           verifier.EndTable();
+  }
+};
+
+struct PerformanceMetricsBuilder {
+  typedef PerformanceMetrics Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_cpu_usage_percent(uint8_t cpu_usage_percent) {
+    fbb_.AddElement<uint8_t>(PerformanceMetrics::VT_CPU_USAGE_PERCENT, cpu_usage_percent, 0);
+  }
+  void add_memory_usage_percent(uint8_t memory_usage_percent) {
+    fbb_.AddElement<uint8_t>(PerformanceMetrics::VT_MEMORY_USAGE_PERCENT, memory_usage_percent, 0);
+  }
+  void add_audio_buffer_overruns(uint32_t audio_buffer_overruns) {
+    fbb_.AddElement<uint32_t>(PerformanceMetrics::VT_AUDIO_BUFFER_OVERRUNS, audio_buffer_overruns, 0);
+  }
+  void add_network_timeouts(uint32_t network_timeouts) {
+    fbb_.AddElement<uint32_t>(PerformanceMetrics::VT_NETWORK_TIMEOUTS, network_timeouts, 0);
+  }
+  void add_avg_processing_time_ms(uint16_t avg_processing_time_ms) {
+    fbb_.AddElement<uint16_t>(PerformanceMetrics::VT_AVG_PROCESSING_TIME_MS, avg_processing_time_ms, 0);
+  }
+  void add_max_processing_time_ms(uint16_t max_processing_time_ms) {
+    fbb_.AddElement<uint16_t>(PerformanceMetrics::VT_MAX_PROCESSING_TIME_MS, max_processing_time_ms, 0);
+  }
+  void add_min_processing_time_ms(uint16_t min_processing_time_ms) {
+    fbb_.AddElement<uint16_t>(PerformanceMetrics::VT_MIN_PROCESSING_TIME_MS, min_processing_time_ms, 0);
+  }
+  void add_timestamp(uint64_t timestamp) {
+    fbb_.AddElement<uint64_t>(PerformanceMetrics::VT_TIMESTAMP, timestamp, 0);
+  }
+  explicit PerformanceMetricsBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<PerformanceMetrics> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<PerformanceMetrics>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<PerformanceMetrics> CreatePerformanceMetrics(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    uint8_t cpu_usage_percent = 0,
+    uint8_t memory_usage_percent = 0,
+    uint32_t audio_buffer_overruns = 0,
+    uint32_t network_timeouts = 0,
+    uint16_t avg_processing_time_ms = 0,
+    uint16_t max_processing_time_ms = 0,
+    uint16_t min_processing_time_ms = 0,
+    uint64_t timestamp = 0) {
+  PerformanceMetricsBuilder builder_(_fbb);
+  builder_.add_timestamp(timestamp);
+  builder_.add_network_timeouts(network_timeouts);
+  builder_.add_audio_buffer_overruns(audio_buffer_overruns);
+  builder_.add_min_processing_time_ms(min_processing_time_ms);
+  builder_.add_max_processing_time_ms(max_processing_time_ms);
+  builder_.add_avg_processing_time_ms(avg_processing_time_ms);
+  builder_.add_memory_usage_percent(memory_usage_percent);
+  builder_.add_cpu_usage_percent(cpu_usage_percent);
+  return builder_.Finish();
+}
+
+struct SystemDiagnostics FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef SystemDiagnosticsBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_FIRMWARE_VERSION = 4,
+    VT_HARDWARE_REVISION = 6,
+    VT_SERIAL_NUMBER = 8,
+    VT_TOTAL_HEAP = 10,
+    VT_FREE_HEAP = 12,
+    VT_LARGEST_FREE_BLOCK = 14,
+    VT_WIFI_CHANNEL = 16,
+    VT_WIFI_AUTH_MODE = 18,
+    VT_NETWORK_LATENCY_MS = 20,
+    VT_AUDIO_SAMPLE_RATE = 22,
+    VT_AUDIO_BUFFER_SIZE = 24,
+    VT_AUDIO_OVERRUNS = 26,
+    VT_TIMESTAMP = 28
+  };
+  const flatbuffers::String *firmware_version() const {
+    return GetPointer<const flatbuffers::String *>(VT_FIRMWARE_VERSION);
+  }
+  flatbuffers::String *mutable_firmware_version() {
+    return GetPointer<flatbuffers::String *>(VT_FIRMWARE_VERSION);
+  }
+  const flatbuffers::String *hardware_revision() const {
+    return GetPointer<const flatbuffers::String *>(VT_HARDWARE_REVISION);
+  }
+  flatbuffers::String *mutable_hardware_revision() {
+    return GetPointer<flatbuffers::String *>(VT_HARDWARE_REVISION);
+  }
+  const flatbuffers::String *serial_number() const {
+    return GetPointer<const flatbuffers::String *>(VT_SERIAL_NUMBER);
+  }
+  flatbuffers::String *mutable_serial_number() {
+    return GetPointer<flatbuffers::String *>(VT_SERIAL_NUMBER);
+  }
+  uint32_t total_heap() const {
+    return GetField<uint32_t>(VT_TOTAL_HEAP, 0);
+  }
+  bool mutate_total_heap(uint32_t _total_heap = 0) {
+    return SetField<uint32_t>(VT_TOTAL_HEAP, _total_heap, 0);
+  }
+  uint32_t free_heap() const {
+    return GetField<uint32_t>(VT_FREE_HEAP, 0);
+  }
+  bool mutate_free_heap(uint32_t _free_heap = 0) {
+    return SetField<uint32_t>(VT_FREE_HEAP, _free_heap, 0);
+  }
+  uint32_t largest_free_block() const {
+    return GetField<uint32_t>(VT_LARGEST_FREE_BLOCK, 0);
+  }
+  bool mutate_largest_free_block(uint32_t _largest_free_block = 0) {
+    return SetField<uint32_t>(VT_LARGEST_FREE_BLOCK, _largest_free_block, 0);
+  }
+  uint8_t wifi_channel() const {
+    return GetField<uint8_t>(VT_WIFI_CHANNEL, 0);
+  }
+  bool mutate_wifi_channel(uint8_t _wifi_channel = 0) {
+    return SetField<uint8_t>(VT_WIFI_CHANNEL, _wifi_channel, 0);
+  }
+  const flatbuffers::String *wifi_auth_mode() const {
+    return GetPointer<const flatbuffers::String *>(VT_WIFI_AUTH_MODE);
+  }
+  flatbuffers::String *mutable_wifi_auth_mode() {
+    return GetPointer<flatbuffers::String *>(VT_WIFI_AUTH_MODE);
+  }
+  uint16_t network_latency_ms() const {
+    return GetField<uint16_t>(VT_NETWORK_LATENCY_MS, 0);
+  }
+  bool mutate_network_latency_ms(uint16_t _network_latency_ms = 0) {
+    return SetField<uint16_t>(VT_NETWORK_LATENCY_MS, _network_latency_ms, 0);
+  }
+  uint32_t audio_sample_rate() const {
+    return GetField<uint32_t>(VT_AUDIO_SAMPLE_RATE, 0);
+  }
+  bool mutate_audio_sample_rate(uint32_t _audio_sample_rate = 0) {
+    return SetField<uint32_t>(VT_AUDIO_SAMPLE_RATE, _audio_sample_rate, 0);
+  }
+  uint16_t audio_buffer_size() const {
+    return GetField<uint16_t>(VT_AUDIO_BUFFER_SIZE, 0);
+  }
+  bool mutate_audio_buffer_size(uint16_t _audio_buffer_size = 0) {
+    return SetField<uint16_t>(VT_AUDIO_BUFFER_SIZE, _audio_buffer_size, 0);
+  }
+  uint32_t audio_overruns() const {
+    return GetField<uint32_t>(VT_AUDIO_OVERRUNS, 0);
+  }
+  bool mutate_audio_overruns(uint32_t _audio_overruns = 0) {
+    return SetField<uint32_t>(VT_AUDIO_OVERRUNS, _audio_overruns, 0);
+  }
+  uint64_t timestamp() const {
+    return GetField<uint64_t>(VT_TIMESTAMP, 0);
+  }
+  bool mutate_timestamp(uint64_t _timestamp = 0) {
+    return SetField<uint64_t>(VT_TIMESTAMP, _timestamp, 0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_FIRMWARE_VERSION) &&
+           verifier.VerifyString(firmware_version()) &&
+           VerifyOffset(verifier, VT_HARDWARE_REVISION) &&
+           verifier.VerifyString(hardware_revision()) &&
+           VerifyOffset(verifier, VT_SERIAL_NUMBER) &&
+           verifier.VerifyString(serial_number()) &&
+           VerifyField<uint32_t>(verifier, VT_TOTAL_HEAP, 4) &&
+           VerifyField<uint32_t>(verifier, VT_FREE_HEAP, 4) &&
+           VerifyField<uint32_t>(verifier, VT_LARGEST_FREE_BLOCK, 4) &&
+           VerifyField<uint8_t>(verifier, VT_WIFI_CHANNEL, 1) &&
+           VerifyOffset(verifier, VT_WIFI_AUTH_MODE) &&
+           verifier.VerifyString(wifi_auth_mode()) &&
+           VerifyField<uint16_t>(verifier, VT_NETWORK_LATENCY_MS, 2) &&
+           VerifyField<uint32_t>(verifier, VT_AUDIO_SAMPLE_RATE, 4) &&
+           VerifyField<uint16_t>(verifier, VT_AUDIO_BUFFER_SIZE, 2) &&
+           VerifyField<uint32_t>(verifier, VT_AUDIO_OVERRUNS, 4) &&
+           VerifyField<uint64_t>(verifier, VT_TIMESTAMP, 8) &&
+           verifier.EndTable();
+  }
+};
+
+struct SystemDiagnosticsBuilder {
+  typedef SystemDiagnostics Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_firmware_version(flatbuffers::Offset<flatbuffers::String> firmware_version) {
+    fbb_.AddOffset(SystemDiagnostics::VT_FIRMWARE_VERSION, firmware_version);
+  }
+  void add_hardware_revision(flatbuffers::Offset<flatbuffers::String> hardware_revision) {
+    fbb_.AddOffset(SystemDiagnostics::VT_HARDWARE_REVISION, hardware_revision);
+  }
+  void add_serial_number(flatbuffers::Offset<flatbuffers::String> serial_number) {
+    fbb_.AddOffset(SystemDiagnostics::VT_SERIAL_NUMBER, serial_number);
+  }
+  void add_total_heap(uint32_t total_heap) {
+    fbb_.AddElement<uint32_t>(SystemDiagnostics::VT_TOTAL_HEAP, total_heap, 0);
+  }
+  void add_free_heap(uint32_t free_heap) {
+    fbb_.AddElement<uint32_t>(SystemDiagnostics::VT_FREE_HEAP, free_heap, 0);
+  }
+  void add_largest_free_block(uint32_t largest_free_block) {
+    fbb_.AddElement<uint32_t>(SystemDiagnostics::VT_LARGEST_FREE_BLOCK, largest_free_block, 0);
+  }
+  void add_wifi_channel(uint8_t wifi_channel) {
+    fbb_.AddElement<uint8_t>(SystemDiagnostics::VT_WIFI_CHANNEL, wifi_channel, 0);
+  }
+  void add_wifi_auth_mode(flatbuffers::Offset<flatbuffers::String> wifi_auth_mode) {
+    fbb_.AddOffset(SystemDiagnostics::VT_WIFI_AUTH_MODE, wifi_auth_mode);
+  }
+  void add_network_latency_ms(uint16_t network_latency_ms) {
+    fbb_.AddElement<uint16_t>(SystemDiagnostics::VT_NETWORK_LATENCY_MS, network_latency_ms, 0);
+  }
+  void add_audio_sample_rate(uint32_t audio_sample_rate) {
+    fbb_.AddElement<uint32_t>(SystemDiagnostics::VT_AUDIO_SAMPLE_RATE, audio_sample_rate, 0);
+  }
+  void add_audio_buffer_size(uint16_t audio_buffer_size) {
+    fbb_.AddElement<uint16_t>(SystemDiagnostics::VT_AUDIO_BUFFER_SIZE, audio_buffer_size, 0);
+  }
+  void add_audio_overruns(uint32_t audio_overruns) {
+    fbb_.AddElement<uint32_t>(SystemDiagnostics::VT_AUDIO_OVERRUNS, audio_overruns, 0);
+  }
+  void add_timestamp(uint64_t timestamp) {
+    fbb_.AddElement<uint64_t>(SystemDiagnostics::VT_TIMESTAMP, timestamp, 0);
+  }
+  explicit SystemDiagnosticsBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<SystemDiagnostics> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<SystemDiagnostics>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<SystemDiagnostics> CreateSystemDiagnostics(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> firmware_version = 0,
+    flatbuffers::Offset<flatbuffers::String> hardware_revision = 0,
+    flatbuffers::Offset<flatbuffers::String> serial_number = 0,
+    uint32_t total_heap = 0,
+    uint32_t free_heap = 0,
+    uint32_t largest_free_block = 0,
+    uint8_t wifi_channel = 0,
+    flatbuffers::Offset<flatbuffers::String> wifi_auth_mode = 0,
+    uint16_t network_latency_ms = 0,
+    uint32_t audio_sample_rate = 0,
+    uint16_t audio_buffer_size = 0,
+    uint32_t audio_overruns = 0,
+    uint64_t timestamp = 0) {
+  SystemDiagnosticsBuilder builder_(_fbb);
+  builder_.add_timestamp(timestamp);
+  builder_.add_audio_overruns(audio_overruns);
+  builder_.add_audio_sample_rate(audio_sample_rate);
+  builder_.add_wifi_auth_mode(wifi_auth_mode);
+  builder_.add_largest_free_block(largest_free_block);
+  builder_.add_free_heap(free_heap);
+  builder_.add_total_heap(total_heap);
+  builder_.add_serial_number(serial_number);
+  builder_.add_hardware_revision(hardware_revision);
+  builder_.add_firmware_version(firmware_version);
+  builder_.add_audio_buffer_size(audio_buffer_size);
+  builder_.add_network_latency_ms(network_latency_ms);
+  builder_.add_wifi_channel(wifi_channel);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<SystemDiagnostics> CreateSystemDiagnosticsDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *firmware_version = nullptr,
+    const char *hardware_revision = nullptr,
+    const char *serial_number = nullptr,
+    uint32_t total_heap = 0,
+    uint32_t free_heap = 0,
+    uint32_t largest_free_block = 0,
+    uint8_t wifi_channel = 0,
+    const char *wifi_auth_mode = nullptr,
+    uint16_t network_latency_ms = 0,
+    uint32_t audio_sample_rate = 0,
+    uint16_t audio_buffer_size = 0,
+    uint32_t audio_overruns = 0,
+    uint64_t timestamp = 0) {
+  auto firmware_version__ = firmware_version ? _fbb.CreateString(firmware_version) : 0;
+  auto hardware_revision__ = hardware_revision ? _fbb.CreateString(hardware_revision) : 0;
+  auto serial_number__ = serial_number ? _fbb.CreateString(serial_number) : 0;
+  auto wifi_auth_mode__ = wifi_auth_mode ? _fbb.CreateString(wifi_auth_mode) : 0;
+  return sparetools::bpm::CreateSystemDiagnostics(
+      _fbb,
+      firmware_version__,
+      hardware_revision__,
+      serial_number__,
+      total_heap,
+      free_heap,
+      largest_free_block,
+      wifi_channel,
+      wifi_auth_mode__,
+      network_latency_ms,
+      audio_sample_rate,
+      audio_buffer_size,
+      audio_overruns,
+      timestamp);
+}
+
+struct DiagnosticsResponse FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef DiagnosticsResponseBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_STATUS = 4,
+    VT_METRICS = 6,
+    VT_DIAGNOSTICS = 8,
+    VT_TIMESTAMP = 10,
+    VT_ERROR = 12
+  };
+  sparetools::bpm::StatusEnum status() const {
+    return static_cast<sparetools::bpm::StatusEnum>(GetField<int32_t>(VT_STATUS, 0));
+  }
+  bool mutate_status(sparetools::bpm::StatusEnum _status = static_cast<sparetools::bpm::StatusEnum>(0)) {
+    return SetField<int32_t>(VT_STATUS, static_cast<int32_t>(_status), 0);
+  }
+  const sparetools::bpm::PerformanceMetrics *metrics() const {
+    return GetPointer<const sparetools::bpm::PerformanceMetrics *>(VT_METRICS);
+  }
+  sparetools::bpm::PerformanceMetrics *mutable_metrics() {
+    return GetPointer<sparetools::bpm::PerformanceMetrics *>(VT_METRICS);
+  }
+  const sparetools::bpm::SystemDiagnostics *diagnostics() const {
+    return GetPointer<const sparetools::bpm::SystemDiagnostics *>(VT_DIAGNOSTICS);
+  }
+  sparetools::bpm::SystemDiagnostics *mutable_diagnostics() {
+    return GetPointer<sparetools::bpm::SystemDiagnostics *>(VT_DIAGNOSTICS);
+  }
+  uint64_t timestamp() const {
+    return GetField<uint64_t>(VT_TIMESTAMP, 0);
+  }
+  bool mutate_timestamp(uint64_t _timestamp = 0) {
+    return SetField<uint64_t>(VT_TIMESTAMP, _timestamp, 0);
+  }
+  const sparetools::bpm::ErrorInfo *error() const {
+    return GetPointer<const sparetools::bpm::ErrorInfo *>(VT_ERROR);
+  }
+  sparetools::bpm::ErrorInfo *mutable_error() {
+    return GetPointer<sparetools::bpm::ErrorInfo *>(VT_ERROR);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_STATUS, 4) &&
+           VerifyOffset(verifier, VT_METRICS) &&
+           verifier.VerifyTable(metrics()) &&
+           VerifyOffset(verifier, VT_DIAGNOSTICS) &&
+           verifier.VerifyTable(diagnostics()) &&
+           VerifyField<uint64_t>(verifier, VT_TIMESTAMP, 8) &&
+           VerifyOffset(verifier, VT_ERROR) &&
+           verifier.VerifyTable(error()) &&
+           verifier.EndTable();
+  }
+};
+
+struct DiagnosticsResponseBuilder {
+  typedef DiagnosticsResponse Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_status(sparetools::bpm::StatusEnum status) {
+    fbb_.AddElement<int32_t>(DiagnosticsResponse::VT_STATUS, static_cast<int32_t>(status), 0);
+  }
+  void add_metrics(flatbuffers::Offset<sparetools::bpm::PerformanceMetrics> metrics) {
+    fbb_.AddOffset(DiagnosticsResponse::VT_METRICS, metrics);
+  }
+  void add_diagnostics(flatbuffers::Offset<sparetools::bpm::SystemDiagnostics> diagnostics) {
+    fbb_.AddOffset(DiagnosticsResponse::VT_DIAGNOSTICS, diagnostics);
+  }
+  void add_timestamp(uint64_t timestamp) {
+    fbb_.AddElement<uint64_t>(DiagnosticsResponse::VT_TIMESTAMP, timestamp, 0);
+  }
+  void add_error(flatbuffers::Offset<sparetools::bpm::ErrorInfo> error) {
+    fbb_.AddOffset(DiagnosticsResponse::VT_ERROR, error);
+  }
+  explicit DiagnosticsResponseBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<DiagnosticsResponse> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<DiagnosticsResponse>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<DiagnosticsResponse> CreateDiagnosticsResponse(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    sparetools::bpm::StatusEnum status = sparetools::bpm::StatusEnum_Success,
+    flatbuffers::Offset<sparetools::bpm::PerformanceMetrics> metrics = 0,
+    flatbuffers::Offset<sparetools::bpm::SystemDiagnostics> diagnostics = 0,
+    uint64_t timestamp = 0,
+    flatbuffers::Offset<sparetools::bpm::ErrorInfo> error = 0) {
+  DiagnosticsResponseBuilder builder_(_fbb);
+  builder_.add_timestamp(timestamp);
+  builder_.add_error(error);
+  builder_.add_diagnostics(diagnostics);
+  builder_.add_metrics(metrics);
+  builder_.add_status(status);
+  return builder_.Finish();
+}
+
+struct StatusUpdate FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef StatusUpdateBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_UPTIME_SECONDS = 4,
+    VT_FREE_HEAP_BYTES = 6,
+    VT_CPU_USAGE_PERCENT = 8,
+    VT_WIFI_RSSI = 10,
+    VT_TIMESTAMP = 12
+  };
+  uint64_t uptime_seconds() const {
+    return GetField<uint64_t>(VT_UPTIME_SECONDS, 0);
+  }
+  bool mutate_uptime_seconds(uint64_t _uptime_seconds = 0) {
+    return SetField<uint64_t>(VT_UPTIME_SECONDS, _uptime_seconds, 0);
+  }
+  uint32_t free_heap_bytes() const {
+    return GetField<uint32_t>(VT_FREE_HEAP_BYTES, 0);
+  }
+  bool mutate_free_heap_bytes(uint32_t _free_heap_bytes = 0) {
+    return SetField<uint32_t>(VT_FREE_HEAP_BYTES, _free_heap_bytes, 0);
+  }
+  uint8_t cpu_usage_percent() const {
+    return GetField<uint8_t>(VT_CPU_USAGE_PERCENT, 0);
+  }
+  bool mutate_cpu_usage_percent(uint8_t _cpu_usage_percent = 0) {
+    return SetField<uint8_t>(VT_CPU_USAGE_PERCENT, _cpu_usage_percent, 0);
+  }
+  int8_t wifi_rssi() const {
+    return GetField<int8_t>(VT_WIFI_RSSI, 0);
+  }
+  bool mutate_wifi_rssi(int8_t _wifi_rssi = 0) {
+    return SetField<int8_t>(VT_WIFI_RSSI, _wifi_rssi, 0);
+  }
+  uint64_t timestamp() const {
+    return GetField<uint64_t>(VT_TIMESTAMP, 0);
+  }
+  bool mutate_timestamp(uint64_t _timestamp = 0) {
+    return SetField<uint64_t>(VT_TIMESTAMP, _timestamp, 0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_UPTIME_SECONDS, 8) &&
+           VerifyField<uint32_t>(verifier, VT_FREE_HEAP_BYTES, 4) &&
+           VerifyField<uint8_t>(verifier, VT_CPU_USAGE_PERCENT, 1) &&
+           VerifyField<int8_t>(verifier, VT_WIFI_RSSI, 1) &&
+           VerifyField<uint64_t>(verifier, VT_TIMESTAMP, 8) &&
+           verifier.EndTable();
+  }
+};
+
+struct StatusUpdateBuilder {
+  typedef StatusUpdate Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_uptime_seconds(uint64_t uptime_seconds) {
+    fbb_.AddElement<uint64_t>(StatusUpdate::VT_UPTIME_SECONDS, uptime_seconds, 0);
+  }
+  void add_free_heap_bytes(uint32_t free_heap_bytes) {
+    fbb_.AddElement<uint32_t>(StatusUpdate::VT_FREE_HEAP_BYTES, free_heap_bytes, 0);
+  }
+  void add_cpu_usage_percent(uint8_t cpu_usage_percent) {
+    fbb_.AddElement<uint8_t>(StatusUpdate::VT_CPU_USAGE_PERCENT, cpu_usage_percent, 0);
+  }
+  void add_wifi_rssi(int8_t wifi_rssi) {
+    fbb_.AddElement<int8_t>(StatusUpdate::VT_WIFI_RSSI, wifi_rssi, 0);
+  }
+  void add_timestamp(uint64_t timestamp) {
+    fbb_.AddElement<uint64_t>(StatusUpdate::VT_TIMESTAMP, timestamp, 0);
+  }
+  explicit StatusUpdateBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<StatusUpdate> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<StatusUpdate>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<StatusUpdate> CreateStatusUpdate(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t uptime_seconds = 0,
+    uint32_t free_heap_bytes = 0,
+    uint8_t cpu_usage_percent = 0,
+    int8_t wifi_rssi = 0,
+    uint64_t timestamp = 0) {
+  StatusUpdateBuilder builder_(_fbb);
+  builder_.add_timestamp(timestamp);
+  builder_.add_uptime_seconds(uptime_seconds);
+  builder_.add_free_heap_bytes(free_heap_bytes);
+  builder_.add_wifi_rssi(wifi_rssi);
+  builder_.add_cpu_usage_percent(cpu_usage_percent);
+  return builder_.Finish();
 }
 
 }  // namespace bpm

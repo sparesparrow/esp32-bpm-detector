@@ -24,16 +24,6 @@ BPM_INCLUDE_SUB_REGEX = "\n#include \"Bpm\\g<1>_extracted.h\""
 
 
 class Esp32BpmDetectorConan(ConanFile):
-
-    python_requires = [
-    "sparetools-lvgl/8.3.11",
-    "sparetools-hal-sunton/1.0.0",
-    "sparesparrow-protocols/1.0.0",
-    "sparetools-bpm-schemas/2.0.0",
-    "sparetools-protocols/1.0.0",
-    "sparetools-embedded/1.0.0",
-        "sparetools-base/2.0.3",
-    ]
     name = "sparetools-bpm-detector"
     version = "0.1.1"
     url = 'https://github.com/sparesparrow/esp32-bpm-detector'
@@ -41,17 +31,23 @@ class Esp32BpmDetectorConan(ConanFile):
     topics = ("esp32", "bpm", "detector", "embedded", "firmware")
     license = "Apache-2.0"
 
-    # Use foundation packages from SpareTools ecosystem
+    # SpareTools ecosystem integration
+    python_requires = "sparetools-base/2.0.3"
+
+    # Runtime dependencies - use SpareTools packages
     requires = [
-        "sparetools-flatbuffers/24.3.25",
-        "sparetools-mcp-core/1.0.0",  # Available from Cloudsmith (sparetools remote)
-        "sparetools-esp32-bpm-prompts/1.0.0",  # ESP32 BPM detector specific prompts
+        "sparetools-flatbuffers/24.3.25",      # FlatBuffers runtime library
+        "sparetools-mcp-core/1.0.1",          # MCP framework
+        "sparetools-embedded/1.0.0",          # Embedded development tools
+        "sparetools-hal-sunton/1.0.0",        # HAL for Sunton ESP32
+        "sparetools-lvgl/8.3.11",             # LVGL graphics library
+        "sparetools-protocols/1.0.0",         # Protocol definitions
     ]
 
-    # Build tools - use SpareTools consistent tooling
+    # Build-time tools - use SpareTools packages
     tool_requires = [
-        "sparetools-flatbuffers/24.3.25",  # Consistent FlatBuffers compiler + library
-        "sparetools-cpython/3.12.7",       # Consistent Python runtime
+        "sparetools-cpython/3.12.7",           # Python interpreter for build scripts
+        "sparetools-flatbuffers/24.3.25",      # FlatBuffers compiler
     ]
 
     # Export source files and schemas for protocol generation

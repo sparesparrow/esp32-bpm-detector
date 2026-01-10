@@ -3,35 +3,33 @@
 #pragma once
 
 #include <cstdint>
-
 #include "BpmCommon_extracted.h"
-
 #include "BpmConfig_extracted.h"
-
 
 namespace sparetools {
 
 namespace bpm {
-
 namespace ExtEnum {
 
 
-enum RequestPayload : uint8_t {
-  RequestPayload_NONE = 0,
-  RequestPayload_GetStatusRequest = 1,
-  RequestPayload_GetConfigRequest = 2,
-  RequestPayload_SetConfigRequest = 3,
-  RequestPayload_ResetDeviceRequest = 4,
-  RequestPayload_CalibrateAudioRequest = 5,
-  RequestPayload_StartStreamingRequest = 6,
-  RequestPayload_StopStreamingRequest = 7,
-  RequestPayload_GetDiagnosticsRequest = 8,
-  RequestPayload_MIN = RequestPayload_NONE,
-  RequestPayload_MAX = RequestPayload_GetDiagnosticsRequest
+enum class RequestPayload : uint8_t {
+  NONE = 0,
+  GetStatusRequest = 1,
+  GetConfigRequest = 2,
+  SetConfigRequest = 3,
+  ResetDeviceRequest = 4,
+  CalibrateAudioRequest = 5,
+  StartStreamingRequest = 6,
+  StopStreamingRequest = 7,
+  GetDiagnosticsRequest = 8,
+  MonitorSetupNewParamsRequest = 9,
+  MonitorValuesRequest = 10,
+  MonitorRemoveRequest = 11,
+  MonitorRemoveAllRequest = 12,
+  MIN = NONE,
+  MAX = MonitorRemoveAllRequest
 };
 
 }
-
 }
-
 }

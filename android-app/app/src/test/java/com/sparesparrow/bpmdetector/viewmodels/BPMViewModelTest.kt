@@ -1,6 +1,10 @@
 package com.sparesparrow.bpmdetector.viewmodels
 
 import android.app.Application
+import android.content.Context
+import android.content.SharedPreferences
+import android.net.ConnectivityManager
+import android.net.wifi.WifiManager
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -11,6 +15,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
 import org.junit.*
+import org.junit.rules.TestWatcher
+import org.junit.runner.Description
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito.*
@@ -31,6 +37,15 @@ class BPMViewModelTest {
     private lateinit var mockApplication: Application
 
     @Mock
+    private lateinit var mockSharedPreferences: SharedPreferences
+
+    @Mock
+    private lateinit var mockConnectivityManager: ConnectivityManager
+
+    @Mock
+    private lateinit var mockWifiManager: WifiManager
+
+    @Mock
     private lateinit var mockBPMService: BPMService
 
     private lateinit var viewModel: BPMViewModel
@@ -38,6 +53,15 @@ class BPMViewModelTest {
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
+
+        // Setup Application mocks
+        `when`(mockApplication.getSharedPreferences(anyString(), anyInt())).thenReturn(mockSharedPreferences)
+        `when`(mockApplication.getSystemService(Context.CONNECTIVITY_SERVICE)).thenReturn(mockConnectivityManager)
+        `when`(mockApplication.getSystemService(Context.WIFI_SERVICE)).thenReturn(mockWifiManager)
+
+        // Setup WifiManager mock
+        `when`(mockWifiManager.isWifiEnabled).thenReturn(true)
+
         viewModel = BPMViewModel(mockApplication)
     }
 
@@ -51,7 +75,7 @@ class BPMViewModelTest {
         // Given - ViewModel is created
 
         // When - Check initial state
-        val bpmData = viewModel.bpmData.value
+        val bpmData = viewModel.bpmDataFlow.value
 
         // Then - Should be loading state
         Assert.assertNotNull(bpmData)
@@ -197,24 +221,24 @@ class BPMViewModelTest {
         viewModel.setBPMService(mockBPMService)
 
         // When - Test CONNECTED
-        mockConnectionStatus.value = ConnectionStatus(ConnectionStatus.CONNECTED)
+        mockConnectionStatus.value = ConnectionStatus.CONNECTED
         var status = viewModel.getConnectionStatusDescription()
         Assert.assertEquals("Connected", status)
 
         // When - Test CONNECTING
-        mockConnectionStatus.value = ConnectionStatus(ConnectionStatus.CONNECTING)
+        mockConnectionStatus.value = ConnectionStatus.CONNECTING
         status = viewModel.getConnectionStatusDescription()
         Assert.assertEquals("Connecting...", status)
 
         // When - Test DISCONNECTED
-        mockConnectionStatus.value = ConnectionStatus(ConnectionStatus.DISCONNECTED)
+        mockConnectionStatus.value = ConnectionStatus.DISCONNECTED
         status = viewModel.getConnectionStatusDescription()
         Assert.assertEquals("Disconnected", status)
 
         // When - Test ERROR
-        mockConnectionStatus.value = ConnectionStatus(ConnectionStatus.ERROR, "Network error")
+        mockConnectionStatus.value = ConnectionStatus.ERROR
         status = viewModel.getConnectionStatusDescription()
-        Assert.assertEquals("Connection Error: Network error", status)
+        Assert.assertEquals("Connection Error", status)
     }
 
     @Test

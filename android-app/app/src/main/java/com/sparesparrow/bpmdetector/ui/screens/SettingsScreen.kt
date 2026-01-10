@@ -2,6 +2,8 @@ package com.sparesparrow.bpmdetector.ui.screens
 
 import android.Manifest
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.sparesparrow.bpmdetector.network.BPMApiClient
+import com.sparesparrow.bpmdetector.network.WiFiManager
 import com.sparesparrow.bpmdetector.viewmodels.BPMViewModel
 import com.sparesparrow.bpmdetector.viewmodels.DetectionMode
 import kotlinx.coroutines.launch
@@ -30,11 +33,25 @@ fun SettingsScreen(viewModel: BPMViewModel) {
     val connectionStatus by viewModel.connectionStatus.collectAsState()
     val detectionMode by viewModel.detectionMode.collectAsState()
 
+    // WiFi state
+    val isScanningWifi by viewModel.isScanningWifi.collectAsState()
+    val wifiScanResults by viewModel.wifiScanResults.collectAsState()
+    val isConnectingToWifi by viewModel.isConnectingToWifi.collectAsState()
+    val esp32NetworkFound by viewModel.esp32NetworkFound.collectAsState()
+
     val coroutineScope = rememberCoroutineScope()
 
     // Audio permission state
     val audioPermissionState = rememberMultiplePermissionsState(
         permissions = listOf(Manifest.permission.RECORD_AUDIO)
+    )
+
+    // WiFi permission state
+    val wifiPermissionState = rememberMultiplePermissionsState(
+        permissions = listOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
     )
 
     var ipInput by remember { mutableStateOf(serverIp) }
@@ -45,7 +62,8 @@ fun SettingsScreen(viewModel: BPMViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
@@ -118,7 +136,7 @@ fun SettingsScreen(viewModel: BPMViewModel) {
             value = ipInput,
             onValueChange = { ipInput = it },
             label = { Text("ESP32 Server IP Address") },
-            placeholder = { Text("192.168.1.100") },
+            placeholder = { Text("192.168.4.1") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             supportingText = {
                 Text("IP address of your ESP32 device")
@@ -200,6 +218,196 @@ fun SettingsScreen(viewModel: BPMViewModel) {
             }
         }
 
+        // WiFi Network Management (ESP32 mode only)
+        if (detectionMode == DetectionMode.ESP32) {
+            Text(
+                text = "ESP32 WiFi Network",
+                style = MaterialTheme.typography.titleLarge
+            )
+
+            // WiFi Permissions
+            if (!wifiPermissionState.allPermissionsGranted) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFFFF3E0) // Light orange background
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "Location Permissions Required",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color(0xFFE65100)
+                        )
+                        Text(
+                            text = "WiFi scanning requires location permissions to find and connect to the ESP32-BPM-DETECTOR network.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Button(
+                            onClick = { wifiPermissionState.launchMultiplePermissionRequest() },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Grant Location Permissions")
+                        }
+                    }
+                }
+            }
+
+            // WiFi Status and Controls
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "WiFi Network Status",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    // Current WiFi connection
+                    Text(
+                        text = viewModel.getWifiConnectionInfo(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (viewModel.isConnectedToEsp32Wifi()) {
+                            Color(0xFF4CAF50) // Green for ESP32 connection
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        }
+                    )
+
+                    // WiFi state
+                    Text(
+                        text = viewModel.getWifiStateDescription(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    // ESP32 network status
+                    if (esp32NetworkFound) {
+                        Text(
+                            text = "✓ ESP32-BPM-DETECTOR network found",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF4CAF50)
+                        )
+                    } else if (!isScanningWifi) {
+                        Text(
+                            text = "ESP32 network not found",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFFF44336)
+                        )
+                    }
+
+                    // WiFi control buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                if (wifiPermissionState.allPermissionsGranted) {
+                                    coroutineScope.launch {
+                                        viewModel.scanForEsp32Wifi()
+                                    }
+                                } else {
+                                    wifiPermissionState.launchMultiplePermissionRequest()
+                                }
+                            },
+                            enabled = !isScanningWifi && !isConnectingToWifi,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            if (isScanningWifi) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Scanning...")
+                            } else {
+                                Text("Scan WiFi")
+                            }
+                        }
+
+                        Button(
+                            onClick = {
+                                coroutineScope.launch {
+                                    viewModel.connectToEsp32Wifi()
+                                }
+                            },
+                            enabled = esp32NetworkFound && !isConnectingToWifi && !isScanningWifi,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            if (isConnectingToWifi) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Connecting...")
+                            } else {
+                                Text("Connect")
+                            }
+                        }
+                    }
+
+                    // Debug Information
+                    if (!viewModel.isWifiScanningSupported()) {
+                        Text(
+                            text = "⚠️ WiFi scanning not supported on this device",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFF44336)
+                        )
+                    }
+
+                    // Show debug info in a collapsible section
+                    var showDebugInfo by remember { mutableStateOf(false) }
+                    Button(
+                        onClick = { showDebugInfo = !showDebugInfo },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Text(
+                            text = if (showDebugInfo) "Hide Debug Info" else "Show Debug Info",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    if (showDebugInfo) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Text(
+                                text = viewModel.getWifiDebugInfo(),
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(12.dp),
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Auto-Discovery Button
+            Button(
+                onClick = {
+                    coroutineScope.launch {
+                        viewModel.autoDiscoverDevice()
+                    }
+                },
+                enabled = wifiPermissionState.allPermissionsGranted && !isScanningWifi && !isConnectingToWifi,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("🔍 Auto-Discover ESP32 Device")
+            }
+        }
+
         // Current Connection Status
         Card(
             modifier = Modifier.fillMaxWidth()
@@ -219,6 +427,7 @@ fun SettingsScreen(viewModel: BPMViewModel) {
                     color = when {
                         connectionStatus.isConnected() -> Color(0xFF4CAF50)
                         connectionStatus.isConnecting() -> Color(0xFFFF9800)
+                        connectionStatus.isSearching() -> Color(0xFF2196F3) // Blue for searching
                         connectionStatus.hasError() -> Color(0xFFF44336)
                         else -> MaterialTheme.colorScheme.onSurface
                     }
@@ -232,7 +441,7 @@ fun SettingsScreen(viewModel: BPMViewModel) {
                     )
                 }
             }
-            }
+        }
 
             // Save Settings Button (ESP32 mode only)
             Spacer(modifier = Modifier.weight(1f))

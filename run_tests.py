@@ -112,6 +112,7 @@ def run_emulator_tests(emulator_host: str = "127.0.0.1", emulator_port: int = 12
         env = os.environ.copy()
         env["HARDWARE_EMULATOR_HOST"] = emulator_host
         env["HARDWARE_EMULATOR_PORT"] = str(emulator_port)
+        env["PYTHONPATH"] = f"/home/sparrow/mcp/servers/python/unified_deployment:{os.environ.get('PYTHONPATH', '')}"
 
         # Run pytest on hardware emulation tests
         cmd = [

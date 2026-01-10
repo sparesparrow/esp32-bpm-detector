@@ -14,8 +14,8 @@
 #include <vector>
 
 #include <flatbuffers/flatbuffers.h>
-#include "bpm_protocol_generated.h"
-#include "BpmCommon_extracted.h"
+#include "BpmProtocol_generated.h"
+#include "BpmCommon_generated.h"
 
 /**
  * BPM FlatBuffers Integration Header
@@ -32,6 +32,9 @@ public:
      * @param confidence Detection confidence (0.0-1.0)
      * @param signal_level Normalized signal strength (0.0-1.0)
      * @param status Detection status
+     * @param timestamp Unix timestamp in milliseconds
+     * @param device_type Device type identifier (e.g., "esp32-s3")
+     * @param firmware_version Firmware version string
      * @param builder FlatBuffers builder instance
      * @return Offset to the created message
      */
@@ -39,7 +42,10 @@ public:
         float bpm,
         float confidence,
         float signal_level,
-        sparetools::bpm::ExtEnum::DetectionStatus status,
+        sparetools::bpm::DetectionStatus status,
+        uint64_t timestamp,
+        const std::string& device_type,
+        const std::string& firmware_version,
         flatbuffers::FlatBufferBuilder& builder);
 
     /**
@@ -99,7 +105,7 @@ public:
      * @param status Detection status enum
      * @return Human-readable string
      */
-    static const char* detectionStatusToString(sparetools::bpm::ExtEnum::DetectionStatus status);
+    static const char* detectionStatusToString(sparetools::bpm::DetectionStatus status);
 
     /**
      * Calculate required buffer size for BPM update message

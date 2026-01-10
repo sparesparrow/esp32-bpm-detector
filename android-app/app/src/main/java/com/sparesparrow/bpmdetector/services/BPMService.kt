@@ -35,7 +35,7 @@ class BPMService : Service() {
 
     // Configuration
     private var pollingIntervalMs: Long = 500L // Default 500ms
-    private var serverIp: String = "192.168.1.100" // Default IP
+    private var serverIp: String = "192.168.4.1" // Default IP - matches ESP32 AP mode gateway IP
 
     override fun onCreate() {
         super.onCreate()
@@ -211,6 +211,7 @@ class BPMService : Service() {
  */
 enum class ConnectionStatus {
     DISCONNECTED,
+    SEARCHING,
     CONNECTING,
     CONNECTED,
     ERROR;
@@ -218,6 +219,7 @@ enum class ConnectionStatus {
     fun isConnected(): Boolean = this == CONNECTED
     fun hasError(): Boolean = this == ERROR
     fun isConnecting(): Boolean = this == CONNECTING
+    fun isSearching(): Boolean = this == SEARCHING
 }
 
 

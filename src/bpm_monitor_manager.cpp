@@ -1,159 +1,205 @@
 #include "bpm_monitor_manager.h"
-#include <algorithm>
+#include "audio_input.h"
+#include "config.h"
+#include <Arduino.h>
 
-namespace BpmMonitor {
+namespace sparetools {
+namespace bpm {
 
-// BpmDataProvider implementation
-BpmDataProvider::BpmDataProvider(BPMDetector& detector)
-    : detector_(detector) {
+BPMMonitorManager::BPMMonitorManager()
+    : nextMonitorId_(1) {
 }
 
-BpmMonitorData BpmDataProvider::getCurrentData() {
-    BpmMonitorData data;
+BPMMonitorManager::~BPMMonitorManager() {
+    monitors_.clear();
+}
 
-    // Get current BPM data from detector by calling detect()
-    if (detector_.isBufferReady()) {
-        auto bpmData = detector_.detect();
-
-        data.bpm = bpmData.bpm;
-        data.confidence = bpmData.confidence;
-        data.signal_level = bpmData.signal_level;
-        data.status = static_cast<int8_t>(0); // Default status
-        data.timestamp = bpmData.timestamp;
+uint32_t BPMMonitorManager::spawnMonitor(const String& name) {
+    // Generate monitor ID
+    uint32_t monitorId = nextMonitorId_++;
+    
+    // Generate name if not provided
+    String monitorName = name.length() > 0 ? name : generateMonitorName(monitorId);
+    
+    // Create monitor instance
+    auto monitor = std::unique_ptr<MonitorInstance>(new MonitorInstance(monitorId, monitorName));
+    
+    // Create audio input for this monitor
+    monitor->audioInput = std::unique_ptr<AudioInput>(new AudioInput());
+    if (monitor->audioInput) {
+        monitor->audioInput->begin(MICROPHONE_PIN);
     }
 
-    return data;
-}
+    // Create BPM detector for this monitor
+    // BPMDetector constructor: BPMDetector(uint16_t sample_rate, uint16_t fft_size)
+    monitor->detector = std::unique_ptr<BPMDetector>(new BPMDetector(SAMPLE_RATE, FFT_SIZE));
 
-bool BpmDataProvider::isDataAvailable() const {
-    return detector_.isBufferReady();
-}
-
-// BpmMonitor implementation
-BpmMonitor::BpmMonitor(uint32_t id, const std::vector<MonitorParameter>& parameters,
-                       IBpmDataProvider& dataProvider)
-    : id_(id), parameters_(parameters), data_provider_(dataProvider), active_(true) {
-}
-
-uint32_t BpmMonitor::getId() const {
-    return id_;
-}
-
-std::vector<BpmMonitorData> BpmMonitor::getCurrentValues() {
-    if (!active_ || !data_provider_.isDataAvailable()) {
-        return {};
+    // Initialize detector with audio input (begin() returns void, so no boolean check)
+    if (monitor->detector) {
+        monitor->detector->begin(MICROPHONE_PIN);
     }
-
-    BpmMonitorData currentData = data_provider_.getCurrentData();
-    std::vector<BpmMonitorData> result;
-
-    // Filter data based on requested parameters
-    for (auto param : parameters_) {
-        if (param == MonitorParameter::ALL) {
-            result.push_back(currentData);
-            break; // ALL includes everything
-        }
-    }
-
-    if (parameters_.empty() ||
-        std::find(parameters_.begin(), parameters_.end(), MonitorParameter::ALL) != parameters_.end()) {
-        result.push_back(currentData);
-    } else {
-        // Create filtered data based on parameters
-        BpmMonitorData filteredData;
-        filteredData.timestamp = currentData.timestamp;
-
-        for (auto param : parameters_) {
-            switch (param) {
-                case MonitorParameter::BPM_VALUE:
-                    filteredData.bpm = currentData.bpm;
-                    break;
-                case MonitorParameter::CONFIDENCE:
-                    filteredData.confidence = currentData.confidence;
-                    break;
-                case MonitorParameter::SIGNAL_LEVEL:
-                    filteredData.signal_level = currentData.signal_level;
-                    break;
-                case MonitorParameter::DETECTION_STATUS:
-                    filteredData.status = currentData.status;
-                    break;
-                case MonitorParameter::ALL:
-                    // Already handled above
-                    break;
-            }
-        }
-        result.push_back(filteredData);
-    }
-
-    return result;
-}
-
-bool BpmMonitor::isActive() const {
-    return active_;
-}
-
-void BpmMonitor::stop() {
-    active_ = false;
-}
-
-// BpmMonitorManager implementation
-BpmMonitorManager::BpmMonitorManager(BPMDetector& detector)
-    : data_provider_(new BpmDataProvider(detector)),
-      next_monitor_id_(1) {
-}
-
-uint32_t BpmMonitorManager::startMonitor(const std::vector<MonitorParameter>& parameters) {
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    if (parameters.empty()) {
-        return 0; // Invalid request
-    }
-
-    uint32_t monitorId = next_monitor_id_++;
-    monitors_[monitorId] = std::unique_ptr<BpmMonitor>(new BpmMonitor(monitorId, parameters, *data_provider_));
-
+    
+    // Set as active
+    monitor->isActive = true;
+    monitor->lastUpdateTime = millis();
+    
+    // Initialize last data
+    BPMDetector::BPMData initData;
+    initData.bpm = 0.0f;
+    initData.confidence = 0.0f;
+    initData.signal_level = 0.0f;
+    initData.quality = 0.0f;
+    initData.status = "initializing";
+    initData.timestamp = 0;
+    monitor->lastData = initData;
+    
+    // Add to monitors list
+    monitors_.push_back(std::move(monitor));
+    
+    DEBUG_PRINTLN("[MonitorManager] Spawned monitor " + String(monitorId) + " (" + monitorName + ")");
+    
     return monitorId;
 }
 
-std::vector<BpmMonitorData> BpmMonitorManager::getMonitorValues(uint32_t monitorId) {
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    auto it = monitors_.find(monitorId);
-    if (it == monitors_.end()) {
-        return {}; // Monitor not found
+bool BPMMonitorManager::removeMonitor(uint32_t monitorId) {
+    auto it = monitors_.begin();
+    while (it != monitors_.end()) {
+        if ((*it)->id == monitorId) {
+            DEBUG_PRINTLN("[MonitorManager] Removing monitor " + String(monitorId));
+            monitors_.erase(it);
+            return true;
+        }
+        ++it;
     }
-
-    return it->second->getCurrentValues();
+    
+    DEBUG_PRINTLN("[MonitorManager] Monitor " + String(monitorId) + " not found");
+    return false;
 }
 
-bool BpmMonitorManager::stopMonitor(uint32_t monitorId) {
-    std::lock_guard<std::mutex> lock(mutex_);
+BPMMonitorManager::MonitorInstance* BPMMonitorManager::getMonitor(uint32_t monitorId) {
+    return findMonitor(monitorId);
+}
 
-    auto it = monitors_.find(monitorId);
-    if (it == monitors_.end()) {
-        return false; // Monitor not found
+void BPMMonitorManager::updateAllMonitors() {
+    unsigned long currentTime = millis();
+    
+    for (auto& monitor : monitors_) {
+        if (monitor->isActive) {
+            // Update monitor
+            auto data = monitor->detector->detect();
+            monitor->lastData = data;
+            monitor->lastUpdateTime = currentTime;
+            
+            // Call callback if set
+            if (updateCallback_) {
+                updateCallback_(monitor->id, data);
+            }
+        }
     }
+}
 
-    it->second->stop();
-    monitors_.erase(it);
+bool BPMMonitorManager::updateMonitor(uint32_t monitorId) {
+    auto* monitor = findMonitor(monitorId);
+    if (!monitor || !monitor->isActive) {
+        return false;
+    }
+    
+    unsigned long currentTime = millis();
+    auto data = monitor->detector->detect();
+    monitor->lastData = data;
+    monitor->lastUpdateTime = currentTime;
+    
+    // Call callback if set
+    if (updateCallback_) {
+        updateCallback_(monitor->id, data);
+    }
+    
     return true;
 }
 
-size_t BpmMonitorManager::stopAllMonitors() {
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    size_t count = monitors_.size();
-    for (auto& pair : monitors_) {
-        pair.second->stop();
+BPMDetector::BPMData BPMMonitorManager::getMonitorData(uint32_t monitorId) {
+    auto* monitor = findMonitor(monitorId);
+    if (monitor) {
+        return monitor->lastData;
     }
-    monitors_.clear();
-
-    return count;
+    
+    // Return empty data
+    BPMDetector::BPMData emptyData;
+    emptyData.bpm = 0.0f;
+    emptyData.confidence = 0.0f;
+    emptyData.signal_level = 0.0f;
+    emptyData.quality = 0.0f;
+    emptyData.status = String("not_found");
+    emptyData.timestamp = 0;
+    return emptyData;
 }
 
-size_t BpmMonitorManager::getActiveMonitorCount() const {
-    std::lock_guard<std::mutex> lock(mutex_);
+std::vector<uint32_t> BPMMonitorManager::getMonitorIds() const {
+    std::vector<uint32_t> ids;
+    for (const auto& monitor : monitors_) {
+        ids.push_back(monitor->id);
+    }
+    return ids;
+}
+
+size_t BPMMonitorManager::getMonitorCount() const {
     return monitors_.size();
 }
 
-} // namespace BpmMonitor
+void BPMMonitorManager::setUpdateCallback(MonitorUpdateCallback callback) {
+    updateCallback_ = callback;
+}
+
+bool BPMMonitorManager::setMonitorActive(uint32_t monitorId, bool active) {
+    auto* monitor = findMonitor(monitorId);
+    if (!monitor) {
+        return false;
+    }
+    
+    monitor->isActive = active;
+    return true;
+}
+
+bool BPMMonitorManager::isMonitorActive(uint32_t monitorId) const {
+    for (const auto& monitor : monitors_) {
+        if (monitor->id == monitorId) {
+            return monitor->isActive;
+        }
+    }
+    return false;
+}
+
+String BPMMonitorManager::getMonitorName(uint32_t monitorId) const {
+    for (const auto& monitor : monitors_) {
+        if (monitor->id == monitorId) {
+            return monitor->name;
+        }
+    }
+    return "";
+}
+
+bool BPMMonitorManager::setMonitorName(uint32_t monitorId, const String& name) {
+    auto* monitor = findMonitor(monitorId);
+    if (!monitor) {
+        return false;
+    }
+    
+    monitor->name = name;
+    return true;
+}
+
+BPMMonitorManager::MonitorInstance* BPMMonitorManager::findMonitor(uint32_t monitorId) {
+    for (auto& monitor : monitors_) {
+        if (monitor->id == monitorId) {
+            return monitor.get();
+        }
+    }
+    return nullptr;
+}
+
+String BPMMonitorManager::generateMonitorName(uint32_t id) const {
+    return "Monitor_" + String(id);
+}
+
+} // namespace bpm
+} // namespace sparetools

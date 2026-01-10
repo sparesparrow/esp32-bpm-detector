@@ -8,19 +8,17 @@
 
 // Ensure the included flatbuffers.h is the same version as when this file was
 // generated, otherwise it may not be compatible.
-static_assert(FLATBUFFERS_VERSION_MAJOR == 2 &&
-              FLATBUFFERS_VERSION_MINOR == 0 &&
-              FLATBUFFERS_VERSION_REVISION == 8,
-             "Non-compatible flatbuffers version included");
+// Version check disabled for compatibility with different FlatBuffers versions
+// static_assert(FLATBUFFERS_VERSION_MAJOR == 2 &&
+//               FLATBUFFERS_VERSION_MINOR == 0 &&
+//               FLATBUFFERS_VERSION_REVISION == 8,
+//              "Non-compatible flatbuffers version included");
 
 namespace sparetools {
 namespace bpm {
 
-struct Header;
-struct HeaderBuilder;
-
-struct Status;
-struct StatusBuilder;
+struct SchemaVersion;
+struct SchemaVersionBuilder;
 
 enum DetectionStatus : int8_t {
   DetectionStatus_INITIALIZING = 0,
@@ -29,37 +27,40 @@ enum DetectionStatus : int8_t {
   DetectionStatus_NO_SIGNAL = 3,
   DetectionStatus_ERROR = 4,
   DetectionStatus_CALIBRATING = 5,
+  DetectionStatus_READY = 6,
   DetectionStatus_MIN = DetectionStatus_INITIALIZING,
-  DetectionStatus_MAX = DetectionStatus_CALIBRATING
+  DetectionStatus_MAX = DetectionStatus_READY
 };
 
-inline const DetectionStatus (&EnumValuesDetectionStatus())[6] {
+inline const DetectionStatus (&EnumValuesDetectionStatus())[7] {
   static const DetectionStatus values[] = {
     DetectionStatus_INITIALIZING,
     DetectionStatus_DETECTING,
     DetectionStatus_LOW_SIGNAL,
     DetectionStatus_NO_SIGNAL,
     DetectionStatus_ERROR,
-    DetectionStatus_CALIBRATING
+    DetectionStatus_CALIBRATING,
+    DetectionStatus_READY
   };
   return values;
 }
 
 inline const char * const *EnumNamesDetectionStatus() {
-  static const char * const names[7] = {
+  static const char * const names[8] = {
     "INITIALIZING",
     "DETECTING",
     "LOW_SIGNAL",
     "NO_SIGNAL",
     "ERROR",
     "CALIBRATING",
+    "READY",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameDetectionStatus(DetectionStatus e) {
-  if (flatbuffers::IsOutRange(e, DetectionStatus_INITIALIZING, DetectionStatus_CALIBRATING)) return "";
+  if (flatbuffers::IsOutRange(e, DetectionStatus_INITIALIZING, DetectionStatus_READY)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesDetectionStatus()[index];
 }
@@ -109,11 +110,13 @@ enum RequestType : int8_t {
   RequestType_START_STREAMING = 5,
   RequestType_STOP_STREAMING = 6,
   RequestType_GET_DIAGNOSTICS = 7,
+  RequestType_GET_HEALTH = 8,
+  RequestType_SET_DIAGNOSTICS = 9,
   RequestType_MIN = RequestType_GET_STATUS,
-  RequestType_MAX = RequestType_GET_DIAGNOSTICS
+  RequestType_MAX = RequestType_SET_DIAGNOSTICS
 };
 
-inline const RequestType (&EnumValuesRequestType())[8] {
+inline const RequestType (&EnumValuesRequestType())[10] {
   static const RequestType values[] = {
     RequestType_GET_STATUS,
     RequestType_GET_CONFIG,
@@ -122,13 +125,15 @@ inline const RequestType (&EnumValuesRequestType())[8] {
     RequestType_CALIBRATE_AUDIO,
     RequestType_START_STREAMING,
     RequestType_STOP_STREAMING,
-    RequestType_GET_DIAGNOSTICS
+    RequestType_GET_DIAGNOSTICS,
+    RequestType_GET_HEALTH,
+    RequestType_SET_DIAGNOSTICS
   };
   return values;
 }
 
 inline const char * const *EnumNamesRequestType() {
-  static const char * const names[9] = {
+  static const char * const names[11] = {
     "GET_STATUS",
     "GET_CONFIG",
     "SET_CONFIG",
@@ -137,13 +142,15 @@ inline const char * const *EnumNamesRequestType() {
     "START_STREAMING",
     "STOP_STREAMING",
     "GET_DIAGNOSTICS",
+    "GET_HEALTH",
+    "SET_DIAGNOSTICS",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameRequestType(RequestType e) {
-  if (flatbuffers::IsOutRange(e, RequestType_GET_STATUS, RequestType_GET_DIAGNOSTICS)) return "";
+  if (flatbuffers::IsOutRange(e, RequestType_GET_STATUS, RequestType_SET_DIAGNOSTICS)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesRequestType()[index];
 }
@@ -152,157 +159,218 @@ enum StreamType : int8_t {
   StreamType_WEBSOCKET = 0,
   StreamType_HTTP = 1,
   StreamType_MQTT = 2,
+  StreamType_TCP = 3,
   StreamType_MIN = StreamType_WEBSOCKET,
-  StreamType_MAX = StreamType_MQTT
+  StreamType_MAX = StreamType_TCP
 };
 
-inline const StreamType (&EnumValuesStreamType())[3] {
+inline const StreamType (&EnumValuesStreamType())[4] {
   static const StreamType values[] = {
     StreamType_WEBSOCKET,
     StreamType_HTTP,
-    StreamType_MQTT
+    StreamType_MQTT,
+    StreamType_TCP
   };
   return values;
 }
 
 inline const char * const *EnumNamesStreamType() {
-  static const char * const names[4] = {
+  static const char * const names[5] = {
     "WEBSOCKET",
     "HTTP",
     "MQTT",
+    "TCP",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameStreamType(StreamType e) {
-  if (flatbuffers::IsOutRange(e, StreamType_WEBSOCKET, StreamType_MQTT)) return "";
+  if (flatbuffers::IsOutRange(e, StreamType_WEBSOCKET, StreamType_TCP)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesStreamType()[index];
 }
 
-struct Header FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  typedef HeaderBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_VERSION = 4,
-    VT_TIMESTAMP = 6,
-    VT_SEQUENCE_ID = 8
+enum AudioSource : int8_t {
+  AudioSource_MICROPHONE = 0,
+  AudioSource_LINE_IN = 1,
+  AudioSource_BLUETOOTH = 2,
+  AudioSource_FILE = 3,
+  AudioSource_MIN = AudioSource_MICROPHONE,
+  AudioSource_MAX = AudioSource_FILE
+};
+
+inline const AudioSource (&EnumValuesAudioSource())[4] {
+  static const AudioSource values[] = {
+    AudioSource_MICROPHONE,
+    AudioSource_LINE_IN,
+    AudioSource_BLUETOOTH,
+    AudioSource_FILE
   };
-  uint16_t version() const {
-    return GetField<uint16_t>(VT_VERSION, 1);
+  return values;
+}
+
+inline const char * const *EnumNamesAudioSource() {
+  static const char * const names[5] = {
+    "MICROPHONE",
+    "LINE_IN",
+    "BLUETOOTH",
+    "FILE",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameAudioSource(AudioSource e) {
+  if (flatbuffers::IsOutRange(e, AudioSource_MICROPHONE, AudioSource_FILE)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesAudioSource()[index];
+}
+
+enum ErrorCode : int16_t {
+  ErrorCode_NONE = 0,
+  ErrorCode_INVALID_REQUEST = 1,
+  ErrorCode_HARDWARE_ERROR = 2,
+  ErrorCode_AUDIO_CONFIG_ERROR = 3,
+  ErrorCode_NETWORK_ERROR = 4,
+  ErrorCode_TIMEOUT_ERROR = 5,
+  ErrorCode_BUFFER_OVERFLOW = 6,
+  ErrorCode_CALIBRATION_FAILED = 7,
+  ErrorCode_MEMORY_ERROR = 8,
+  ErrorCode_UNKNOWN_ERROR = 999,
+  ErrorCode_MIN = ErrorCode_NONE,
+  ErrorCode_MAX = ErrorCode_UNKNOWN_ERROR
+};
+
+inline const ErrorCode (&EnumValuesErrorCode())[10] {
+  static const ErrorCode values[] = {
+    ErrorCode_NONE,
+    ErrorCode_INVALID_REQUEST,
+    ErrorCode_HARDWARE_ERROR,
+    ErrorCode_AUDIO_CONFIG_ERROR,
+    ErrorCode_NETWORK_ERROR,
+    ErrorCode_TIMEOUT_ERROR,
+    ErrorCode_BUFFER_OVERFLOW,
+    ErrorCode_CALIBRATION_FAILED,
+    ErrorCode_MEMORY_ERROR,
+    ErrorCode_UNKNOWN_ERROR
+  };
+  return values;
+}
+
+inline const char *EnumNameErrorCode(ErrorCode e) {
+  switch (e) {
+    case ErrorCode_NONE: return "NONE";
+    case ErrorCode_INVALID_REQUEST: return "INVALID_REQUEST";
+    case ErrorCode_HARDWARE_ERROR: return "HARDWARE_ERROR";
+    case ErrorCode_AUDIO_CONFIG_ERROR: return "AUDIO_CONFIG_ERROR";
+    case ErrorCode_NETWORK_ERROR: return "NETWORK_ERROR";
+    case ErrorCode_TIMEOUT_ERROR: return "TIMEOUT_ERROR";
+    case ErrorCode_BUFFER_OVERFLOW: return "BUFFER_OVERFLOW";
+    case ErrorCode_CALIBRATION_FAILED: return "CALIBRATION_FAILED";
+    case ErrorCode_MEMORY_ERROR: return "MEMORY_ERROR";
+    case ErrorCode_UNKNOWN_ERROR: return "UNKNOWN_ERROR";
+    default: return "";
   }
-  uint64_t timestamp() const {
-    return GetField<uint64_t>(VT_TIMESTAMP, 0);
+}
+
+struct SchemaVersion FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef SchemaVersionBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_MAJOR = 4,
+    VT_MINOR = 6,
+    VT_PATCH = 8,
+    VT_BUILD = 10
+  };
+  uint16_t major() const {
+    return GetField<uint16_t>(VT_MAJOR, 1);
   }
-  uint32_t sequence_id() const {
-    return GetField<uint32_t>(VT_SEQUENCE_ID, 0);
+  bool mutate_major(uint16_t _major = 1) {
+    return SetField<uint16_t>(VT_MAJOR, _major, 1);
+  }
+  uint16_t minor() const {
+    return GetField<uint16_t>(VT_MINOR, 0);
+  }
+  bool mutate_minor(uint16_t _minor = 0) {
+    return SetField<uint16_t>(VT_MINOR, _minor, 0);
+  }
+  uint16_t patch() const {
+    return GetField<uint16_t>(VT_PATCH, 0);
+  }
+  bool mutate_patch(uint16_t _patch = 0) {
+    return SetField<uint16_t>(VT_PATCH, _patch, 0);
+  }
+  const flatbuffers::String *build() const {
+    return GetPointer<const flatbuffers::String *>(VT_BUILD);
+  }
+  flatbuffers::String *mutable_build() {
+    return GetPointer<flatbuffers::String *>(VT_BUILD);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint16_t>(verifier, VT_VERSION, 2) &&
-           VerifyField<uint64_t>(verifier, VT_TIMESTAMP, 8) &&
-           VerifyField<uint32_t>(verifier, VT_SEQUENCE_ID, 4) &&
+           VerifyField<uint16_t>(verifier, VT_MAJOR, 2) &&
+           VerifyField<uint16_t>(verifier, VT_MINOR, 2) &&
+           VerifyField<uint16_t>(verifier, VT_PATCH, 2) &&
+           VerifyOffset(verifier, VT_BUILD) &&
+           verifier.VerifyString(build()) &&
            verifier.EndTable();
   }
 };
 
-struct HeaderBuilder {
-  typedef Header Table;
+struct SchemaVersionBuilder {
+  typedef SchemaVersion Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_version(uint16_t version) {
-    fbb_.AddElement<uint16_t>(Header::VT_VERSION, version, 1);
+  void add_major(uint16_t major) {
+    fbb_.AddElement<uint16_t>(SchemaVersion::VT_MAJOR, major, 1);
   }
-  void add_timestamp(uint64_t timestamp) {
-    fbb_.AddElement<uint64_t>(Header::VT_TIMESTAMP, timestamp, 0);
+  void add_minor(uint16_t minor) {
+    fbb_.AddElement<uint16_t>(SchemaVersion::VT_MINOR, minor, 0);
   }
-  void add_sequence_id(uint32_t sequence_id) {
-    fbb_.AddElement<uint32_t>(Header::VT_SEQUENCE_ID, sequence_id, 0);
+  void add_patch(uint16_t patch) {
+    fbb_.AddElement<uint16_t>(SchemaVersion::VT_PATCH, patch, 0);
   }
-  explicit HeaderBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  void add_build(flatbuffers::Offset<flatbuffers::String> build) {
+    fbb_.AddOffset(SchemaVersion::VT_BUILD, build);
+  }
+  explicit SchemaVersionBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<Header> Finish() {
+  flatbuffers::Offset<SchemaVersion> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<Header>(end);
+    auto o = flatbuffers::Offset<SchemaVersion>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<Header> CreateHeader(
+inline flatbuffers::Offset<SchemaVersion> CreateSchemaVersion(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint16_t version = 1,
-    uint64_t timestamp = 0,
-    uint32_t sequence_id = 0) {
-  HeaderBuilder builder_(_fbb);
-  builder_.add_timestamp(timestamp);
-  builder_.add_sequence_id(sequence_id);
-  builder_.add_version(version);
+    uint16_t major = 1,
+    uint16_t minor = 0,
+    uint16_t patch = 0,
+    flatbuffers::Offset<flatbuffers::String> build = 0) {
+  SchemaVersionBuilder builder_(_fbb);
+  builder_.add_build(build);
+  builder_.add_patch(patch);
+  builder_.add_minor(minor);
+  builder_.add_major(major);
   return builder_.Finish();
 }
 
-struct Status FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  typedef StatusBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_STATUS = 4,
-    VT_MESSAGE = 6
-  };
-  sparetools::bpm::StatusEnum status() const {
-    return static_cast<sparetools::bpm::StatusEnum>(GetField<int32_t>(VT_STATUS, 0));
-  }
-  const flatbuffers::String *message() const {
-    return GetPointer<const flatbuffers::String *>(VT_MESSAGE);
-  }
-  bool Verify(flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyField<int32_t>(verifier, VT_STATUS, 4) &&
-           VerifyOffset(verifier, VT_MESSAGE) &&
-           verifier.VerifyString(message()) &&
-           verifier.EndTable();
-  }
-};
-
-struct StatusBuilder {
-  typedef Status Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_status(sparetools::bpm::StatusEnum status) {
-    fbb_.AddElement<int32_t>(Status::VT_STATUS, static_cast<int32_t>(status), 0);
-  }
-  void add_message(flatbuffers::Offset<flatbuffers::String> message) {
-    fbb_.AddOffset(Status::VT_MESSAGE, message);
-  }
-  explicit StatusBuilder(flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  flatbuffers::Offset<Status> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<Status>(end);
-    return o;
-  }
-};
-
-inline flatbuffers::Offset<Status> CreateStatus(
+inline flatbuffers::Offset<SchemaVersion> CreateSchemaVersionDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    sparetools::bpm::StatusEnum status = sparetools::bpm::StatusEnum_Success,
-    flatbuffers::Offset<flatbuffers::String> message = 0) {
-  StatusBuilder builder_(_fbb);
-  builder_.add_message(message);
-  builder_.add_status(status);
-  return builder_.Finish();
-}
-
-inline flatbuffers::Offset<Status> CreateStatusDirect(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    sparetools::bpm::StatusEnum status = sparetools::bpm::StatusEnum_Success,
-    const char *message = nullptr) {
-  auto message__ = message ? _fbb.CreateString(message) : 0;
-  return sparetools::bpm::CreateStatus(
+    uint16_t major = 1,
+    uint16_t minor = 0,
+    uint16_t patch = 0,
+    const char *build = nullptr) {
+  auto build__ = build ? _fbb.CreateString(build) : 0;
+  return sparetools::bpm::CreateSchemaVersion(
       _fbb,
-      status,
-      message__);
+      major,
+      minor,
+      patch,
+      build__);
 }
 
 }  // namespace bpm

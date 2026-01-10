@@ -4,15 +4,11 @@
 
 #include <cstdint>
 
-
 namespace sparetools {
 
 namespace bpm {
-
 namespace ExtEnum {
 
 }
-
 }
-
 }

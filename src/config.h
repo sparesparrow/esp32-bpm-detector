@@ -2,34 +2,17 @@
 #define CONFIG_H
 
 // ============================================================================
-// Platform Configuration
+// WiFi Configuration
 // ============================================================================
-// Define the target platform - only one should be defined at compile time
-// #define PLATFORM_ESP32      // For ESP32-S3 and other ESP32 variants
-// #define PLATFORM_ARDUINO    // For Arduino Uno, Nano, and compatible boards
-
-#ifndef PLATFORM_ESP32
-#ifndef PLATFORM_ARDUINO
-    #define PLATFORM_ESP32    // Default to ESP32 if not specified
-#endif
-#endif
-
-// ============================================================================
-// WiFi Configuration (ESP32 only)
-// ============================================================================
-#ifdef PLATFORM_ESP32
 #define WIFI_SSID "Prospects"
 #define WIFI_PASSWORD "Romy1337"
-#endif
 
 // ============================================================================
 // Hardware Configuration
 // ============================================================================
-// Stereo microphone input pins (ADC pins on ESP32-S3)
+// Microphone input pin (ADC pin on ESP32-S3)
 // ESP32-S3 ADC1 pins: GPIO1, GPIO2, GPIO3, GPIO4, GPIO5, GPIO6, GPIO7, GPIO8, GPIO9, GPIO10
-#define MICROPHONE_LEFT_PIN 5       // GPIO5 (ADC1_CH4) - Left channel
-#define MICROPHONE_RIGHT_PIN 6      // GPIO6 (ADC1_CH5) - Right channel
-#define MICROPHONE_PIN MICROPHONE_LEFT_PIN  // Legacy mono compatibility
+#define MICROPHONE_PIN 1            // GPIO1 (ADC1_CH0 on ESP32-S3)
 
 // Display configuration
 #define USE_OLED_DISPLAY 0          // Set to 1 to enable SSD1306 OLED
@@ -39,16 +22,6 @@
 #define OLED_I2C_ADDRESS 0x3C       // Default I2C address for SSD1306
 #define SEGMENT_CLK_PIN 18          // CLK for TM1637
 #define SEGMENT_DIO_PIN 19          // DIO for TM1637
-
-// ============================================================================
-// Arduino Display Serial Configuration (ESP32 → Arduino)
-// ============================================================================
-// Sends BPM data to Arduino Uno display client via Serial2 (dedicated UART)
-// Wiring: ESP32 GPIO17 (TX2) → Arduino D2 (SoftwareSerial RX), GND → GND
-#define ARDUINO_DISPLAY_TX_PIN 17    // ESP32 GPIO17 (Serial2 TX) → Arduino RX
-#define ARDUINO_DISPLAY_RX_PIN 16    // ESP32 GPIO16 (Serial2 RX) ← Arduino TX (optional)
-#define ARDUINO_DISPLAY_BAUD 9600    // Lower baud for reliable SoftwareSerial
-#define ARDUINO_DISPLAY_ENABLED 1    // Set to 1 to enable sending BPM to Arduino
 
 // ============================================================================
 // Audio Configuration - MCP-Prompts Optimized
@@ -71,8 +44,8 @@
 // ============================================================================
 #define MIN_BPM 60                  // Minimum BPM to detect
 #define MAX_BPM 200                 // Maximum BPM to detect
-#define DETECTION_THRESHOLD 0.1     // Threshold for beat detection (0.0-1.0) - Lowered for line-in
-#define CONFIDENCE_THRESHOLD 0.15   // Minimum confidence to report BPM (0.0-1.0) - Lowered for weak signals
+#define DETECTION_THRESHOLD 0.5     // Threshold for beat detection (0.0-1.0)
+#define CONFIDENCE_THRESHOLD 0.3    // Minimum confidence to report BPM (0.0-1.0)
 
 // FFT frequency range for bass detection
 // BPM is typically found in bass frequencies (40-100 Hz for kick drum)
@@ -120,6 +93,20 @@
 #endif
 
 // ============================================================================
+// LED Strip Configuration
+// ============================================================================
+#define LED_STRIP_DATA_PIN 21       // GPIO 21 for DIN (WS2812B data pin)
+#define LED_STRIP_NUM_LEDS 23       // Number of LEDs in the strip
+#define LED_STRIP_TYPE WS2812B      // LED strip type (WS2812B, WS2813, etc.)
+#define LED_STRIP_BRIGHTNESS 50     // Default brightness (0-255, conservative)
+#define LED_STRIP_UPDATE_INTERVAL 50 // Update interval in ms (~20Hz)
+
+// LED pattern timing constants
+#define LED_WIFI_BLINK_INTERVAL 500   // WiFi connecting blink interval (ms)
+#define LED_CLIENT_BLINK_INTERVAL 200 // Client connected blink interval (ms)
+#define LED_ERROR_BLINK_INTERVAL 100  // Error blink interval (ms)
+
+// ============================================================================
 // Optional Features
 // ============================================================================
 #define ENABLE_MQTT 0               // Enable MQTT publishing (requires WiFi)
@@ -140,12 +127,15 @@
 #define TASK_STACK_SIZE 4096        // Task stack size in bytes
 #define TASK_CORE 0                 // Core to run audio task (0 or 1)
 
+// FFT buffer pre-allocation (recommended for ESP32 to avoid heap fragmentation)
+#define FFT_PREALLOCATE_BUFFERS 1   // Pre-allocate FFT buffers (1=enabled, 0=disabled)
+
 // ADC attenuation: controls max voltage measurement
-// ADC_ATTEN_DB_0  : 0 dB attenuation, max 1.1V (High sensitivity, good for phones/line-in)
+// ADC_ATTEN_DB_0  : 0 dB attenuation, max 1.0V
 // ADC_ATTEN_DB_2_5: 2.5 dB attenuation, max 1.5V
-// ADC_ATTEN_DB_6  : 6 dB attenuation, max 2.2V
-// ADC_ATTEN_DB_11 : 11 dB attenuation, max 3.9V (Standard 3.3V logic)
-#define ADC_ATTENUATION ADC_ATTEN_DB_0
+// ADC_ATTEN_DB_6  : 6 dB attenuation, max 2.0V
+// ADC_ATTEN_DB_11 : 11 dB attenuation, max 3.6V (recommended for MAX9814)
+#define ADC_ATTENUATION ADC_ATTEN_DB_11
 
 // ============================================================================
 // Validation Checks

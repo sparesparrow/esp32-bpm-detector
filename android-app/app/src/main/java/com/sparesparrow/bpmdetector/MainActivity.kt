@@ -20,7 +20,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import com.sparesparrow.bpmdetector.services.BPMService
 import com.sparesparrow.bpmdetector.ui.BPMApp
 import com.sparesparrow.bpmdetector.ui.theme.BPMDetectorTheme
@@ -33,6 +36,9 @@ class MainActivity : ComponentActivity() {
     private var bpmService: BPMService? = null
     private var isServiceBound = false
 
+    // ViewModel reference for service binding
+    private lateinit var viewModel: BPMViewModel
+
     // Audio permission launcher
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -41,6 +47,21 @@ class MainActivity : ComponentActivity() {
             Timber.d("Audio recording permission granted")
         } else {
             Timber.w("Audio recording permission denied")
+        }
+    }
+
+    // Location permission launcher for WiFi scanning
+    private val requestLocationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+        val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+
+        if (fineLocationGranted || coarseLocationGranted) {
+            Timber.d("Location permissions granted - WiFi scanning enabled")
+            viewModel.autoDiscoverDevice()
+        } else {
+            Timber.w("Location permissions denied - WiFi scanning disabled")
         }
     }
 
@@ -66,22 +87,70 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Check if location permissions are granted
+     */
+    fun checkLocationPermissions(): Boolean {
+        val fineLocationGranted = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val coarseLocationGranted = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        return fineLocationGranted || coarseLocationGranted
+    }
+
+    /**
+     * Request location permissions if needed
+     */
+    fun requestLocationPermissionsIfNeeded() {
+        if (!checkLocationPermissions()) {
+            requestLocationPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
+
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             Timber.d("BPM service connected")
-            val binder = service as BPMService.LocalBinder
-            bpmService = binder.getService()
-            isServiceBound = true
+            try {
+                val binder = service as? BPMService.LocalBinder ?: run {
+                    Timber.e("Invalid service binder type")
+                    return
+                }
 
-            // Set service reference in ViewModel
-            val viewModel = viewModelStore["bpm_viewmodel"] as? BPMViewModel
-            viewModel?.setBPMService(bpmService!!)
+                bpmService = binder.getService()
+                isServiceBound = true
+
+                // Ensure ViewModel is initialized
+                if (::viewModel.isInitialized) {
+                    viewModel.setBPMService(bpmService!!)
+                } else {
+                    Timber.w("ViewModel not initialized yet, deferring service setup")
+                    // Retry after a short delay
+                    lifecycleScope.launch {
+                        delay(100)
+                        if (::viewModel.isInitialized) {
+                            viewModel.setBPMService(bpmService!!)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Error setting up service connection")
+            }
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
             Timber.d("BPM service disconnected")
-            val viewModel = viewModelStore["bpm_viewmodel"] as? BPMViewModel
-            viewModel?.clearBPMService()
+            if (::viewModel.isInitialized) {
+                viewModel.clearBPMService()
+            }
 
             bpmService = null
             isServiceBound = false
@@ -102,15 +171,16 @@ class MainActivity : ComponentActivity() {
 
         Timber.d("MainActivity created")
 
+        // Initialize ViewModel for service binding
+        viewModel = androidx.lifecycle.ViewModelProvider(this)[BPMViewModel::class.java]
+
         setContent {
             BPMDetectorTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val viewModel: BPMViewModel = viewModel()
-
-                    BPMApp(viewModel = viewModel)
+                    BPMApp(viewModel = this@MainActivity.viewModel)
                 }
             }
         }
@@ -119,6 +189,9 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         Timber.d("MainActivity started")
+
+        // Request location permissions for WiFi scanning
+        requestLocationPermissionsIfNeeded()
 
         // Bind to BPM service
         Intent(this, BPMService::class.java).also { intent ->

@@ -112,28 +112,3 @@ managed_components/
 *.temp
 .cache/
 *.log
-
-# Compiled test binaries
-comprehensive_tests
-fft_logic_test
-final_test
-simple_validation
-
-# PlatformIO build artifacts (more specific)
-.pio/build/
-
-# Dependency directories
-conan-headers/
-conan-headers-*/
-flatbuffers-23.5.26/
-flatbuffers-src/
-
-# Conan build scripts
-conanbuild.sh
-conanbuildenv-*.sh
-conanrunenv-*.sh
-deactivate_conan*.sh
-.conan2/profiles/local_*
-
-# Multi-device deployment
-device_manifest.json

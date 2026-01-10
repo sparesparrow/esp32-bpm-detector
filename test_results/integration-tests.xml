@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="16" skipped="0" tests="18" time="0.566" timestamp="2026-01-01T19:36:40.855684+00:00" hostname="39b1675ab62c"><testcase classname="tests.integration.test_hardware_emulation.TestHardwareEmulator" name="test_emulator_initialization" time="0.001"><failure message="KeyError: 'sensor_types'">tests/integration/test_hardware_emulation.py:190: in test_emulator_initialization
+    assert "gyroscope" in esp32s3_emulator.config["sensor_types"]
+E   KeyError: 'sensor_types'</failure></testcase><testcase classname="tests.integration.test_hardware_emulation.TestHardwareEmulator" name="test_emulator_start_stop" time="0.001"><failure message="AttributeError: 'HardwareEmulator' object has no attribute 'status'">tests/integration/test_hardware_emulation.py:201: in test_emulator_start_stop
+    assert emulator.status == "stopped"
+E   AttributeError: 'HardwareEmulator' object has no attribute 'status'</failure></testcase><testcase classname="tests.integration.test_hardware_emulation.TestHardwareEmulator" name="test_tcp_connection_establishment" time="0.102"><failure message="AttributeError: 'HardwareEmulator' object has no attribute 'connected_clients'">tests/integration/test_hardware_emulation.py:225: in test_tcp_connection_establishment
+    assert emulator.connected_clients &gt;= 1
+E   AttributeError: 'HardwareEmulator' object has no attribute 'connected_clients'</failure></testcase><testcase classname="tests.integration.test_hardware_emulation.TestHardwareEmulator" name="test_bpm_data_protocol_simulation" time="0.002" /><testcase classname="tests.integration.test_hardware_emulation.TestHardwareEmulator" name="test_device_status_simulation" time="0.002"><failure message="AssertionError: assert 'bpm_update' == 'status'&#10;  &#10;  - status&#10;  + bpm_update">tests/integration/test_hardware_emulation.py:279: in test_device_status_simulation
+    assert data["type"] == "status"
+E   AssertionError: assert 'bpm_update' == 'status'
+E     
+E     - status
+E     + bpm_update</failure></testcase><testcase classname="tests.integration.test_hardware_emulation.TestHardwareEmulator" name="test_sensor_enumeration" time="0.002"><failure message="AssertionError: assert 'bpm_update' == 'sensors'&#10;  &#10;  - sensors&#10;  + bpm_update">tests/integration/test_hardware_emulation.py:306: in test_sensor_enumeration
+    assert data["type"] == "sensors"
+E   AssertionError: assert 'bpm_update' == 'sensors'
+E     
+E     - sensors
+E     + bpm_update</failure></testcase><testcase classname="tests.integration.test_hardware_emulation.TestHardwareEmulator" name="test_configuration_commands" time="0.002"><failure message="AssertionError: assert 'bpm_update' == 'config_set'&#10;  &#10;  - config_set&#10;  + bpm_update">tests/integration/test_hardware_emulation.py:336: in test_configuration_commands
+    assert data["type"] == "config_set"
+E   AssertionError: assert 'bpm_update' == 'config_set'
+E     
+E     - config_set
+E     + bpm_update</failure></testcase><testcase classname="tests.integration.test_hardware_emulation.TestHardwareEmulator" name="test_ping_pong_functionality" time="0.003"><failure message="AssertionError: assert 'bpm_update' == 'pong'&#10;  &#10;  - pong&#10;  + bpm_update">tests/integration/test_hardware_emulation.py:365: in test_ping_pong_functionality
+    assert data["type"] == "pong"
+E   AssertionError: assert 'bpm_update' == 'pong'
+E     
+E     - pong
+E     + bpm_update</failure></testcase><testcase classname="tests.integration.test_hardware_emulation.TestHardwareEmulator" name="test_device_reset_simulation" time="0.002"><failure message="AssertionError: assert 'bpm_update' == 'reset'&#10;  &#10;  - reset&#10;  + bpm_update">tests/integration/test_hardware_emulation.py:389: in test_device_reset_simulation
+    assert data["type"] == "reset"
+E   AssertionError: assert 'bpm_update' == 'reset'
+E     
+E     - reset
+E     + bpm_update</failure></testcase><testcase classname="tests.integration.test_hardware_emulation.TestHardwareEmulator" name="test_unknown_command_handling" time="0.003"><failure message="AssertionError: assert 'bpm_update' == 'error'&#10;  &#10;  - error&#10;  + bpm_update">tests/integration/test_hardware_emulation.py:414: in test_unknown_command_handling
+    assert data["type"] == "error"
+E   AssertionError: assert 'bpm_update' == 'error'
+E     
+E     - error
+E     + bpm_update</failure></testcase><testcase classname="tests.integration.test_hardware_emulation.TestHardwareEmulator" name="test_multi_client_handling" time="0.008"><failure message="AttributeError: 'HardwareEmulator' object has no attribute 'connected_clients'">tests/integration/test_hardware_emulation.py:460: in test_multi_client_handling
+    assert emulator.connected_clients &gt;= 0  # May be 0 if all disconnected
+E   AttributeError: 'HardwareEmulator' object has no attribute 'connected_clients'</failure></testcase><testcase classname="tests.integration.test_hardware_emulation.TestHardwareEmulator" name="test_error_conditions_and_recovery" time="0.002" /><testcase classname="tests.integration.test_hardware_emulation.TestHardwareEmulator" name="test_emulator_status_reporting" time="0.001"><failure message="KeyError: 'status'">tests/integration/test_hardware_emulation.py:492: in test_emulator_status_reporting
+    assert status["status"] == "running"
+E   KeyError: 'status'</failure></testcase><testcase classname="tests.integration.test_hardware_emulation.TestHardwareEmulator" name="test_different_device_types[esp32]" time="0.002"><failure message="AssertionError: assert 'bpm_update' == 'status'&#10;  &#10;  - status&#10;  + bpm_update">tests/integration/test_hardware_emulation.py:530: in test_different_device_types
+    assert data["type"] == "status"
+E   AssertionError: assert 'bpm_update' == 'status'
+E     
+E     - status
+E     + bpm_update</failure></testcase><testcase classname="tests.integration.test_hardware_emulation.TestHardwareEmulator" name="test_different_device_types[esp32s3]" time="0.002"><failure message="AssertionError: assert 'bpm_update' == 'status'&#10;  &#10;  - status&#10;  + bpm_update">tests/integration/test_hardware_emulation.py:530: in test_different_device_types
+    assert data["type"] == "status"
+E   AssertionError: assert 'bpm_update' == 'status'
+E     
+E     - status
+E     + bpm_update</failure></testcase><testcase classname="tests.integration.test_hardware_emulation.TestHardwareEmulator" name="test_different_device_types[arduino]" time="0.002"><failure message="AssertionError: assert 'bpm_update' == 'status'&#10;  &#10;  - status&#10;  + bpm_update">tests/integration/test_hardware_emulation.py:530: in test_different_device_types
+    assert data["type"] == "status"
+E   AssertionError: assert 'bpm_update' == 'status'
+E     
+E     - status
+E     + bpm_update</failure></testcase><testcase classname="tests.integration.test_hardware_emulation.TestHardwareEmulatorIntegration" name="test_full_bpm_workflow_simulation" time="0.002"><failure message="AttributeError: 'TestHardwareEmulatorIntegration' object has no attribute '_parse_json_response'">tests/integration/test_hardware_emulation.py:569: in test_full_bpm_workflow_simulation
+    data = self._parse_json_response(response)
+E   AttributeError: 'TestHardwareEmulatorIntegration' object has no attribute '_parse_json_response'</failure></testcase><testcase classname="tests.integration.test_hardware_emulation.TestHardwareEmulatorIntegration" name="test_emulator_performance_under_load" time="0.004"><failure message="AttributeError: 'TestHardwareEmulatorIntegration' object has no attribute '_parse_json_response'">tests/integration/test_hardware_emulation.py:640: in test_emulator_performance_under_load
+    data = self._parse_json_response(resp)
+E   AttributeError: 'TestHardwareEmulatorIntegration' object has no attribute '_parse_json_response'</failure></testcase></testsuite></testsuites>

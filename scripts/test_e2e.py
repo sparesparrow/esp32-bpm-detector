@@ -447,6 +447,7 @@ class E2ETest:
             if not test.get("passed", False) and not test.get("skipped", False):
                 results["passed"] = False
         
+        # Always set total_duration, even if there was an early return
         results["total_duration"] = time.time() - start
         
         # Save results
@@ -526,8 +527,12 @@ def main():
             status = "✓" if test.get("passed", False) else ("⊘" if test.get("skipped", False) else "✗")
             print(f"  {status} {test['name']} ({test['duration']:.2f}s)")
         
-        print(f"\nTotal Duration: {results['total_duration']:.2f}s")
-        print(f"Status: {'PASSED' if results['passed'] else 'FAILED'}")
+        total_duration = results.get('total_duration', 0.0)
+        if total_duration == 0.0:
+            # Calculate from test durations if not set
+            total_duration = sum(test.get('duration', 0.0) for test in results.get('tests', []))
+        print(f"\nTotal Duration: {total_duration:.2f}s")
+        print(f"Status: {'PASSED' if results.get('passed', False) else 'FAILED'}")
         
         if results["passed"]:
             print("\n✅ All tests passed")

@@ -1,0 +1,36 @@
+{
+  "id": "mcp-testing-prompt",
+  "name": "mcp-testing-prompt",
+  "description": "Generate testing prompts for test case generation and quality assurance using MCP prompts",
+  "content": "# Testing Prompt Generator\n\nGenerate comprehensive {{test_type}} for {{code_to_test}} using {{testing_framework}}.\n\n## Test Requirements\n\n**Language**: {{language}}\n**Framework**: {{testing_framework}}\n**Coverage Target**: {{coverage_target}}%\n**Code to Test**: {{code_to_test}}\n\n## Test Categories\n\n### 1. Basic Functionality Tests\n- Test normal operation paths\n- Verify expected outputs\n- Check return values and state changes\n\n### 2. Error Handling Tests\n- Test invalid inputs\n- Test error conditions\n- Verify error messages and exceptions\n\n{% if include_edge_cases == \"true\" or include_edge_cases == true %}\n### 3. Edge Cases\n- Boundary conditions\n- Empty/null inputs\n- Maximum/minimum values\n- Special characters and encoding\n{% endif %}\n\n{% if include_performance_tests == \"true\" or include_performance_tests == true %}\n### 4. Performance Tests\n- Response time benchmarks\n- Memory usage\n- Scalability tests\n- Load testing scenarios\n{% endif %}\n\n## Test Structure\n\nUse {{testing_framework}} best practices:\n- Clear test names describing what is being tested\n- Arrange-Act-Assert pattern\n- Isolated test cases\n- Proper setup and teardown\n\n## Coverage Goals\n\nAim for {{coverage_target}}% code coverage, focusing on:\n- All public methods/functions\n- Critical business logic\n- Error handling paths\n- Edge cases (if enabled)\n\n## Output Format\n\nProvide:\n1. Test file structure\n2. Individual test cases with descriptions\n3. Test data and fixtures\n4. Mock objects (if needed)\n5. Assertions and expected outcomes\n\nGenerate {{test_type}} that are maintainable, readable, and provide confidence in the code quality.\n",
+  "isTemplate": true,
+  "tags": [
+    "testing",
+    "qa",
+    "test-generation",
+    "quality-assurance",
+    "test-cases"
+  ],
+  "category": "testing",
+  "variables": [
+    "test_type",
+    "code_to_test",
+    "testing_framework",
+    "language",
+    "coverage_target",
+    "include_edge_cases",
+    "include_performance_tests"
+  ],
+  "version": "1.0.0",
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "updatedAt": "2026-01-01T00:00:00.000Z",
+  "isLatest": true,
+  "metadata": {
+    "created": "2026-01-01T00:00:00.000Z",
+    "validation": "template",
+    "confidence": "medium",
+    "framework": "mcp-prompts",
+    "project_type": "testing"
+  },
+  "accessLevel": "public"
+}

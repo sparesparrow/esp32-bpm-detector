@@ -1,0 +1,10 @@
+Android + ESP32 Integration Test Results
+==================================================
+Test Start: 2026-01-01 06:51:18.291033
+Test End: 2026-01-01 06:53:25.287881
+
+permissions: PASS
+wifi_discovery: FAIL
+bpm_monitoring: FAIL
+
+Overall: 1/3 tests passed

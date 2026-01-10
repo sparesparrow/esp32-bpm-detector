@@ -1,0 +1,58 @@
+[
+  {
+    "name": "ESP32 Code Review Assistant",
+    "description": "Comprehensive ESP32 embedded code review template with memory management, real-time constraints, and hardware-specific considerations",
+    "tags": [
+      "esp32",
+      "embedded",
+      "code-review",
+      "development",
+      "freertos",
+      "memory-management",
+      "real-time"
+    ],
+    "category": "esp32",
+    "path": "esp32-code-review.json"
+  },
+  {
+    "name": "android-clipboard-analysis-workflow",
+    "description": "Workflow for analyzing Android clipboard usage patterns",
+    "tags": [
+      "android",
+      "clipboard",
+      "analysis",
+      "workflow",
+      "patterns",
+      "productivity"
+    ],
+    "category": "",
+    "path": "cognitive/procedural/android-clipboard-analysis-workflow.json"
+  },
+  {
+    "name": "Code Review Assistant",
+    "description": "A comprehensive template for reviewing code with best practices, security considerations, and improvement suggestions",
+    "tags": [
+      "development",
+      "code-review",
+      "quality-assurance",
+      "security"
+    ],
+    "category": "",
+    "path": "public/code-review-assistant.json"
+  },
+  {
+    "name": "SpareTools Android Development",
+    "description": "Complete Android development and deployment toolkit",
+    "tags": [
+      "android",
+      "mobile",
+      "development",
+      "apk",
+      "gradle",
+      "testing",
+      "deployment"
+    ],
+    "category": "mobile",
+    "path": "public/sparetools-android-dev.json"
+  }
+]

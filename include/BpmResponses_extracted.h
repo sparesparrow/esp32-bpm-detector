@@ -3,22 +3,15 @@
 #pragma once
 
 #include <cstdint>
-
 #include "BpmAudio_extracted.h"
-
 #include "BpmCommon_extracted.h"
-
 #include "BpmConfig_extracted.h"
-
 #include "BpmCore_extracted.h"
-
 #include "BpmSystem_extracted.h"
-
 
 namespace sparetools {
 
 namespace bpm {
-
 namespace ExtEnum {
 
 
@@ -32,12 +25,14 @@ enum ResponsePayload : uint8_t {
   ResponsePayload_StartStreamingResponse = 6,
   ResponsePayload_StopStreamingResponse = 7,
   ResponsePayload_GetDiagnosticsResponse = 8,
+  ResponsePayload_MonitorSetupResponse = 9,
+  ResponsePayload_MonitorValuesResponse = 10,
+  ResponsePayload_MonitorRemovedResponse = 11,
+  ResponsePayload_MonitorRemovedAllResponse = 12,
   ResponsePayload_MIN = ResponsePayload_NONE,
-  ResponsePayload_MAX = ResponsePayload_GetDiagnosticsResponse
+  ResponsePayload_MAX = ResponsePayload_MonitorRemovedAllResponse
 };
 
 }
-
 }
-
 }

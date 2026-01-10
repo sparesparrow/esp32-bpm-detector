@@ -25,8 +25,29 @@ This project captures audio signals from a microphone (analog or digital MIDI), 
 
 ### Optional Components
 - **Display**: SSD1306 OLED (I2C) or TM1637 7-segment display
+- **LED Strip**: WS2812B programmable LED strip (23 LEDs) for visual feedback
 - **MIDI Input**: DIN connector with optoisolator (for MIDI clock sync)
 - **USB Cable**: For programming and power
+
+### LED Strip Wiring
+
+For visual feedback during operation:
+
+1. Connect LED strip DIN pin to **GPIO 21** on ESP32
+2. Power the LED strip with **5V** and adequate current capacity
+3. Connect GND between ESP32 and LED strip power supply
+
+**Power Requirements:**
+- 23 LEDs × 60mA max current = **1.38A** at 5V
+- Recommended power supply: **2A** at 5V
+- Use a separate power supply from ESP32 to avoid voltage drops
+
+**Wiring Diagram:**
+```
+ESP32 GPIO 21 ────► LED Strip DIN
+ESP32 GND ───────► LED Strip GND
+5V Power Supply ─► LED Strip +5V
+```
 
 ## Quick Start
 
@@ -97,6 +118,38 @@ cd android-app
 2. Go to **Settings** tab
 3. Enter ESP32 IP address (e.g., `192.168.1.100`)
 4. Tap **Connect**
+
+## LED Status Indicators
+
+When an LED strip is connected, the ESP32 provides visual feedback about system status:
+
+### Status Patterns
+
+| Pattern | Description | LED Behavior |
+|---------|-------------|--------------|
+| **Booting** | System startup | Rainbow cycle through all LEDs |
+| **WiFi Connecting** | Attempting WiFi connection | Blue pulsing on LED 0 |
+| **WiFi Connected** | WiFi connection successful | Solid blue on LED 0 |
+| **Client Connected** | Android app connected | Green pulsing on LED 1 |
+| **Error** | System error occurred | Red blinking on all LEDs |
+| **BPM Detecting** | Normal operation | LEDs ready for BPM flash |
+
+### BPM Flash
+
+- **White flash**: Synchronized to detected BPM rhythm
+- **Flash timing**: Calculated from BPM value (e.g., 120 BPM = 500ms intervals)
+- **Confidence threshold**: Only flashes when detection confidence ≥ 0.3
+- **Duration**: 100ms flash followed by dark period
+
+### Troubleshooting LED Issues
+
+| Problem | Symptom | Solution |
+|---------|---------|----------|
+| No LEDs lighting | All LEDs remain off | Check GPIO 21 connection and power supply |
+| Erratic colors | Random/incorrect colors | Verify WS2812B LED strip type in config |
+| Dim LEDs | LEDs visible but very dim | Increase brightness or check power supply current |
+| No BPM flash | Status LEDs work but no flash | Check audio input and BPM detection confidence |
+| Fast blinking | LEDs blinking too rapidly | Adjust LED timing constants in config.h |
 
 ## API Documentation
 

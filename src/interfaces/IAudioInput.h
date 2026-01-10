@@ -1,40 +1,68 @@
-#ifndef IAUDIO_INPUT_H
-#define IAUDIO_INPUT_H
+#ifndef IAUDIOINPUT_H
+#define IAUDIOINPUT_H
 
-#include <cstdint>
-
-//! @brief Pure virtual interface for audio input functionality
-//! @details Defines the contract for audio sampling across different microcontroller platforms.
-//! Follows oms-dev pattern with 'I' prefix for interfaces.
-class IAudioInput
-{
+/**
+ * @brief Interface for audio input operations
+ *
+ * This interface defines the contract for audio input implementations
+ * used by the BPM detector system. It supports both mono and stereo
+ * audio input with ADC sampling capabilities.
+ */
+class IAudioInput {
 public:
+    /**
+     * @brief Virtual destructor for proper cleanup
+     */
     virtual ~IAudioInput() = default;
 
-    //! @brief Initialize the audio input with specified pin
+    /**
+     * @brief Initialize ADC with specified pin (mono mode)
+     * @param adc_pin The ADC pin to use for audio input
+     */
     virtual void begin(uint8_t adc_pin) = 0;
 
-    //! @brief Initialize stereo audio input
+    /**
+     * @brief Initialize ADC with stereo pins
+     * @param left_pin The ADC pin for left channel
+     * @param right_pin The ADC pin for right channel
+     */
     virtual void beginStereo(uint8_t left_pin, uint8_t right_pin) = 0;
 
-    //! @brief Read a single audio sample (mono or combined stereo)
+    /**
+     * @brief Read a single audio sample
+     * @return The audio sample value
+     */
     virtual float readSample() = 0;
 
-    //! @brief Read separate stereo samples
+    /**
+     * @brief Read stereo samples
+     * @param left Reference to store left channel sample
+     * @param right Reference to store right channel sample
+     */
     virtual void readStereoSamples(float& left, float& right) = 0;
 
-    //! @brief Get current signal level (RMS or peak)
+    /**
+     * @brief Get current signal level
+     * @return The current RMS signal level
+     */
     virtual float getSignalLevel() const = 0;
 
-    //! @brief Get normalized signal level (0.0-1.0)
+    /**
+     * @brief Get normalized signal level (0.0-1.0)
+     * @return The normalized signal level
+     */
     virtual float getNormalizedLevel() const = 0;
 
-    //! @brief Check if audio input is initialized
+    /**
+     * @brief Check if audio input is initialized
+     * @return true if initialized, false otherwise
+     */
     virtual bool isInitialized() const = 0;
 
-    //! @brief Reset signal level calibration
+    /**
+     * @brief Reset signal level calibration
+     */
     virtual void resetCalibration() = 0;
 };
 
-#endif // IAUDIO_INPUT_H
-
+#endif // IAUDIOINPUT_H

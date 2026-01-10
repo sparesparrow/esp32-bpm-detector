@@ -1,19 +1,224 @@
-// Main BPM Protocol Schema File
-// Includes all domain files and declares root types for serialization
-
 include "BpmCommon.fbs";
-include "BpmCore.fbs";
-include "BpmAudio.fbs";
-include "BpmConfig.fbs";
-include "BpmSystem.fbs";
-include "BpmRequests.fbs";
-include "BpmResponses.fbs";
 
 namespace sparetools.bpm;
 
-// Root types for serialization - following ngaims-icd-dev pattern
-root_type BPMUpdate;
-root_type StatusUpdate;
-root_type Request;
-root_type Response;
+// ============================================================================
+// Core BPM Detection Data Structures
+// ============================================================================
 
+// Detailed BPM analysis results
+table BPMAnalysis {
+  // Signal stability metrics
+  stability: float = 0.0;              // Signal stability score (0.0-1.0)
+  regularity: float = 0.0;             // Beat regularity score (0.0-1.0)
+
+  // Frequency domain analysis
+  dominant_frequency: float = 0.0;     // Primary frequency component (Hz)
+  spectral_centroid: float = 0.0;      // Spectral centroid (Hz)
+
+  // Temporal analysis
+  beat_position: float = 0.0;          // Beat position within measure (0.0-1.0)
+  tempo_consistency: float = 0.0;      // Tempo consistency score (0.0-1.0)
+
+  // Advanced metrics
+  zero_crossing_rate: float = 0.0;     // Zero crossing rate
+  rms_energy: float = 0.0;             // RMS energy level
+}
+
+// BPM detection quality metrics
+table BPMQuality {
+  // Signal quality
+  snr_db: float = 0.0;                 // Signal-to-noise ratio (dB)
+  signal_level_db: float = 0.0;        // Signal level (dB)
+
+  // Detection reliability
+  consecutive_detections: uint16 = 0;  // Consecutive valid detections
+  reliability_score: float = 0.0;      // Overall reliability (0.0-1.0)
+
+  // Error metrics
+  false_positive_rate: float = 0.0;    // False positive rate (0.0-1.0)
+  algorithm_confidence: float = 0.0;   // Algorithm confidence (0.0-1.0)
+
+  // Processing metrics
+  processing_time_ms: uint32 = 0;      // Processing time in milliseconds
+}
+
+// Main BPM update message
+table BPMUpdate {
+  // Primary BPM data
+  bpm: float = 0.0;                    // Detected BPM value
+  confidence: float = 0.0;             // Detection confidence (0.0-1.0)
+  signal_level: float = 0.0;           // Signal level (0.0-1.0)
+
+  // Status and metadata
+  status: DetectionStatus = INITIALIZING;
+  timestamp: uint64 = 0;               // Unix timestamp in milliseconds
+
+  // Detailed analysis (optional for performance)
+  analysis: BPMAnalysis;               // Detailed analysis results
+  quality: BPMQuality;                 // Quality metrics
+
+  // Device info
+  device_type: string;                 // Device type identifier
+  firmware_version: string;            // Firmware version
+}
+
+// ============================================================================
+// Configuration and Control Structures
+// ============================================================================
+
+// Audio configuration settings
+table AudioConfig {
+  sample_rate: uint32 = 16000;         // Sample rate in Hz
+  fft_size: uint16 = 1024;             // FFT size (power of 2)
+  buffer_size: uint16 = 512;           // Audio buffer size
+
+  // BPM detection parameters
+  min_bpm: uint8 = 60;                 // Minimum detectable BPM
+  max_bpm: uint8 = 200;                // Maximum detectable BPM
+
+  // Audio processing
+  channels: uint8 = 1;                 // Number of audio channels
+  bits_per_sample: uint8 = 16;         // Bits per sample
+  audio_source: AudioSource = MICROPHONE;
+}
+
+// Device status information
+table DeviceStatus {
+  // System status
+  uptime_seconds: uint64 = 0;          // Device uptime in seconds
+  free_heap_bytes: uint32 = 0;         // Available heap memory
+  total_heap_bytes: uint32 = 0;        // Total heap memory
+  cpu_usage_percent: uint8 = 0;        // CPU usage percentage
+
+  // Network status
+  wifi_connected: bool = false;        // WiFi connection status
+  wifi_rssi: int8 = 0;                 // WiFi signal strength (dBm)
+  ip_address: string;                  // Device IP address
+
+  // Audio status
+  audio_active: bool = false;          // Audio processing active
+  last_bpm: float = 0.0;               // Last detected BPM
+  detection_status: DetectionStatus = INITIALIZING;
+
+  // Timestamps
+  timestamp: uint64 = 0;               // Status timestamp
+  last_bpm_timestamp: uint64 = 0;      // Last BPM detection timestamp
+}
+
+// ============================================================================
+// Request/Response Structures
+// ============================================================================
+
+// Generic error information
+table ErrorInfo {
+  code: ErrorCode = NONE;
+  message: string;                     // Error message
+  details: string;                     // Additional error details
+  timestamp: uint64 = 0;
+}
+
+// Generic response wrapper
+table Response {
+  status: StatusEnum = Success;
+  timestamp: uint64 = 0;
+  error: ErrorInfo;                    // Present if status is Error
+}
+
+// Health check response
+table HealthResponse {
+  status: StatusEnum = Success;
+  uptime_seconds: uint64 = 0;
+  version: string;                     // Firmware version
+  timestamp: uint64 = 0;
+  error: ErrorInfo;
+}
+
+// Configuration response
+table ConfigResponse {
+  status: StatusEnum = Success;
+  config: AudioConfig;
+  timestamp: uint64 = 0;
+  error: ErrorInfo;
+}
+
+// Status response
+table StatusResponse {
+  status: StatusEnum = Success;
+  device_status: DeviceStatus;
+  timestamp: uint64 = 0;
+  error: ErrorInfo;
+}
+
+// BPM data response
+table BPMResponse {
+  status: StatusEnum = Success;
+  bpm_update: BPMUpdate;
+  timestamp: uint64 = 0;
+  error: ErrorInfo;
+}
+
+// ============================================================================
+// Diagnostic and Maintenance Structures
+// ============================================================================
+
+// Performance metrics
+table PerformanceMetrics {
+  cpu_usage_percent: uint8 = 0;        // CPU usage percentage
+  memory_usage_percent: uint8 = 0;     // Memory usage percentage
+  audio_buffer_overruns: uint32 = 0;   // Audio buffer overruns
+  network_timeouts: uint32 = 0;        // Network timeout count
+
+  // Timing metrics
+  avg_processing_time_ms: uint16 = 0;  // Average processing time
+  max_processing_time_ms: uint16 = 0;  // Maximum processing time
+  min_processing_time_ms: uint16 = 0;  // Minimum processing time
+
+  timestamp: uint64 = 0;
+}
+
+// System diagnostics
+table SystemDiagnostics {
+  firmware_version: string;             // Firmware version
+  hardware_revision: string;            // Hardware revision
+  serial_number: string;                // Device serial number
+
+  // Memory information
+  total_heap: uint32 = 0;
+  free_heap: uint32 = 0;
+  largest_free_block: uint32 = 0;
+
+  // Network diagnostics
+  wifi_channel: uint8 = 0;
+  wifi_auth_mode: string;               // WiFi authentication mode
+  network_latency_ms: uint16 = 0;
+
+  // Audio diagnostics
+  audio_sample_rate: uint32 = 0;
+  audio_buffer_size: uint16 = 0;
+  audio_overruns: uint32 = 0;
+
+  timestamp: uint64 = 0;
+}
+
+// Diagnostic response
+table DiagnosticsResponse {
+  status: StatusEnum = Success;
+  metrics: PerformanceMetrics;
+  diagnostics: SystemDiagnostics;
+  timestamp: uint64 = 0;
+  error: ErrorInfo;
+}
+
+// ============================================================================
+// Legacy Structures (for backward compatibility)
+// ============================================================================
+
+// Deprecated - use BPMUpdate instead
+table StatusUpdate {
+  uptime_seconds: uint64 = 0;
+  free_heap_bytes: uint32 = 0;
+  cpu_usage_percent: uint8 = 0;
+  wifi_rssi: int8 = 0;
+  timestamp: uint64 = 0;
+}

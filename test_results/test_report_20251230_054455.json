@@ -1,0 +1,17 @@
+{
+  "test_run_id": "20251230_054455",
+  "timestamp": "2025-12-30T05:46:43.080120",
+  "project_dir": "/home/sparrow/projects/embedded-systems/esp32-bpm-detector",
+  "test_results": {},
+  "container_logs": {
+    "esp32-emulator": "Attaching to esp32-bpm-emulator\n\u001b[36mesp32-bpm-emulator   |\u001b[0m Traceback (most recent call last):\n\u001b[36mesp32-bpm-emulator   |\u001b[0m   File \"/workspace/scripts/start_emulator.py\", line 12, in <module>\n\u001b[36mesp32-bpm-emulator   |\u001b[0m     from mcp.servers.python.unified_deployment.unified_deployment_mcp_server import HardwareEmulator\n\u001b[36mesp32-bpm-emulator   |\u001b[0m ModuleNotFoundError: No module named 'mcp'\n",
+    "integration-tests": "Attaching to \n",
+    "mock-services": "Attaching to esp32-bpm-mock-services\n\u001b[36mesp32-bpm-mock-services |\u001b[0m \ud83d\udd27 Starting Mock Services...\n\u001b[36mesp32-bpm-mock-services |\u001b[0m \u2705 Mock ESP32 API server starting on port 8080\u2705 Mock WebSocket server starting on port 8000\n\u001b[36mesp32-bpm-mock-services |\u001b[0m \n"
+  },
+  "environment_info": {
+    "docker_version": "Docker version 28.5.2, build ecc6942",
+    "compose_version": "docker-compose version 1.29.2, build unknown",
+    "python_version": "3.12.3 (main, Nov  6 2025, 13:44:16) [GCC 13.3.0]",
+    "platform": "linux"
+  }
+}

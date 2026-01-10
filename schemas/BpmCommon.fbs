@@ -1,23 +1,29 @@
 namespace sparetools.bpm;
 
-// Enums - following ngaims-icd-dev pattern of domain-specific enums
+// ============================================================================
+// Common enums and types used across BPM protocol
+// ============================================================================
 
+// Detection and processing status
 enum DetectionStatus : int8 {
   INITIALIZING = 0,
   DETECTING = 1,
   LOW_SIGNAL = 2,
   NO_SIGNAL = 3,
   ERROR = 4,
-  CALIBRATING = 5
+  CALIBRATING = 5,
+  READY = 6
 }
 
-enum StatusEnum : int {
+// Operation result status
+enum StatusEnum : int32 {
   Success = 0,
   Error = 1,
   Warning = 2,
   Info = 3
 }
 
+// API request types
 enum RequestType : int8 {
   GET_STATUS = 0,
   GET_CONFIG = 1,
@@ -26,25 +32,45 @@ enum RequestType : int8 {
   CALIBRATE_AUDIO = 4,
   START_STREAMING = 5,
   STOP_STREAMING = 6,
-  GET_DIAGNOSTICS = 7
+  GET_DIAGNOSTICS = 7,
+  GET_HEALTH = 8,
+  SET_DIAGNOSTICS = 9
 }
 
-
+// Streaming protocol types
 enum StreamType : int8 {
   WEBSOCKET = 0,
   HTTP = 1,
-  MQTT = 2
+  MQTT = 2,
+  TCP = 3
 }
 
-// Tables - following ngaims-icd-dev pattern of common structures
-
-table Header {
-  version: uint16 = 1;
-  timestamp: uint64;
-  sequence_id: uint32;
+// Audio input source types
+enum AudioSource : int8 {
+  MICROPHONE = 0,
+  LINE_IN = 1,
+  BLUETOOTH = 2,
+  FILE = 3
 }
 
-table Status {
-  status: StatusEnum = Success;
-  message: string;
+// Error codes for detailed error reporting
+enum ErrorCode : int16 {
+  NONE = 0,
+  INVALID_REQUEST = 1,
+  HARDWARE_ERROR = 2,
+  AUDIO_CONFIG_ERROR = 3,
+  NETWORK_ERROR = 4,
+  TIMEOUT_ERROR = 5,
+  BUFFER_OVERFLOW = 6,
+  CALIBRATION_FAILED = 7,
+  MEMORY_ERROR = 8,
+  UNKNOWN_ERROR = 999
+}
+
+// Schema version for compatibility checking
+table SchemaVersion {
+  major: uint16 = 1;
+  minor: uint16 = 0;
+  patch: uint16 = 0;
+  build: string;                       // Build identifier (no default allowed)
 }

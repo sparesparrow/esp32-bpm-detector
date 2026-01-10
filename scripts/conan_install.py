@@ -10,52 +10,46 @@ import os
 import sys
 import subprocess
 import platform
+from pathlib import Path
+
+# Add scripts directory to path
+sys.path.insert(0, str(Path(__file__).parent))
+
+# Import SpareTools utilities
+from sparetools_utils import (
+    setup_logging,
+    run_command,
+    get_project_root,
+    Conan
+)
+
+# Set up logging
+logger = setup_logging(__name__)
 
 def run_conan_install(profile=None):
-    """Run conan install to set up dependencies."""
+    """Run conan install to set up dependencies using SpareTools utilities."""
 
-    # Get the project root directory
-    project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # Get the project root directory using SpareTools utilities
+    project_dir = get_project_root(Path(__file__).parent)
 
-    # Change to project directory
-    os.chdir(project_dir)
+    logger.info(f"Installing Conan dependencies for profile: {profile or 'default'}...")
 
-    print(f"Installing Conan dependencies for profile: {profile or 'default'}...")
+    # Use SpareTools Conan utilities
+    success = Conan.install_dependencies(
+        profile=profile,
+        build_missing=True,
+        remote="sparetools"
+    )
 
-    # Run conan install
-    # Use --build=missing to build any missing dependencies
-    cmd = [
-        "conan", "install", ".",
-        "--build=missing"
-    ]
-    
-    # Add profile if specified
-    if profile:
-        # Use profile name with .profile extension for Conan 2.x
-        profile_name = f"{profile}.profile"
-        cmd.extend(["--profile", profile_name])
-        print(f"Using Conan profile: {profile_name}")
-
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        print("Conan dependencies installed successfully!")
-        if result.stdout:
-            print("Conan output:", result.stdout)
+    if success:
+        logger.info("Conan dependencies installed successfully!")
 
         # Copy headers to local include directory for PlatformIO
-        print("Setting up headers for PlatformIO...")
-        setup_platformio_headers(project_dir, profile=profile)
+        logger.info("Setting up headers for PlatformIO...")
+        setup_platformio_headers(str(project_dir), profile=profile)
         return True
-    except subprocess.CalledProcessError as e:
-        print(f"Error installing Conan dependencies: {e}")
-        if e.stdout:
-            print("Conan stdout:", e.stdout)
-        if e.stderr:
-            print("Conan stderr:", e.stderr)
-        return False
-    except FileNotFoundError:
-        print("Error: Conan not found. Please install Conan package manager.")
-        print("Visit: https://conan.io/downloads.html")
+    else:
+        logger.error("Failed to install Conan dependencies")
         return False
 
 def setup_platformio_headers(project_dir, profile=None):

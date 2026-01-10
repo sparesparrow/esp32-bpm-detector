@@ -5,17 +5,20 @@ echo "Staging all changes..."
 git add -A
 
 echo "Committing changes..."
-git commit -m "Implement BPM Protocol Conan Package with Cloudsmith Integration
+git commit -m "Configure Android project structure and APK build setup
 
-- Migrate conanfile.py to Conan 2.x API (tools.cmake, exports_sources)
-- Add automated FlatBuffers header generation and enum extraction
-- Create modular schema structure (BpmCommon, BpmCore, BpmAudio, etc.)
-- Implement OMS-style ExtEnum namespace for extracted enums
-- Fix BpmCore.fbs enum reference (DetectionStatus.INITIALIZING)
-- Generate and package 14 header files (7 generated + 7 extracted)
-- Upload bpm-protocol/0.1.0 package to Cloudsmith sparetools remote
-- Verify package functionality with CMake integration test
-- Package contains BPM detection protocol with FlatBuffers serialization"
+- Move build.gradle to android-app/app/
+- Create root build.gradle with project-level config
+- Set up Gradle wrapper (gradlew, gradlew.bat, wrapper properties)
+- Add gradle.properties with project-wide settings
+- Configure debug and release build types
+- Create ProGuard rules file
+- Add build scripts (build-debug.sh/bat, build-release.sh/bat)
+- Create missing Android resources (data_extraction_rules.xml, backup_rules.xml)
+- Update .gitignore to allow build/sparetools/
+- Add comprehensive documentation (README updates, setup guides)
+- Create sparetools integration guides and review scripts
+- Add implementation summary documentation"
 
 echo "Pushing to remote..."
 git push

@@ -2,18 +2,17 @@
 #include "wifi_handler.h"
 #include "bpm_detector.h"
 #include "bpm_flatbuffers.h"
+#include "bpm_monitor_manager.h"
 #include "config.h"
 #include <WebServer.h>
 #include <flatbuffers/flatbuffers.h>
 #include <WiFi.h>
+#include <ArduinoJson.h>
 
-// Global references for legacy support (will be removed in future)
-extern WebServer* server;
-extern BPMDetector* bpmDetector;
-
-// Internal state for dependency injection
+// Internal state for dependency injection (no legacy globals - using smart pointers)
 static WebServer* g_server = nullptr;
 static BPMDetector* g_bpmDetector = nullptr;
+static sparetools::bpm::BPMMonitorManager* g_monitorManager = nullptr;
 
 /**
  * API Endpoints Implementation
@@ -27,8 +26,8 @@ static BPMDetector* g_bpmDetector = nullptr;
 
 // BPM Current Status Endpoint
 void handleBpmCurrent() {
-    BPMDetector* detector = g_bpmDetector ? g_bpmDetector : bpmDetector;
-    WebServer* srv = g_server ? g_server : server;
+    BPMDetector* detector = g_bpmDetector;
+    WebServer* srv = g_server;
     
     if (detector == nullptr || srv == nullptr) {
         if (srv) {
@@ -46,7 +45,8 @@ void handleBpmCurrent() {
         bpmData.bpm,
         bpmData.confidence,
         bpmData.signal_level,
-        sparetools::bpm::ExtEnum::DetectionStatus_DETECTING,
+        sparetools::bpm::DetectionStatus_DETECTING,
+        millis(), "esp32-s3", "1.1.0",
         builder
     );
 
@@ -67,7 +67,7 @@ void handleBpmCurrent() {
 
 // BPM Spectrum Analysis Endpoint
 void handleBpmSpectrum() {
-    WebServer* srv = g_server ? g_server : server;
+    WebServer* srv = g_server;
     if (srv) {
         srv->send(200, "application/json", "{\"spectrum\":\"not_implemented\"}");
     }
@@ -86,7 +86,7 @@ void handleSystemStatus() {
     json += "\"wifi_rssi\":" + String(WiFi.status() == WL_CONNECTED ? WiFi.RSSI() : -100);
     json += "}";
 
-    WebServer* srv = g_server ? g_server : server;
+    WebServer* srv = g_server;
     if (srv) {
         srv->send(200, "application/json", json);
     }
@@ -103,7 +103,7 @@ void handleConfiguration() {
     json += "\"confidence_threshold\":" + String(CONFIDENCE_THRESHOLD);
     json += "}";
 
-    WebServer* srv = g_server ? g_server : server;
+    WebServer* srv = g_server;
     if (srv) {
         srv->send(200, "application/json", json);
     }
@@ -118,7 +118,7 @@ void handleHealth() {
     json += "\"wifi_connected\":" + String(WiFi.status() == WL_CONNECTED ? "true" : "false");
     json += "}";
 
-    WebServer* srv = g_server ? g_server : server;
+    WebServer* srv = g_server;
     if (srv) {
         srv->send(200, "application/json", json);
     }
@@ -126,10 +126,219 @@ void handleHealth() {
 
 // WebSocket Handler (placeholder for real-time streaming)
 void handleWebSocket() {
-    WebServer* srv = g_server ? g_server : server;
+    WebServer* srv = g_server;
     if (srv) {
         srv->send(200, "application/json", "{\"websocket\":\"not_implemented\"}");
     }
+}
+
+// Monitor Management Endpoints
+// Generated from ESP32-BPM monitor spawning prompt template
+
+// List all monitors
+void handleMonitorsList() {
+    WebServer* srv = g_server;
+    if (!srv) return;
+    
+    if (!g_monitorManager) {
+        srv->send(500, "application/json", "{\"error\":\"Monitor manager not initialized\"}");
+        return;
+    }
+    
+    String json = "[";
+    auto monitorIds = g_monitorManager->getMonitorIds();
+    bool first = true;
+    
+    for (uint32_t id : monitorIds) {
+        if (!first) json += ",";
+        first = false;
+        
+        auto data = g_monitorManager->getMonitorData(id);
+        String name = g_monitorManager->getMonitorName(id);
+        bool active = g_monitorManager->isMonitorActive(id);
+        
+        json += "{";
+        json += "\"id\":" + String(id) + ",";
+        json += "\"name\":\"" + name + "\",";
+        json += "\"active\":" + String(active ? "true" : "false") + ",";
+        json += "\"bpm\":" + String(data.bpm, 1) + ",";
+        json += "\"confidence\":" + String(data.confidence, 2) + ",";
+        json += "\"status\":\"" + String(data.status) + "\"";
+        json += "}";
+    }
+    
+    json += "]";
+    srv->send(200, "application/json", json);
+}
+
+// Get specific monitor data
+void handleMonitorGet() {
+    WebServer* srv = g_server;
+    if (!srv) return;
+    
+    if (!g_monitorManager) {
+        srv->send(500, "application/json", "{\"error\":\"Monitor manager not initialized\"}");
+        return;
+    }
+    
+    // Get monitor ID from query parameter
+    String monitorIdStr = srv->arg("id");
+    if (monitorIdStr.length() == 0) {
+        srv->send(400, "application/json", "{\"error\":\"Missing monitor ID parameter\"}");
+        return;
+    }
+    
+    uint32_t monitorId = monitorIdStr.toInt();
+    if (monitorId == 0) {
+        srv->send(400, "application/json", "{\"error\":\"Invalid monitor ID\"}");
+        return;
+    }
+    
+    auto data = g_monitorManager->getMonitorData(monitorId);
+    if (data.status == "not_found") {
+        srv->send(404, "application/json", "{\"error\":\"Monitor not found\"}");
+        return;
+    }
+    
+    String name = g_monitorManager->getMonitorName(monitorId);
+    bool active = g_monitorManager->isMonitorActive(monitorId);
+    
+    String json = "{";
+    json += "\"id\":" + String(monitorId) + ",";
+    json += "\"name\":\"" + name + "\",";
+    json += "\"active\":" + String(active ? "true" : "false") + ",";
+    json += "\"bpm\":" + String(data.bpm, 1) + ",";
+    json += "\"confidence\":" + String(data.confidence, 2) + ",";
+    json += "\"signal_level\":" + String(data.signal_level, 2) + ",";
+    json += "\"status\":\"" + String(data.status) + "\",";
+    json += "\"timestamp\":" + String(data.timestamp);
+    json += "}";
+    
+    srv->send(200, "application/json", json);
+}
+
+// Spawn new monitor
+void handleMonitorSpawn() {
+    WebServer* srv = g_server;
+    if (!srv) return;
+    
+    if (!g_monitorManager) {
+        srv->send(500, "application/json", "{\"error\":\"Monitor manager not initialized\"}");
+        return;
+    }
+    
+    // Get name from request body or query parameter
+    String name = srv->arg("name");
+    if (name.length() == 0 && srv->hasArg("plain")) {
+        // Try to parse JSON body
+        String body = srv->arg("plain");
+        // Simple JSON parsing for name field
+        int nameStart = body.indexOf("\"name\"");
+        if (nameStart >= 0) {
+            int colonPos = body.indexOf(':', nameStart);
+            int quoteStart = body.indexOf('"', colonPos);
+            if (quoteStart >= 0) {
+                int quoteEnd = body.indexOf('"', quoteStart + 1);
+                if (quoteEnd > quoteStart) {
+                    name = body.substring(quoteStart + 1, quoteEnd);
+                }
+            }
+        }
+    }
+    
+    uint32_t monitorId = g_monitorManager->spawnMonitor(name);
+    if (monitorId == 0) {
+        srv->send(500, "application/json", "{\"error\":\"Failed to spawn monitor\"}");
+        return;
+    }
+    
+    String json = "{";
+    json += "\"id\":" + String(monitorId) + ",";
+    json += "\"name\":\"" + g_monitorManager->getMonitorName(monitorId) + "\",";
+    json += "\"status\":\"spawned\"";
+    json += "}";
+    
+    srv->send(201, "application/json", json);
+}
+
+// Remove monitor
+void handleMonitorRemove() {
+    WebServer* srv = g_server;
+    if (!srv) return;
+    
+    if (!g_monitorManager) {
+        srv->send(500, "application/json", "{\"error\":\"Monitor manager not initialized\"}");
+        return;
+    }
+    
+    String monitorIdStr = srv->arg("id");
+    if (monitorIdStr.length() == 0) {
+        srv->send(400, "application/json", "{\"error\":\"Missing monitor ID parameter\"}");
+        return;
+    }
+    
+    uint32_t monitorId = monitorIdStr.toInt();
+    if (monitorId == 0) {
+        srv->send(400, "application/json", "{\"error\":\"Invalid monitor ID\"}");
+        return;
+    }
+    
+    bool removed = g_monitorManager->removeMonitor(monitorId);
+    if (!removed) {
+        srv->send(404, "application/json", "{\"error\":\"Monitor not found\"}");
+        return;
+    }
+    
+    srv->send(200, "application/json", "{\"status\":\"removed\",\"id\":" + String(monitorId) + "}");
+}
+
+// Update monitor (activate/deactivate)
+void handleMonitorUpdate() {
+    WebServer* srv = g_server;
+    if (!srv) return;
+    
+    if (!g_monitorManager) {
+        srv->send(500, "application/json", "{\"error\":\"Monitor manager not initialized\"}");
+        return;
+    }
+    
+    String monitorIdStr = srv->arg("id");
+    if (monitorIdStr.length() == 0) {
+        srv->send(400, "application/json", "{\"error\":\"Missing monitor ID parameter\"}");
+        return;
+    }
+    
+    uint32_t monitorId = monitorIdStr.toInt();
+    if (monitorId == 0) {
+        srv->send(400, "application/json", "{\"error\":\"Invalid monitor ID\"}");
+        return;
+    }
+    
+    // Get active status from query or body
+    String activeStr = srv->arg("active");
+    bool active = (activeStr == "true" || activeStr == "1");
+    
+    // Get name if provided
+    String name = srv->arg("name");
+    
+    bool success = true;
+    if (name.length() > 0) {
+        success = g_monitorManager->setMonitorName(monitorId, name) && success;
+    }
+    success = g_monitorManager->setMonitorActive(monitorId, active) && success;
+    
+    if (!success) {
+        srv->send(404, "application/json", "{\"error\":\"Monitor not found or update failed\"}");
+        return;
+    }
+    
+    String json = "{";
+    json += "\"id\":" + String(monitorId) + ",";
+    json += "\"active\":" + String(active ? "true" : "false") + ",";
+    json += "\"status\":\"updated\"";
+    json += "}";
+    
+    srv->send(200, "application/json", json);
 }
 
 /**
@@ -138,6 +347,16 @@ void handleWebSocket() {
  * Sets up all REST endpoints for BPM data access
  */
 void setupApiEndpoints(WebServer* server_instance, BPMDetector* detector) {
+    setupApiEndpoints(server_instance, detector, nullptr);
+}
+
+/**
+ * Initialize API Endpoints with monitor manager support
+ *
+ * Sets up all REST endpoints for BPM data access and monitor management
+ * Generated from ESP32-BPM Android integration and monitor spawning prompts
+ */
+void setupApiEndpoints(WebServer* server_instance, BPMDetector* detector, sparetools::bpm::BPMMonitorManager* monitorManager) {
     if (server_instance == nullptr) {
         DEBUG_PRINTLN("[API] Error: WebServer instance is null");
         return;
@@ -146,6 +365,7 @@ void setupApiEndpoints(WebServer* server_instance, BPMDetector* detector) {
     // Store references for handlers
     g_server = server_instance;
     g_bpmDetector = detector;
+    g_monitorManager = monitorManager;
     
     // BPM endpoints
     server_instance->on("/api/v1/bpm/current", HTTP_GET, handleBpmCurrent);
@@ -156,6 +376,15 @@ void setupApiEndpoints(WebServer* server_instance, BPMDetector* detector) {
     server_instance->on("/api/v1/system/config", HTTP_GET, handleConfiguration);
     server_instance->on("/api/v1/system/health", HTTP_GET, handleHealth);
 
+    // Monitor management endpoints (if monitor manager is available)
+    if (monitorManager) {
+        server_instance->on("/api/v1/monitors", HTTP_GET, handleMonitorsList);
+        server_instance->on("/api/v1/monitors/spawn", HTTP_POST, handleMonitorSpawn);
+        server_instance->on("/api/v1/monitors/get", HTTP_GET, handleMonitorGet);
+        server_instance->on("/api/v1/monitors/remove", HTTP_DELETE, handleMonitorRemove);
+        server_instance->on("/api/v1/monitors/update", HTTP_PUT, handleMonitorUpdate);
+    }
+
     // WebSocket endpoint (future)
     server_instance->on("/ws", HTTP_GET, handleWebSocket);
 
@@ -165,15 +394,20 @@ void setupApiEndpoints(WebServer* server_instance, BPMDetector* detector) {
     DEBUG_PRINTLN("  GET /api/v1/system/status - System status (FlatBuffers)");
     DEBUG_PRINTLN("  GET /api/v1/system/config - System configuration");
     DEBUG_PRINTLN("  GET /api/v1/system/health - Health check");
+    if (monitorManager) {
+        DEBUG_PRINTLN("  GET /api/v1/monitors - List all monitors");
+        DEBUG_PRINTLN("  POST /api/v1/monitors/spawn - Spawn new monitor");
+        DEBUG_PRINTLN("  GET /api/v1/monitors/get?id=X - Get monitor data");
+        DEBUG_PRINTLN("  DELETE /api/v1/monitors/remove?id=X - Remove monitor");
+        DEBUG_PRINTLN("  PUT /api/v1/monitors/update?id=X&active=true - Update monitor");
+    }
 }
 
 /**
- * Legacy initialization (uses global variables)
+ * Legacy initialization (deprecated - requires dependency injection)
  * @deprecated Use setupApiEndpoints(WebServer*, BPMDetector*) instead
  */
 void setupApiEndpoints() {
-    if (server == nullptr || bpmDetector == nullptr) {
-        DEBUG_PRINTLN("[API] Warning: Using legacy setupApiEndpoints() - globals may be null");
-    }
-    setupApiEndpoints(server, bpmDetector);
+    DEBUG_PRINTLN("[API] Error: Legacy setupApiEndpoints() called - use dependency injection version");
+    DEBUG_PRINTLN("[API] Call setupApiEndpoints(WebServer*, BPMDetector*) instead");
 }
