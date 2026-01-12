@@ -108,7 +108,7 @@ esp32-bpm-provider/
 ```
 
 **Dependencies:**
-- `sparetools-bpm-schemas/[>=1.0.0]@sparetools/stable` (via Conan)
+- `sparetools-bpm-schemas/[>=1.0.0]` (via Conan)
 - PlatformIO libraries (arduinoFFT, ArduinoJson, flatbuffers)
 
 **Build Process:**
@@ -143,7 +143,7 @@ android-bpm-consumer/
 ```
 
 **Dependencies:**
-- `sparetools-bpm-schemas/[>=1.0.0]@sparetools/stable` (via Conan)
+- `sparetools-bpm-schemas/[>=1.0.0]` (via Conan)
 - Android libraries (Compose, Retrofit, etc.)
 
 **Build Process:**
@@ -431,7 +431,7 @@ class Esp32BpmProviderConan(ConanFile):
     
     # Dependencies
     requires = (
-        "sparetools-bpm-schemas/[>=1.0.0 <2.0.0]@sparetools/stable",
+        "sparetools-bpm-schemas/[>=1.0.0 <2.0.0]",
         "flatbuffers/[>=2.0.0]",  # Runtime dependency
     )
     
@@ -549,7 +549,7 @@ from conans import ConanFile
 class AndroidBpmConsumerConan(ConanFile):
     name = "android-bpm-consumer"
     version = "1.0.0"
-    requires = "sparetools-bpm-schemas/[>=1.0.0]@sparetools/stable"
+    requires = "sparetools-bpm-schemas/[>=1.0.0]"
     
     def imports(self):
         # Copy generated Java/Kotlin classes
@@ -750,9 +750,9 @@ sparetools-schemas/              # Single repository for all schemas
 ```
 
 **Conan Packages:**
-- `sparetools-bpm-schemas/[>=1.0.0]@sparetools/stable`
-- `sparetools-mia-schemas/[>=1.0.0]@sparetools/stable`
-- `sparetools-common-schemas/[>=1.0.0]@sparetools/stable` (if needed)
+- `sparetools-bpm-schemas/[>=1.0.0]`
+- `sparetools-mia-schemas/[>=1.0.0]`
+- `sparetools-common-schemas/[>=1.0.0]` (if needed)
 
 **Benefits:**
 - Single repository for all schemas
@@ -1068,7 +1068,7 @@ plugins {
 conan {
     profile = "android"
     remote = "sparetools"
-    requires = listOf("sparetools-bpm-schemas/[>=1.0.0]@sparetools/stable")
+    requires = listOf("sparetools-bpm-schemas/[>=1.0.0]")
 }
 ```
 
@@ -1344,7 +1344,7 @@ jobs:
       
       - name: Upload to Conan remote
         run: |
-          conan upload "sparetools-bpm-schemas/${{ steps.version.outputs.version || github.event.inputs.version }}@sparetools/stable" \
+          conan upload "sparetools-bpm-schemas/${{ steps.version.outputs.version || github.event.inputs.version }}" \
             --remote sparetools --all --confirm
 ```
 
@@ -1445,13 +1445,13 @@ echo "✅ Migration complete!"
 **Conan Version Ranges:**
 ```python
 # Conservative (recommended for production)
-requires = "sparetools-bpm-schemas/[>=1.0.0 <2.0.0]@sparetools/stable"
+requires = "sparetools-bpm-schemas/[>=1.0.0 <2.0.0]"
 
 # Latest minor (for development)
-requires = "sparetools-bpm-schemas/[>=1.0.0 <1.1.0]@sparetools/stable"
+requires = "sparetools-bpm-schemas/[>=1.0.0 <1.1.0]"
 
 # Latest patch (most restrictive)
-requires = "sparetools-bpm-schemas/1.0.0@sparetools/stable"
+requires = "sparetools-bpm-schemas/1.0.0"
 ```
 
 ---

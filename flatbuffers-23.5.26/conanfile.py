@@ -13,9 +13,9 @@ class FlatbuffersConan(ConanFile):
     tool_requires = [
     "sparetools-lvgl/8.3.11",
     "sparetools-hal-sunton/1.0.0",
-    "sparesparrow-protocols/1.0.0",
+    "sparetools-protocols/1.0.1",
     "sparetools-bpm-schemas/2.0.0",
-    "sparetools-protocols/1.0.0",
+    "sparetools-protocols/1.0.1",
     "sparetools-mcp-core/1.0.0",
     "sparetools-embedded/1.0.0",
     "sparetools-flatbuffers/24.3.25",

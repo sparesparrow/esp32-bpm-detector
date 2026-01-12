@@ -31,23 +31,25 @@ class Esp32BpmDetectorConan(ConanFile):
     topics = ("esp32", "bpm", "detector", "embedded", "firmware")
     license = "Apache-2.0"
 
-    # SpareTools ecosystem integration
-    python_requires = "sparetools-base/2.0.3"
+    # 1. Use SpareTools SDK (python_requires) for recipe infrastructure
+    python_requires = "sparesparrow/sparetools-base/2.0.3"
+    python_requires_extend = "sparetools-base.SpareToolsBaseTemplate"
 
     # Runtime dependencies - use SpareTools packages
     requires = [
-        "sparetools-flatbuffers/24.3.25",      # FlatBuffers runtime library
-        "sparetools-mcp-core/1.0.1",          # MCP framework
-        "sparetools-embedded/1.0.0",          # Embedded development tools
-        "sparetools-hal-sunton/1.0.0",        # HAL for Sunton ESP32
-        "sparetools-lvgl/8.3.11",             # LVGL graphics library
-        "sparetools-protocols/1.0.0",         # Protocol definitions
+        "sparesparrow/sparetools-flatbuffers/24.3.25",      # FlatBuffers runtime library
+        "sparesparrow/sparetools-mcp-core/1.0.1",          # MCP framework
+        "sparesparrow/sparetools-embedded/1.0.0",          # Embedded development tools
+        "sparesparrow/sparetools-hal-sunton/1.0.0",        # HAL for Sunton ESP32
+        "sparesparrow/sparetools-lvgl/8.3.11",             # LVGL graphics library
+        "sparesparrow/sparetools-protocols/1.0.1",         # Protocol definitions
     ]
 
-    # Build-time tools - use SpareTools packages
+    # 2. Build-time tools - bundled Python + scripts
     tool_requires = [
-        "sparetools-cpython/3.12.7",           # Python interpreter for build scripts
-        "sparetools-flatbuffers/24.3.25",      # FlatBuffers compiler
+        "sparesparrow/sparetools-cpython/3.12.7",           # Python interpreter for build scripts
+        "sparesparrow/sparetools-python-scripts/1.0.0",     # Python utilities
+        "sparesparrow/sparetools-flatbuffers/24.3.25",      # FlatBuffers compiler
     ]
 
     # Export source files and schemas for protocol generation
@@ -195,9 +197,17 @@ class Esp32BpmDetectorConan(ConanFile):
         print("FlatBuffers header generation completed.")
 
     def build(self):
+        """Build the ESP32 BPM detector firmware"""
+        # A) Run security gates (inherited from SpareToolsBaseTemplate)
+        self.run_security_gates()
+
+        # B) Use Python from tool_requires for any build steps
+        python_exe = self._get_python_exe()
+        self.output.info(f"🔧 Using CPython: {python_exe}")
+
         # Headers are generated in generate() step
         # For ESP32, actual building is done via PlatformIO, not CMake
-        pass
+        self.output.info("✅ ESP32 BPM detector build complete")
 
     def package(self):
         # Copy generated headers to package
