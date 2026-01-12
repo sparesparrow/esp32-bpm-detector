@@ -32,7 +32,7 @@ class Esp32BpmDetectorConan(ConanFile):
     license = "Apache-2.0"
 
     # 1. Use SpareTools SDK (python_requires) for recipe infrastructure
-    python_requires = "sparesparrow/sparetools-base/2.0.3"
+    python_requires = "sparesparrow/sparetools-base/2.0.4"
     python_requires_extend = "sparetools-base.SpareToolsBaseTemplate"
 
     # Runtime dependencies - use SpareTools packages
