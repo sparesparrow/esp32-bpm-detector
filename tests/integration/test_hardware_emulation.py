@@ -41,13 +41,38 @@ except ImportError as e1:
 # Create mock HardwareEmulator if import failed
 if HardwareEmulator is None:
     import random
+    import time as _time
 
     class HardwareEmulator:
         """Mock HardwareEmulator for testing without MCP server.
 
-        Provides basic functionality for running hardware emulation tests
+        Provides full command routing for hardware emulation tests
         when the full MCP server is not available.
         """
+
+        _DEVICE_CONFIGS = {
+            "esp32": {
+                "bpm_range": (60, 200),
+                "sample_rate": 25000,
+                "sensor_types": ["microphone", "accelerometer"],
+                "response_delay": 0.0,
+                "error_rate": 0.0,
+            },
+            "esp32s3": {
+                "bpm_range": (60, 200),
+                "sample_rate": 44100,
+                "sensor_types": ["microphone", "gyroscope", "accelerometer"],
+                "response_delay": 0.0,
+                "error_rate": 0.0,
+            },
+            "arduino": {
+                "bpm_range": (60, 180),
+                "sample_rate": 8000,
+                "sensor_types": ["microphone"],
+                "response_delay": 0.2,
+                "error_rate": 0.0,
+            },
+        }
 
         def __init__(self, host: str = "127.0.0.1", port: int = 12345, device_type: str = "esp32"):
             self.host = host
@@ -57,13 +82,15 @@ if HardwareEmulator is None:
             self.server_socket = None
             self.clients = []
             self._server_thread = None
+            self.config = dict(self._DEVICE_CONFIGS.get(device_type, self._DEVICE_CONFIGS["esp32"]))
 
-            # Device configuration based on type
-            self.config = {
-                "esp32": {"bpm_range": (60, 200), "sample_rate": 25000},
-                "esp32-s3": {"bpm_range": (60, 200), "sample_rate": 44100},
-                "arduino": {"bpm_range": (60, 180), "sample_rate": 8000},
-            }.get(device_type, {"bpm_range": (60, 200), "sample_rate": 25000})
+        @property
+        def status(self) -> str:
+            return "running" if self.running else "stopped"
+
+        @property
+        def connected_clients(self) -> int:
+            return len(self.clients)
 
         def start(self) -> bool:
             """Start the emulator server."""
@@ -74,8 +101,6 @@ if HardwareEmulator is None:
                 self.server_socket.listen(5)
                 self.server_socket.settimeout(1.0)
                 self.running = True
-
-                # Start accept thread
                 self._server_thread = threading.Thread(target=self._accept_loop, daemon=True)
                 self._server_thread.start()
                 return True
@@ -86,21 +111,20 @@ if HardwareEmulator is None:
         def stop(self):
             """Stop the emulator server."""
             self.running = False
-            for client in self.clients:
+            for client in list(self.clients):
                 try:
                     client.close()
-                except:
+                except Exception:
                     pass
             self.clients.clear()
             if self.server_socket:
                 try:
                     self.server_socket.close()
-                except:
+                except Exception:
                     pass
                 self.server_socket = None
 
         def _accept_loop(self):
-            """Accept client connections."""
             while self.running:
                 try:
                     client, addr = self.server_socket.accept()
@@ -108,42 +132,86 @@ if HardwareEmulator is None:
                     threading.Thread(target=self._handle_client, args=(client,), daemon=True).start()
                 except socket.timeout:
                     continue
-                except:
+                except Exception:
                     break
 
         def _handle_client(self, client):
-            """Handle client messages."""
+            """Handle client messages with full command routing."""
             client.settimeout(1.0)
             while self.running:
                 try:
                     data = client.recv(1024)
                     if not data:
                         break
-                    # Echo back with simulated BPM response
-                    response = json.dumps({
-                        "type": "bpm_update",
-                        "bpm": random.uniform(*self.config["bpm_range"]),
-                        "confidence": random.uniform(0.7, 1.0),
-                        "device_type": self.device_type
-                    })
-                    client.send(response.encode() + b'\n')
+                    cmd_line = data.decode("utf-8", errors="ignore").strip()
+                    response = self._route_command(cmd_line)
+                    client.send(json.dumps(response).encode() + b"\n")
+                    delay = self.config.get("response_delay", 0.0)
+                    if delay:
+                        _time.sleep(delay)
                 except socket.timeout:
                     continue
-                except:
+                except Exception:
                     break
             try:
                 client.close()
                 self.clients.remove(client)
-            except:
+            except Exception:
                 pass
 
-        def get_status(self) -> Dict[str, Any]:
-            """Get emulator status."""
+        def _route_command(self, cmd_line: str) -> dict:
+            parts = cmd_line.split()
+            if not parts:
+                return {"type": "error", "error": "unknown_command: (empty)"}
+            cmd = parts[0].upper()
+
+            if cmd == "GET_BPM":
+                return {
+                    "type": "bpm_update",
+                    "bpm": round(random.uniform(*self.config["bpm_range"]), 1),
+                    "confidence": round(random.uniform(0.7, 1.0), 3),
+                    "device_type": self.device_type,
+                }
+            if cmd == "GET_STATUS":
+                return {
+                    "type": "status",
+                    "status": "OK",
+                    "device_type": self.device_type,
+                    "running": self.running,
+                }
+            if cmd == "GET_SENSORS":
+                return {
+                    "type": "sensors",
+                    "sensors": self.config.get("sensor_types", []),
+                    "device_type": self.device_type,
+                }
+            if cmd == "SET_CONFIG" and len(parts) >= 3:
+                param = parts[1]
+                try:
+                    value = int(parts[2])
+                except ValueError:
+                    try:
+                        value = float(parts[2])
+                    except ValueError:
+                        value = parts[2]
+                self.config[param] = value
+                return {"type": "config_set", "parameter": param, "value": value, "status": "OK"}
+            if cmd == "PING":
+                return {"type": "pong", "timestamp": _time.time()}
+            if cmd == "RESET":
+                return {"type": "reset", "status": "OK"}
+            return {"type": "error", "error": f"unknown_command: {cmd}"}
+
+        def get_status(self) -> dict:
+            """Get full emulator status."""
+            bound_port = self.server_socket.getsockname()[1] if self.server_socket else self.port
             return {
-                "running": self.running,
+                "status": self.status,
+                "host": self.host,
+                "port": bound_port,
                 "device_type": self.device_type,
-                "clients": len(self.clients),
-                "port": self.port
+                "connected_clients": self.connected_clients,
+                "config": self.config,
             }
 
     print(f"Warning: Using mock HardwareEmulator (MCP import failed: {_import_error})")
@@ -538,6 +606,13 @@ class TestHardwareEmulator:
 
 class TestHardwareEmulatorIntegration:
     """Integration tests combining multiple emulator features."""
+
+    def _parse_json_response(self, response: str) -> Dict[str, Any]:
+        """Parse JSON response from emulator."""
+        try:
+            return json.loads(response.strip())
+        except json.JSONDecodeError:
+            return {"legacy_response": response.strip()}
 
     @pytest.fixture
     def running_emulator_integration(self):
