@@ -94,9 +94,10 @@ class LocalBPMDetector(
         }
         fftSize?.let {
             val newSize = it.coerceIn(256, 4096)
-            // Ensure fftSize is power of 2
-            val powerOf2 = 1 shl (31 - Integer.numberOfLeadingZeros(newSize))
-            _fftSize.value = powerOf2
+            // Ensure fftSize is next power of 2 (round up)
+            val powerOf2 = if (newSize and (newSize - 1) == 0) newSize
+                           else 1 shl (32 - Integer.numberOfLeadingZeros(newSize - 1))
+            _fftSize.value = powerOf2.coerceAtMost(4096)
         }
         minBpm?.let {
             _minBpm.value = it.coerceIn(30, 200)
@@ -130,7 +131,7 @@ class LocalBPMDetector(
         return try {
             val currentSampleRate = _sampleRate.value
             val currentFftSize = _fftSize.value
-            
+
             val bufferSize = AudioRecord.getMinBufferSize(
                 currentSampleRate,
                 AudioFormat.CHANNEL_IN_MONO,
@@ -142,7 +143,7 @@ class LocalBPMDetector(
                 return false
             }
 
-            audioRecord = AudioRecord(
+            val record = AudioRecord(
                 MediaRecorder.AudioSource.MIC,
                 currentSampleRate,
                 AudioFormat.CHANNEL_IN_MONO,
@@ -150,16 +151,26 @@ class LocalBPMDetector(
                 bufferSize * 2
             )
 
-            if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
+            if (record.state != AudioRecord.STATE_INITIALIZED) {
                 Timber.e("AudioRecord initialization failed")
-                audioRecord?.release()
-                audioRecord = null
+                record.release()
                 return false
             }
 
+            audioRecord = record
             isRecording = true
             _isDetecting.value = true
-            audioRecord?.startRecording()
+
+            try {
+                record.startRecording()
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to start recording")
+                isRecording = false
+                _isDetecting.value = false
+                record.release()
+                audioRecord = null
+                return false
+            }
 
             detectionJob = scope.launch {
                 processAudio()
@@ -171,6 +182,8 @@ class LocalBPMDetector(
             Timber.e(e, "Failed to start BPM detection")
             isRecording = false
             _isDetecting.value = false
+            audioRecord?.release()
+            audioRecord = null
             false
         }
     }

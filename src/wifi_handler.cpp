@@ -250,20 +250,17 @@ bool WiFiHandler::_attemptConnection() {
     WiFi.mode(WIFI_STA);
     WiFi.begin(_ssid.c_str(), _password.c_str());
 
-    // Wait for connection with timeout
-    int attempts = 0;
-    const int max_attempts = 20;  // 20 * 500ms = 10 seconds timeout
+    // Non-blocking: set state to CONNECTING and let update() check progress
+    // Do NOT block with delay() loop — that freezes the main loop
+    _currentState = WIFI_CONNECTING;
+    _lastReconnectionAttempt = millis();
 
-    while (WiFi.status() != WL_CONNECTED && attempts < max_attempts) {
-        delay(500);
-        attempts++;
+    DEBUG_PRINTLN("[WiFi] Connection initiated (non-blocking), checking in update()");
 
-        if (attempts % 4 == 0) {  // Print status every 2 seconds
-            DEBUG_PRINT(".");
-        }
-    }
-    DEBUG_PRINTLN("");
+    // Do a brief yield to allow WiFi stack to start, but don't block
+    yield();
 
+    // Check if already connected (fast local networks)
     if (WiFi.status() == WL_CONNECTED) {
         _currentState = WIFI_CONNECTED;
         _connectionStartTime = millis();
@@ -286,16 +283,12 @@ bool WiFiHandler::_attemptConnection() {
         }
 #endif
 
-        // Setup web server and API endpoints
         setupWebServer();
-
         return true;
-    } else {
-        _errorMessage = _getWiFiErrorString(WiFi.status());
-        _currentState = WIFI_DISCONNECTED;
-        DEBUG_PRINTLN("[WiFi] Connection failed: " + _errorMessage);
-        return false;
     }
+
+    // Connection in progress — _updateState() will detect WL_CONNECTED
+    return false;
 }
 
 void WiFiHandler::_updateState() {
@@ -318,6 +311,21 @@ void WiFiHandler::_updateState() {
                 _currentReconnectionAttempt = 0;
                 _errorMessage = "";
                 DEBUG_PRINTLN("[WiFi] Connection established");
+                DEBUG_PRINTLN("[WiFi] IP: " + WiFi.localIP().toString());
+
+#if ENABLE_MDNS
+                if (!_mdnsEnabled) {
+                    setupMDNS();
+                }
+#endif
+
+#if ENABLE_OTA
+                if (!_otaEnabled) {
+                    setupOTA();
+                }
+#endif
+
+                setupWebServer();
             }
             break;
 
@@ -338,7 +346,14 @@ void WiFiHandler::_updateState() {
             break;
 
         default:
-            if (_currentState != WIFI_CONNECTING) {
+            if (_currentState == WIFI_CONNECTING) {
+                // Check for connection timeout (10 seconds)
+                if (millis() - _lastReconnectionAttempt > 10000) {
+                    _currentState = WIFI_DISCONNECTED;
+                    _errorMessage = "Connection timeout";
+                    DEBUG_PRINTLN("[WiFi] Connection attempt timed out");
+                }
+            } else {
                 _currentState = WIFI_DISCONNECTED;
                 _errorMessage = _getWiFiErrorString(wifi_status);
             }
@@ -347,8 +362,8 @@ void WiFiHandler::_updateState() {
 }
 
 void WiFiHandler::_handleReconnection() {
-    if (_currentState == WIFI_CONNECTED || _currentState == WIFI_AP_MODE) {
-        return;  // No need to reconnect
+    if (_currentState == WIFI_CONNECTED || _currentState == WIFI_AP_MODE || _currentState == WIFI_CONNECTING) {
+        return;  // No need to reconnect, or connection already in progress
     }
 
     if (_currentReconnectionAttempt < _maxReconnectionAttempts) {

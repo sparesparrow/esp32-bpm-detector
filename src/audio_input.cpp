@@ -1,6 +1,7 @@
 #include "audio_input.h"
 #include <numeric>
 #include <cmath>
+#include <limits>
 
 // Constants that should be in config.h but aren't being recognized
 #ifndef HIGH_PASS_CUTOFF_HZ
@@ -106,7 +107,7 @@ AudioInput::AudioInput()
     , stereo_mode_(false)
     , signal_level_(0.0f)
     , max_signal_(0.0f)
-    , min_signal_(4095.0f)
+    , min_signal_(std::numeric_limits<float>::max())
     , rms_index_(0)
     , high_pass_filter_(HIGH_PASS_CUTOFF_HZ, SAMPLE_RATE)
     , bass_filter_(SAMPLE_RATE)
@@ -442,7 +443,7 @@ float AudioInput::calculateRMS() const {
 void AudioInput::resetCalibration() {
     signal_level_ = 0.0f;
     max_signal_ = 0.0f;
-    min_signal_ = 4095.0f;
+    min_signal_ = std::numeric_limits<float>::max();
     rms_index_ = 0;
     std::fill(rms_buffer_.begin(), rms_buffer_.end(), 0.0f);
 }

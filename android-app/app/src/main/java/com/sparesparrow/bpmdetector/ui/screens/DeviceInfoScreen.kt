@@ -19,6 +19,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.DecimalFormat
 
@@ -30,7 +32,19 @@ fun DeviceInfoScreen() {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
-    val deviceInfo by remember { mutableStateOf(getDeviceInfo(context)) }
+    var deviceInfo by remember { mutableStateOf<DeviceInfo?>(null) }
+
+    LaunchedEffect(Unit) {
+        deviceInfo = withContext(Dispatchers.IO) { getDeviceInfo(context) }
+    }
+
+    val info = deviceInfo
+    if (info == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
 
     Column(
         modifier = Modifier
@@ -54,14 +68,14 @@ fun DeviceInfoScreen() {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                DeviceInfoRow("Model", deviceInfo.model)
-                DeviceInfoRow("Manufacturer", deviceInfo.manufacturer)
-                DeviceInfoRow("Brand", deviceInfo.brand)
-                DeviceInfoRow("Device", deviceInfo.device)
-                DeviceInfoRow("Product", deviceInfo.product)
-                DeviceInfoRow("Hardware", deviceInfo.hardware)
-                DeviceInfoRow("Board", deviceInfo.board)
-                DeviceInfoRow("Serial", deviceInfo.serial)
+                DeviceInfoRow("Model", info.model)
+                DeviceInfoRow("Manufacturer", info.manufacturer)
+                DeviceInfoRow("Brand", info.brand)
+                DeviceInfoRow("Device", info.device)
+                DeviceInfoRow("Product", info.product)
+                DeviceInfoRow("Hardware", info.hardware)
+                DeviceInfoRow("Board", info.board)
+                DeviceInfoRow("Serial", info.serial)
             }
         }
 
@@ -75,13 +89,13 @@ fun DeviceInfoScreen() {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                DeviceInfoRow("Android Version", deviceInfo.androidVersion)
-                DeviceInfoRow("API Level", deviceInfo.apiLevel.toString())
-                DeviceInfoRow("Build ID", deviceInfo.buildId)
-                DeviceInfoRow("Build Type", deviceInfo.buildType)
-                DeviceInfoRow("Security Patch", deviceInfo.securityPatch)
-                DeviceInfoRow("Bootloader", deviceInfo.bootloader)
-                DeviceInfoRow("Fingerprint", deviceInfo.fingerprint)
+                DeviceInfoRow("Android Version", info.androidVersion)
+                DeviceInfoRow("API Level", info.apiLevel.toString())
+                DeviceInfoRow("Build ID", info.buildId)
+                DeviceInfoRow("Build Type", info.buildType)
+                DeviceInfoRow("Security Patch", info.securityPatch)
+                DeviceInfoRow("Bootloader", info.bootloader)
+                DeviceInfoRow("Fingerprint", info.fingerprint)
             }
         }
 
@@ -95,10 +109,10 @@ fun DeviceInfoScreen() {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                DeviceInfoRow("Screen Resolution", "${deviceInfo.screenWidth}x${deviceInfo.screenHeight}")
-                DeviceInfoRow("Screen Density", "${deviceInfo.screenDensity} dpi")
-                DeviceInfoRow("Refresh Rate", "${deviceInfo.refreshRate} Hz")
-                DeviceInfoRow("Orientation", deviceInfo.orientation)
+                DeviceInfoRow("Screen Resolution", "${info.screenWidth}x${info.screenHeight}")
+                DeviceInfoRow("Screen Density", "${info.screenDensity} dpi")
+                DeviceInfoRow("Refresh Rate", "${info.refreshRate} Hz")
+                DeviceInfoRow("Orientation", info.orientation)
             }
         }
 
@@ -112,15 +126,15 @@ fun DeviceInfoScreen() {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                DeviceInfoRow("Internal Total", deviceInfo.internalTotalSpace)
-                DeviceInfoRow("Internal Available", deviceInfo.internalAvailableSpace)
-                DeviceInfoRow("Internal Used", deviceInfo.internalUsedSpace)
+                DeviceInfoRow("Internal Total", info.internalTotalSpace)
+                DeviceInfoRow("Internal Available", info.internalAvailableSpace)
+                DeviceInfoRow("Internal Used", info.internalUsedSpace)
 
-                if (deviceInfo.externalTotalSpace.isNotEmpty()) {
+                if (info.externalTotalSpace.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    DeviceInfoRow("External Total", deviceInfo.externalTotalSpace)
-                    DeviceInfoRow("External Available", deviceInfo.externalAvailableSpace)
-                    DeviceInfoRow("External Used", deviceInfo.externalUsedSpace)
+                    DeviceInfoRow("External Total", info.externalTotalSpace)
+                    DeviceInfoRow("External Available", info.externalAvailableSpace)
+                    DeviceInfoRow("External Used", info.externalUsedSpace)
                 }
             }
         }
@@ -135,8 +149,8 @@ fun DeviceInfoScreen() {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                DeviceInfoRow("Total RAM", deviceInfo.totalRam)
-                DeviceInfoRow("Available RAM", deviceInfo.availableRam)
+                DeviceInfoRow("Total RAM", info.totalRam)
+                DeviceInfoRow("Available RAM", info.availableRam)
             }
         }
 
@@ -150,12 +164,12 @@ fun DeviceInfoScreen() {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                DeviceInfoRow("Level", deviceInfo.batteryLevel)
-                DeviceInfoRow("Status", deviceInfo.batteryStatus)
-                DeviceInfoRow("Health", deviceInfo.batteryHealth)
-                DeviceInfoRow("Technology", deviceInfo.batteryTechnology)
-                DeviceInfoRow("Temperature", deviceInfo.batteryTemperature)
-                DeviceInfoRow("Voltage", deviceInfo.batteryVoltage)
+                DeviceInfoRow("Level", info.batteryLevel)
+                DeviceInfoRow("Status", info.batteryStatus)
+                DeviceInfoRow("Health", info.batteryHealth)
+                DeviceInfoRow("Technology", info.batteryTechnology)
+                DeviceInfoRow("Temperature", info.batteryTemperature)
+                DeviceInfoRow("Voltage", info.batteryVoltage)
             }
         }
 
@@ -169,9 +183,9 @@ fun DeviceInfoScreen() {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                DeviceInfoRow("Network Type", deviceInfo.networkType)
-                DeviceInfoRow("WiFi Connected", deviceInfo.wifiConnected)
-                DeviceInfoRow("Mobile Data", deviceInfo.mobileDataEnabled)
+                DeviceInfoRow("Network Type", info.networkType)
+                DeviceInfoRow("WiFi Connected", info.wifiConnected)
+                DeviceInfoRow("Mobile Data", info.mobileDataEnabled)
             }
         }
 
@@ -185,10 +199,10 @@ fun DeviceInfoScreen() {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                DeviceInfoRow("App Version", deviceInfo.appVersion)
-                DeviceInfoRow("Package Name", deviceInfo.packageName)
-                DeviceInfoRow("Target SDK", deviceInfo.targetSdk.toString())
-                DeviceInfoRow("Min SDK", deviceInfo.minSdk.toString())
+                DeviceInfoRow("App Version", info.appVersion)
+                DeviceInfoRow("Package Name", info.packageName)
+                DeviceInfoRow("Target SDK", info.targetSdk.toString())
+                DeviceInfoRow("Min SDK", info.minSdk.toString())
             }
         }
     }
