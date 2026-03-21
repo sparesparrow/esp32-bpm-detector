@@ -106,6 +106,8 @@ sdkconfig
 sdkconfig.old
 components/
 managed_components/
+# Do not ignore Android UI components package
+!android-app/**/components/
 
 # Temporary files
 *.tmp
