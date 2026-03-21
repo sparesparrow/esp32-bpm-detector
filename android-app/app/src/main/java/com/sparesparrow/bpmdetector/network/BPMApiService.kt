@@ -13,21 +13,21 @@ import retrofit2.http.GET
 interface BPMApiService {
 
     /**
-     * Get current BPM data (FlatBuffers binary)
+     * Get current BPM data (JSON)
      */
-    @GET("/api/bpm")
+    @GET("/api/v1/bpm/current")
     suspend fun getBPMData(): Response<ResponseBody>
 
     /**
-     * Get firmware settings (FlatBuffers binary)
+     * Get firmware settings (JSON)
      */
-    @GET("/api/settings")
+    @GET("/api/v1/system/config")
     suspend fun getSettings(): Response<ResponseBody>
 
     /**
-     * Health check (FlatBuffers binary)
+     * Health check (JSON)
      */
-    @GET("/api/health")
+    @GET("/api/v1/system/health")
     suspend fun getHealth(): Response<ResponseBody>
 
     companion object {

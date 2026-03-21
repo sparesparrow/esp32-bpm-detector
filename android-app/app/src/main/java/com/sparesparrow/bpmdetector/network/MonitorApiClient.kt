@@ -2,6 +2,8 @@ package com.sparesparrow.bpmdetector.network
 
 import com.sparesparrow.bpmdetector.models.BPMMonitor
 import com.sparesparrow.bpmdetector.models.BPMData
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -9,6 +11,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import timber.log.Timber
 import java.io.IOException
+import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 import org.json.JSONArray
 import org.json.JSONObject
@@ -35,8 +38,8 @@ class MonitorApiClient(private val baseUrl: String) {
                 .get()
                 .build()
 
-            val response = client.newCall(request).execute()
-            
+            val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
+
             if (response.isSuccessful) {
                 val body = response.body?.string() ?: return Result.failure(IOException("Empty response"))
                 val monitors = parseMonitorsList(body)
@@ -60,8 +63,8 @@ class MonitorApiClient(private val baseUrl: String) {
                 .get()
                 .build()
 
-            val response = client.newCall(request).execute()
-            
+            val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
+
             if (response.isSuccessful) {
                 val body = response.body?.string() ?: return Result.failure(IOException("Empty response"))
                 val monitor = parseMonitor(body)
@@ -97,8 +100,8 @@ class MonitorApiClient(private val baseUrl: String) {
                 .post(requestBody)
                 .build()
 
-            val response = client.newCall(request).execute()
-            
+            val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
+
             if (response.isSuccessful) {
                 val body = response.body?.string() ?: return Result.failure(IOException("Empty response"))
                 val monitor = parseMonitor(body)
@@ -126,8 +129,8 @@ class MonitorApiClient(private val baseUrl: String) {
                 .delete()
                 .build()
 
-            val response = client.newCall(request).execute()
-            
+            val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
+
             if (response.isSuccessful) {
                 Result.success(true)
             } else {
@@ -149,15 +152,15 @@ class MonitorApiClient(private val baseUrl: String) {
                 urlBuilder.append("&active=$active")
             }
             if (name != null) {
-                urlBuilder.append("&name=$name")
+                urlBuilder.append("&name=${URLEncoder.encode(name, "UTF-8")}")
             }
-            
+
             val request = Request.Builder()
                 .url(urlBuilder.toString())
                 .put("".toRequestBody("application/json".toMediaType()))
                 .build()
 
-            val response = client.newCall(request).execute()
+            val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
             
             if (response.isSuccessful) {
                 // Re-fetch monitor to get updated data

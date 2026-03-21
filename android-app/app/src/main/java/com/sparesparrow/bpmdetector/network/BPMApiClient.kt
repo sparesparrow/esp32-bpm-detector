@@ -6,16 +6,15 @@ import com.sparesparrow.bpmdetector.BuildConfig
 import com.sparesparrow.bpmdetector.models.BPMData
 import com.sparesparrow.bpmdetector.models.BPMSettings
 import com.sparesparrow.bpmdetector.models.BPMHealth
-import sparetools.bpm.*
 import kotlinx.coroutines.delay
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
+import org.json.JSONObject
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import timber.log.Timber
 import java.io.IOException
-import java.nio.ByteBuffer
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
@@ -182,60 +181,48 @@ class BPMApiClient(private val baseUrl: String) {
     }
 
     /**
-     * Deserialize BPM data from FlatBuffers binary
+     * Deserialize BPM data from JSON response
+     * ESP32 /api/v1/bpm/current returns:
+     *   {"bpm":120.0,"confidence":0.85,"signal_level":0.72,"status":"detecting","timestamp":12345}
      */
     private fun deserializeBPMData(responseBody: ResponseBody): BPMData {
-        val bytes = responseBody.bytes()
-        val buffer = ByteBuffer.wrap(bytes)
-        val bpmUpdate = BPMUpdate.getRootAsBPMUpdate(buffer)
-
+        val json = JSONObject(responseBody.string())
         return BPMData(
-            bpm = bpmUpdate.bpm().toFloat(),
-            confidence = bpmUpdate.confidence().toFloat(),
-            signalLevel = bpmUpdate.signalLevel().toFloat(),
-            status = when (bpmUpdate.status()) {
-                DetectionStatus.INITIALIZING -> "initializing"
-                DetectionStatus.DETECTING -> "detecting"
-                DetectionStatus.LOW_SIGNAL -> "low_signal"
-                DetectionStatus.NO_SIGNAL -> "no_signal"
-                DetectionStatus.ERROR -> "error"
-                DetectionStatus.CALIBRATING -> "calibrating"
-                else -> "unknown"
-            },
-            timestamp = bpmUpdate.timestamp().toLong()
+            bpm = json.optDouble("bpm", 0.0).toFloat(),
+            confidence = json.optDouble("confidence", 0.0).toFloat(),
+            signalLevel = json.optDouble("signal_level", 0.0).toFloat(),
+            status = json.optString("status", "unknown"),
+            timestamp = json.optLong("timestamp", 0L)
         )
     }
 
     /**
-     * Deserialize BPM settings from FlatBuffers binary
+     * Deserialize BPM settings from JSON response
+     * ESP32 /api/v1/system/config returns:
+     *   {"sample_rate":25000,"fft_size":1024,"min_bpm":60,"max_bpm":200,...}
      */
     private fun deserializeBPMSettings(responseBody: ResponseBody): BPMSettings {
-        val bytes = responseBody.bytes()
-        val buffer = ByteBuffer.wrap(bytes)
-        val configUpdate = ConfigUpdate.getRootAsConfigUpdate(buffer)
-        val bpmConfig = configUpdate.bpmConfig()
-
+        val json = JSONObject(responseBody.string())
         return BPMSettings(
-            minBpm = bpmConfig.minBpm().toInt(),
-            maxBpm = bpmConfig.maxBpm().toInt(),
-            sampleRate = 25000, // Default sample rate
-            fftSize = 1024, // Default FFT size
-            version = "1.0.0" // Default version
+            minBpm = json.optInt("min_bpm", 60),
+            maxBpm = json.optInt("max_bpm", 200),
+            sampleRate = json.optInt("sample_rate", 25000),
+            fftSize = json.optInt("fft_size", 1024),
+            version = json.optString("version", "1.0.0")
         )
     }
 
     /**
-     * Deserialize BPM health from FlatBuffers binary
+     * Deserialize BPM health from JSON response
+     * ESP32 /api/v1/system/health returns:
+     *   {"status":"ok","uptime":12345,"heap":200000,"wifi_connected":true}
      */
     private fun deserializeBPMHealth(responseBody: ResponseBody): BPMHealth {
-        val bytes = responseBody.bytes()
-        val buffer = ByteBuffer.wrap(bytes)
-        val statusUpdate = StatusUpdate.getRootAsStatusUpdate(buffer)
-
+        val json = JSONObject(responseBody.string())
         return BPMHealth(
-            status = "online", // StatusUpdate doesn't have a simple status field
-            uptime = statusUpdate.uptimeSeconds().toLong(),
-            heapFree = statusUpdate.freeHeapBytes().toLong()
+            status = json.optString("status", "unknown"),
+            uptime = json.optLong("uptime", 0L),
+            heapFree = json.optLong("heap", 0L)
         )
     }
 

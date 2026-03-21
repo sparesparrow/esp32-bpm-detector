@@ -129,9 +129,10 @@ data class BPMHealth(
 
     /**
      * Get formatted uptime string
+     * Note: uptime is already in seconds as sent by the ESP32
      */
     fun getFormattedUptime(): String {
-        val seconds = uptime / 1000
+        val seconds = uptime
         val minutes = seconds / 60
         val hours = minutes / 60
 

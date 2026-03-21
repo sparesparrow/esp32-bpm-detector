@@ -76,9 +76,12 @@ std::vector<uint8_t> BPMFlatBuffers::serializeBPMUpdate(
     flatbuffers::Offset<sparetools::bpm::BPMUpdate> bpm_update_offset,
     flatbuffers::FlatBufferBuilder& builder) {
 
-    // TODO: Implement proper FlatBuffers serialization when schema is finalized
-    // For now, return empty vector to avoid build errors
-    return std::vector<uint8_t>();
+    builder.Finish(bpm_update_offset);
+
+    const uint8_t* buffer = builder.GetBufferPointer();
+    size_t size = builder.GetSize();
+
+    return std::vector<uint8_t>(buffer, buffer + size);
 }
 
 std::vector<uint8_t> BPMFlatBuffers::serializeStatusUpdate(
@@ -98,16 +101,15 @@ std::vector<uint8_t> BPMFlatBuffers::serializeStatusUpdate(
 const sparetools::bpm::BPMUpdate* BPMFlatBuffers::deserializeBPMUpdate(
     const std::vector<uint8_t>& buffer) {
 
-    // BPMUpdate is not directly serializable as root - return nullptr for testing
-    return nullptr;
+    if (buffer.empty()) return nullptr;
+    return flatbuffers::GetRoot<sparetools::bpm::BPMUpdate>(buffer.data());
 }
 
 const sparetools::bpm::StatusUpdate* BPMFlatBuffers::deserializeStatusUpdate(
     const std::vector<uint8_t>& buffer) {
 
-    // For now, return nullptr as this functionality is not fully implemented
-    // TODO: Implement proper FlatBuffers deserialization when schema is finalized
-    return nullptr;
+    if (buffer.empty()) return nullptr;
+    return flatbuffers::GetRoot<sparetools::bpm::StatusUpdate>(buffer.data());
 }
 
 const char* BPMFlatBuffers::detectionStatusToString(sparetools::bpm::DetectionStatus status) {
