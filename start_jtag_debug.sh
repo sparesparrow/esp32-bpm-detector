@@ -7,19 +7,34 @@ OPENOCD_CFG="openocd.cfg"
 echo "Starting JTAG debugging for ESP32-S3..."
 echo "USB JTAG device: 303a:1001 (Espressif USB JTAG/serial debug unit)"
 
-# Find OpenOCD
-OPENOCD_BIN=$(which openocd)
-if [ -z "$OPENOCD_BIN" ]; then
-    # Try PlatformIO's OpenOCD
-    OPENOCD_BIN=$(find ~/.platformio -name "openocd" -type f 2>/dev/null | head -1)
-    if [ -z "$OPENOCD_BIN" ]; then
-        echo "Error: OpenOCD not found. Installing..."
-        echo "Please install OpenOCD: sudo apt-get install openocd"
-        exit 1
-    fi
+# Find OpenOCD - prioritize PlatformIO's ESP32 version
+OPENOCD_BIN=""
+OPENOCD_SCRIPTS=""
+
+# Try PlatformIO's tool-openocd-esp32 first
+if [ -d "$HOME/.platformio/packages/tool-openocd-esp32" ]; then
+   OPENOCD_BIN="$HOME/.platformio/packages/tool-openocd-esp32/bin/openocd"
+   OPENOCD_SCRIPTS="$HOME/.platformio/packages/tool-openocd-esp32/share/openocd/scripts"
+fi
+
+# Fallback to system openocd (will likely fail with ESP32-S3)
+if [ -z "$OPENOCD_BIN" ] || [ ! -f "$OPENOCD_BIN" ]; then
+   OPENOCD_BIN=$(which openocd)
+fi
+
+if [ -z "$OPENOCD_BIN" ] || [ ! -f "$OPENOCD_BIN" ]; then
+   echo "Error: OpenOCD not found."
+   echo "Please install via: pio pkg install --global --tool tool-openocd-esp32"
+   exit 1
 fi
 
 echo "Using OpenOCD: $OPENOCD_BIN"
+
+# Set OPENOCD_SCRIPTS environment variable if found
+if [ -n "$OPENOCD_SCRIPTS" ]; then
+   export OPENOCD_SCRIPTS
+   echo "Using scripts from: $OPENOCD_SCRIPTS"
+fi
 
 # Clear log file
 mkdir -p .cursor
@@ -27,8 +42,8 @@ mkdir -p .cursor
 
 # Check if ESP32-S3 JTAG is connected
 if ! lsusb | grep -q "303a:1001"; then
-    echo "Warning: ESP32-S3 USB JTAG not detected. Make sure device is connected."
-    echo "Expected: Bus XXX Device XXX: ID 303a:1001 Espressif USB JTAG/serial debug unit"
+   echo "Warning: ESP32-S3 USB JTAG not detected."
+   echo "Expected: ID 303a:1001 Espressif USB JTAG/serial debug unit"
 fi
 
 # Start OpenOCD
@@ -40,9 +55,9 @@ sleep 2
 
 # Check if OpenOCD started
 if ! kill -0 $OPENOCD_PID 2>/dev/null; then
-    echo "Error: OpenOCD failed to start. Check openocd.log:"
-    cat openocd.log
-    exit 1
+   echo "Error: OpenOCD failed to start. Check openocd.log:"
+   cat openocd.log
+   exit 1
 fi
 
 echo "OpenOCD started (PID: $OPENOCD_PID)"
@@ -51,18 +66,8 @@ echo "Next steps:"
 echo "1. Connect GDB:"
 echo "   xtensa-esp32s3-elf-gdb -x gdbinit .pio/build/esp32s3/firmware.elf"
 echo ""
-echo "2. Or use Python deployment script with GDB:"
-echo "   python3 scripts/deploy_with_jtag.py --gdb-only"
-echo ""
-echo "3. Or flash and debug in one command:"
-echo "   python3 scripts/deploy_with_jtag.py --device esp32s3 --debug"
-echo ""
-echo "4. In GDB, use 'dumplogs' command to extract logs from memory buffer"
-echo ""
 echo "OpenOCD is running. Press Ctrl+C to stop."
 
 # Wait for interrupt
 trap "kill $OPENOCD_PID 2>/dev/null; echo 'Stopped OpenOCD'; exit" INT TERM
 wait
-
-
