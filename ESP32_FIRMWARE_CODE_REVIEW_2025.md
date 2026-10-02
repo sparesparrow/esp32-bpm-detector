@@ -444,8 +444,8 @@ if (beat_times_.empty() || (now - beat_times_.back() > calculateAdaptiveDebounce
 **Issue:** WiFi credentials hardcoded in source code
 
 ```cpp
-#define WIFI_SSID "Prospects"
-#define WIFI_PASSWORD "Romy1337"
+#define WIFI_SSID "<your-ssid>"
+#define WIFI_PASSWORD "<your-wifi-password>"
 ```
 
 **Problem:** Security risk - credentials exposed in source code and binary.

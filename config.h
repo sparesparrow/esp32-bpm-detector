@@ -1,11 +1,17 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+// WiFi and OTA credentials are NOT tracked in git. Copy config.example.h to
+// config.local.h (repository root, gitignored) and set your own values.
+#if __has_include("config.local.h")
+#include "config.local.h"
+#else
+#error "config.local.h not found: copy config.example.h to config.local.h and set WIFI_SSID, WIFI_PASSWORD and OTA_PASSWORD"
+#endif
+
 // ============================================================================
 // WiFi Configuration
 // ============================================================================
-#define WIFI_SSID "Prospects"
-#define WIFI_PASSWORD "Romy1337"
 
 // ============================================================================
 // Hardware Configuration
@@ -117,7 +123,6 @@
 #define MDNS_HOSTNAME "esp32-bpm"
 
 #define ENABLE_OTA 1                // Enable Over-The-Air updates
-#define OTA_PASSWORD "admin123"
 
 // ============================================================================
 // Performance Tuning

@@ -527,8 +527,8 @@ if (!audioInput->begin(MICROPHONE_PIN)) {
 **Issue:** Credentials exposed in source code
 
 ```cpp
-#define WIFI_SSID "Prospects"
-#define WIFI_PASSWORD "Romy1337"
+#define WIFI_SSID "<your-ssid>"
+#define WIFI_PASSWORD "<your-wifi-password>"
 ```
 
 **Problem:** Security risk - credentials in source code and binary.
