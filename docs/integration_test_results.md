@@ -15,7 +15,7 @@
 
 ### Software
 - **Android App**: `com.sparesparrow.bpmdetector.debug` ✅ Installed
-- **WiFi Network**: "Prospects" (SSID matches in both config files)
+- **WiFi Network**: "<your-ssid>" (SSID matches in both config files)
 - **Monitoring Scripts**: Created and ready
 
 ## Test Results
@@ -28,8 +28,8 @@
    - USB debugging enabled and working
 
 2. **Android WiFi Connection** ✅
-   - Connected to "Prospects" network
-   - SSID verified: `Prospects`
+   - Connected to "<your-ssid>" network
+   - SSID verified: `<your-ssid>`
    - BSSID: `74:b5:7e:3f:56:60`
    - Android IP: `192.168.200.130` (detected from ping responses)
 
@@ -42,8 +42,8 @@
 
 4. **ESP32 Configuration** ✅
    - WiFi credentials verified in `src/config.h`:
-     - SSID: `"Prospects"`
-     - Password: `"Romy1337"`
+     - SSID: `"<your-ssid>"`
+     - Password: `"<your-wifi-password>"`
    - Config files match (both root and src/config.h have same credentials)
 
 5. **Monitoring Infrastructure** ✅
@@ -80,11 +80,11 @@
 ### Android Device
 - **IP Address**: `192.168.200.130`
 - **Subnet**: `192.168.200.x`
-- **WiFi SSID**: `Prospects` ✅
+- **WiFi SSID**: `<your-ssid>` ✅
 
 ### ESP32 (Expected)
 - **Subnet**: `192.168.200.x` (should match Android)
-- **WiFi SSID**: `Prospects` ✅
+- **WiFi SSID**: `<your-ssid>` ✅
 - **API Port**: `80`
 - **mDNS**: `esp32-bpm.local` (if enabled)
 
@@ -174,7 +174,7 @@
 |-----------|--------|-------|
 | Android Device | ✅ Ready | Connected to WiFi, app installed |
 | Android App | ✅ Ready | Launches, navigates, service running |
-| WiFi Network | ✅ Ready | Both devices configured for "Prospects" |
+| WiFi Network | ✅ Ready | Both devices configured for "<your-ssid>" |
 | ESP32 Serial | ⚠️ Pending | No output detected |
 | ESP32 WiFi | ⚠️ Pending | Not responding to API calls |
 | ESP32 API | ⚠️ Pending | Endpoints not accessible |

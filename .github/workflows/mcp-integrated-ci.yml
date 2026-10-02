@@ -114,7 +114,7 @@ jobs:
 
       - name: Build firmware
         continue-on-error: true
-        run: pio run -e ${{ env.PIO_ENV }} || echo "ESP32 build completed with warnings"
+        run: cp config.example.h config.local.h && (pio run -e ${{ env.PIO_ENV }} || echo "ESP32 build completed with warnings")
 
       - uses: actions/upload-artifact@v4
         if: always()

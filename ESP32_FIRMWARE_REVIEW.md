@@ -515,8 +515,8 @@ void BPMDetector::begin(uint8_t adc_pin) {
 **Issue:** WiFi credentials hardcoded in source code.
 
 ```cpp
-#define WIFI_SSID "Prospects"        // ❌ Security risk
-#define WIFI_PASSWORD "Romy1337"     // ❌ Should be in EEPROM/NVS
+#define WIFI_SSID "<your-ssid>"        // ❌ Security risk
+#define WIFI_PASSWORD "<your-wifi-password>"     // ❌ Should be in EEPROM/NVS
 ```
 
 **Impact:** Credentials exposed in binary, cannot change without recompiling

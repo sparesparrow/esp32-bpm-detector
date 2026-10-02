@@ -322,8 +322,8 @@ void loop() {
 
 **Issue:**
 ```cpp
-#define WIFI_SSID "Prospects"
-#define WIFI_PASSWORD "Romy1337"
+#define WIFI_SSID "<your-ssid>"
+#define WIFI_PASSWORD "<your-wifi-password>"
 ```
 
 **Problem:**
@@ -596,7 +596,7 @@ envelope_threshold_ *= ENVELOPE_THRESHOLD_DECAY;
 
 ### 3. Weak OTA Password (LOW)
 - **File:** `src/config.h:121`
-- **Risk:** `OTA_PASSWORD "admin123"` is weak
+- **Risk:** `OTA_PASSWORD "<your-ota-password>"` is weak
 - **Fix:** Use strong password or disable OTA in production
 
 ---

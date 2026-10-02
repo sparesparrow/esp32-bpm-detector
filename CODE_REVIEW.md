@@ -408,8 +408,8 @@ unsigned long currentTime = timer->millis();
 
 **Issue:**
 ```cpp
-#define WIFI_SSID "Prospects"
-#define WIFI_PASSWORD "Romy1337"
+#define WIFI_SSID "<your-ssid>"
+#define WIFI_PASSWORD "<your-wifi-password>"
 ```
 
 **Security Risk:** Credentials exposed in source code.

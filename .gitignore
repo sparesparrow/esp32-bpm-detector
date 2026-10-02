@@ -114,3 +114,6 @@ managed_components/
 *.temp
 .cache/
 *.log
+
+# Local credentials (see config.example.h)
+config.local.h

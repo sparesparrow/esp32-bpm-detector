@@ -264,8 +264,8 @@ if (!adc_chars) {
 **Issue:** WiFi SSID and password hardcoded in source code.
 
 ```cpp
-#define WIFI_SSID "Prospects"
-#define WIFI_PASSWORD "Romy1337"
+#define WIFI_SSID "<your-ssid>"
+#define WIFI_PASSWORD "<your-wifi-password>"
 ```
 
 **Problem:**
